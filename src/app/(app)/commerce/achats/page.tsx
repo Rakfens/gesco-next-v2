@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { getCurrentCompany } from "@/lib/supabase";
 import { formatAr } from "@/modules/shared/utils/constants";
-import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty } from "@/modules/shared/components/ui";
+import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
 
 export default function AchatsPage() {
   const [achats, setAchats] = useState([]);
@@ -18,6 +18,10 @@ export default function AchatsPage() {
     search: ""
   });
   const [currentCompany, setCurrentCompany] = useState<any>(null);
+  const [selectedAchat, setSelectedAchat] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'view' | 'edit' | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [saving, setSaving] = useState(false);
 
   // Fetch current company on mount
   useEffect(() => {
@@ -75,6 +79,48 @@ export default function AchatsPage() {
   // Handle date changes
   const handleDateChange = (field: string, date: string | null) => {
     setFilters(prev => ({ ...prev, [field]: date || "" }));
+  };
+
+  // Modal functions
+  const openModal = (achat: any, mode: 'view' | 'edit') => {
+    setSelectedAchat(achat);
+    setModalMode(mode);
+    if (mode === 'edit') {
+      setEditForm({
+        numero_commande: achat.numero_commande || '',
+        date_achat: achat.date_achat || '',
+        fournisseur_nom: achat.fournisseur_nom || '',
+        montant_ht: achat.montant_ht || 0,
+        tva: achat.tva || 0,
+        montant_total: achat.montant_total || 0,
+        montant_paye: achat.montant_paye || 0,
+        statut: achat.statut || 'en_attente',
+      });
+    }
+  };
+
+  const closeModal = () => {
+    setSelectedAchat(null);
+    setModalMode(null);
+    setEditForm({});
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedAchat) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('achats')
+        .update({ ...editForm })
+        .eq('id', selectedAchat.id);
+      if (error) throw error;
+      closeModal();
+      fetchAchats();
+    } catch (err: any) {
+      alert('Erreur lors de la sauvegarde : ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -187,8 +233,8 @@ export default function AchatsPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        // Handle view details
-                        alert(`Voir détails de l'achat ${achat.numero_commande}`);
+                        setSelectedAchat(achat);
+                        setModalMode('view');
                       }}
                     >
                       Voir
@@ -197,8 +243,7 @@ export default function AchatsPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        // Handle edit
-                        alert(`Modifier l'achat ${achat.numero_commande}`);
+                        openModal(achat, 'edit');
                       }}
                     >
                       Modifier
@@ -210,6 +255,105 @@ export default function AchatsPage() {
           </Table>
         )}
       </div>
+
+      {/* Modal */}
+      {selectedAchat && modalMode && (
+        <Modal open={true} onClose={closeModal}>
+          <ModalHeader>
+            {modalMode === 'view' ? "Détails de l'achat" : "Modifier l'achat"}
+          </ModalHeader>
+          <ModalBody>
+            {modalMode === 'view' ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">N° Commande</label>
+                  <p>{selectedAchat.numero_commande}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Date</label>
+                  <p>{new Date(selectedAchat.date_achat).toLocaleDateString('fr-FR')}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Fournisseur</label>
+                  <p>{selectedAchat.fournisseur_nom}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Montant HT</label>
+                  <p>{formatAr(selectedAchat.montant_ht)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">TVA</label>
+                  <p>{formatAr(selectedAchat.tva)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Montant Total</label>
+                  <p>{formatAr(selectedAchat.montant_total)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Montant Payé</label>
+                  <p>{formatAr(selectedAchat.montant_paye)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Statut</label>
+                  <p>{selectedAchat.statut}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium">N° Commande</label>
+                  <Input value={editForm.numero_commande || ''} onChange={(e) => setEditForm((prev: any) => ({ ...prev, numero_commande: e.target.value }))} className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Date</label>
+                  <Input type="date" value={editForm.date_achat || ''} onChange={(e) => setEditForm((prev: any) => ({ ...prev, date_achat: e.target.value }))} className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Fournisseur</label>
+                  <Input value={editForm.fournisseur_nom || ''} onChange={(e) => setEditForm((prev: any) => ({ ...prev, fournisseur_nom: e.target.value }))} className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Montant HT</label>
+                  <Input type="number" value={editForm.montant_ht || 0} onChange={(e) => setEditForm((prev: any) => ({ ...prev, montant_ht: parseFloat(e.target.value) || 0 }))} className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">TVA</label>
+                  <Input type="number" value={editForm.tva || 0} onChange={(e) => setEditForm((prev: any) => ({ ...prev, tva: parseFloat(e.target.value) || 0 }))} className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Montant Total</label>
+                  <Input type="number" value={editForm.montant_total || 0} onChange={(e) => setEditForm((prev: any) => ({ ...prev, montant_total: parseFloat(e.target.value) || 0 }))} className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Montant Payé</label>
+                  <Input type="number" value={editForm.montant_paye || 0} onChange={(e) => setEditForm((prev: any) => ({ ...prev, montant_paye: parseFloat(e.target.value) || 0 }))} className="mt-1" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Statut</label>
+                  <Select value={editForm.statut || 'en_attente'} onChange={(e) => setEditForm((prev: any) => ({ ...prev, statut: e.target.value }))} className="mt-1">
+                    <option value="en_attente">En attente</option>
+                    <option value="recu">Reçu</option>
+                    <option value="paye">Payé</option>
+                    <option value="annule">Annulé</option>
+                  </Select>
+                </div>
+              </div>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            {modalMode === 'view' ? (
+              <Button onClick={closeModal}>Fermer</Button>
+            ) : (
+              <>
+                <Button variant="outline" onClick={closeModal} disabled={saving}>Annuler</Button>
+                <Button onClick={handleSaveEdit} disabled={saving}>
+                  {saving ? 'Enregistrement...' : 'Enregistrer'}
+                </Button>
+              </>
+            )}
+          </ModalFooter>
+        </Modal>
+      )}
     </>
   );
 }

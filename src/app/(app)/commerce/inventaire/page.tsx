@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { getCurrentCompany } from "@/lib/supabase";
 import { formatAr } from "@/modules/shared/utils/constants";
-import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty } from "@/modules/shared/components/ui";
+import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
 
 export default function InventairePage() {
   const [inventaires, setInventaires] = useState([]);
@@ -17,6 +17,12 @@ export default function InventairePage() {
     statut: ""
   });
   const [currentCompany, setCurrentCompany] = useState<any>(null);
+
+  // Modal states
+  const [selectedInventaire, setSelectedInventaire] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'view' | 'edit' | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [saving, setSaving] = useState(false);
 
   // Fetch current company on mount
   useEffect(() => {
@@ -71,6 +77,42 @@ export default function InventairePage() {
   // Handle date changes
   const handleDateChange = (field: string, date: string | null) => {
     setFilters(prev => ({ ...prev, [field]: date || "" }));
+  };
+
+  // Modal functions
+  const openModal = (inv: any, mode: 'view' | 'edit') => {
+    setSelectedInventaire(inv);
+    setModalMode(mode);
+    setEditForm({
+      date_debut: inv.date_debut || '',
+      date_fin: inv.date_fin || '',
+      statut: inv.statut || ''
+    });
+  };
+
+  const closeModal = () => {
+    setSelectedInventaire(null);
+    setModalMode(null);
+    setEditForm({});
+    setSaving(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedInventaire) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('inventaires')
+        .update({ ...editForm })
+        .eq('id', selectedInventaire.id);
+      if (error) throw error;
+      await fetchInventaires();
+      closeModal();
+    } catch (err: any) {
+      setError(err.message || "Erreur lors de la sauvegarde");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -169,20 +211,14 @@ export default function InventairePage() {
                     <Button 
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        // Handle view details
-                        alert(`Voir détails de l'inventaire du ${inv.date_debut}`);
-                      }}
+                      onClick={() => openModal(inv, 'view')}
                     >
                       Voir
                     </Button>
                     <Button 
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        // Handle edit
-                        alert(`Modifier l'inventaire du ${inv.date_debut}`);
-                      }}
+                      onClick={() => openModal(inv, 'edit')}
                     >
                       Modifier
                     </Button>
@@ -193,6 +229,86 @@ export default function InventairePage() {
           </Table>
         )}
       </div>
+
+      {/* Modal Voir / Modifier */}
+      <Modal isOpen={modalMode !== null} onClose={closeModal}>
+        <ModalHeader>
+          {modalMode === 'view' ? 'Détails de l\'inventaire' : 'Modifier l\'inventaire'}
+        </ModalHeader>
+        <ModalBody>
+          {selectedInventaire && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Date début</label>
+                {modalMode === 'view' ? (
+                  <p className="text-sm">
+                    {selectedInventaire.date_debut
+                      ? new Date(selectedInventaire.date_debut).toLocaleDateString('fr-FR')
+                      : '-'}
+                  </p>
+                ) : (
+                  <Input
+                    type="date"
+                    value={editForm.date_debut || ''}
+                    onChange={(e) => setEditForm((prev: any) => ({ ...prev, date_debut: e.target.value }))}
+                  />
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Date fin</label>
+                {modalMode === 'view' ? (
+                  <p className="text-sm">
+                    {selectedInventaire.date_fin
+                      ? new Date(selectedInventaire.date_fin).toLocaleDateString('fr-FR')
+                      : '-'}
+                  </p>
+                ) : (
+                  <Input
+                    type="date"
+                    value={editForm.date_fin || ''}
+                    onChange={(e) => setEditForm((prev: any) => ({ ...prev, date_fin: e.target.value }))}
+                  />
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Statut</label>
+                {modalMode === 'view' ? (
+                  <Badge
+                    variant={selectedInventaire.statut === 'en_cours' ? 'secondary' :
+                             selectedInventaire.statut === 'termine' ? 'success' :
+                             'destructive'}
+                  >
+                    {selectedInventaire.statut}
+                  </Badge>
+                ) : (
+                  <Select
+                    value={editForm.statut || ''}
+                    onChange={(e) => setEditForm((prev: any) => ({ ...prev, statut: e.target.value }))}
+                  >
+                    <option value="en_cours">En cours</option>
+                    <option value="termine">Terminé</option>
+                    <option value="annule">Annulé</option>
+                  </Select>
+                )}
+              </div>
+            </div>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          {modalMode === 'edit' ? (
+            <>
+              <Button variant="outline" onClick={closeModal} disabled={saving}>
+                Annuler
+              </Button>
+              <Button onClick={handleSaveEdit} disabled={saving}>
+                {saving ? 'Enregistrement...' : 'Enregistrer'}
+              </Button>
+            </>
+          ) : (
+            <Button onClick={closeModal}>Fermer</Button>
+          )}
+        </ModalFooter>
+      </Modal>
     </>
   );
 }

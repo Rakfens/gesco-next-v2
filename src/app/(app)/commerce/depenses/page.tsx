@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { getCurrentCompany } from "@/lib/supabase";
 import { formatAr } from "@/modules/shared/utils/constants";
-import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty } from "@/modules/shared/components/ui";
+import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
 
 export default function DepensesPage() {
   const [depenses, setDepenses] = useState([]);
@@ -17,6 +17,10 @@ export default function DepensesPage() {
     categorie: ""
   });
   const [currentCompany, setCurrentCompany] = useState<any>(null);
+  const [selectedDepense, setSelectedDepense] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'view' | 'edit' | null>(null);
+  const [editForm, setEditForm] = useState({ date: "", description: "", categorie: "", montant: "", mode_paiement: "" });
+  const [saving, setSaving] = useState(false);
 
   // Fetch current company on mount
   useEffect(() => {
@@ -62,6 +66,47 @@ export default function DepensesPage() {
       setLoading(false);
     }
   }, [currentCompany, filters]);
+
+  const openModal = (dep: any, mode: 'view' | 'edit') => {
+    setSelectedDepense(dep);
+    setModalMode(mode);
+    setEditForm({
+      date: dep.date || "",
+      description: dep.description || "",
+      categorie: dep.categorie || "",
+      montant: dep.montant?.toString() || "",
+      mode_paiement: dep.mode_paiement || ""
+    });
+  };
+
+  const closeModal = () => {
+    setSelectedDepense(null);
+    setModalMode(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedDepense) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('depenses')
+        .update({
+          date: editForm.date,
+          description: editForm.description,
+          categorie: editForm.categorie,
+          montant: parseFloat(editForm.montant) || 0,
+          mode_paiement: editForm.mode_paiement
+        })
+        .eq('id', selectedDepense.id);
+      if (error) throw error;
+      closeModal();
+      fetchDepenses();
+    } catch (err: any) {
+      alert("Erreur lors de l'enregistrement : " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Handle filter changes
   const handleFilterChange = (field: string, value: string) => {
@@ -169,8 +214,7 @@ export default function DepensesPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        // Handle view details
-                        alert(`Voir détails de la dépense ${dep.description}`);
+                        openModal(dep, 'view');
                       }}
                     >
                       Voir
@@ -179,8 +223,7 @@ export default function DepensesPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        // Handle edit
-                        alert(`Modifier la dépense ${dep.description}`);
+                        openModal(dep, 'edit');
                       }}
                     >
                       Modifier
@@ -192,6 +235,118 @@ export default function DepensesPage() {
           </Table>
         )}
       </div>
+
+      {/* Modal Voir / Modifier */}
+      {modalMode && selectedDepense && (
+        <Modal open={true} onClose={closeModal}>
+          <ModalHeader>
+            {modalMode === 'view' ? 'Détails de la dépense' : 'Modifier la dépense'}
+          </ModalHeader>
+          <ModalBody>
+            {modalMode === 'view' ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Date</label>
+                  <p className="text-base">{selectedDepense.date ? new Date(selectedDepense.date).toLocaleDateString('fr-FR') : '-'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Description</label>
+                  <p className="text-base">{selectedDepense.description ?? '-'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Catégorie</label>
+                  <p className="text-base">{selectedDepense.categorie ?? '-'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Montant</label>
+                  <p className="text-base font-semibold">{formatAr(selectedDepense.montant)}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">Mode de paiement</label>
+                  <p className="text-base">{selectedDepense.mode_paiement ?? '-'}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Date</label>
+                  <Input
+                    type="date"
+                    value={editForm.date}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, date: e.target.value }))}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <Input
+                    type="text"
+                    value={editForm.description}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Catégorie</label>
+                  <Select
+                    value={editForm.categorie}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, categorie: e.target.value }))}
+                    className="w-full"
+                  >
+                    <option value="">Sélectionner</option>
+                    <option value="Électricité">Électricité</option>
+                    <option value="Eau">Eau</option>
+                    <option value="Transport">Transport</option>
+                    <option value="Fournitures">Fournitures</option>
+                    <option value="Communication">Communication</option>
+                    <option value="Loyer">Loyer</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Salaires">Salaires</option>
+                    <option value="Entretien">Entretien</option>
+                    <option value="Impressions">Impressions</option>
+                    <option value="Autres">Autres</option>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Montant</label>
+                  <Input
+                    type="number"
+                    value={editForm.montant}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, montant: e.target.value }))}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Mode de paiement</label>
+                  <Select
+                    value={editForm.mode_paiement}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, mode_paiement: e.target.value }))}
+                    className="w-full"
+                  >
+                    <option value="">Sélectionner</option>
+                    <option value="Espèces">Espèces</option>
+                    <option value="Virement">Virement</option>
+                    <option value="Chèque">Chèque</option>
+                    <option value="Carte bancaire">Carte bancaire</option>
+                  </Select>
+                </div>
+              </div>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            {modalMode === 'edit' ? (
+              <>
+                <Button variant="outline" onClick={closeModal} disabled={saving}>Annuler</Button>
+                <Button onClick={handleSaveEdit} disabled={saving}>
+                  {saving ? "Enregistrement..." : "Enregistrer"}
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" onClick={closeModal}>Fermer</Button>
+            )}
+          </ModalFooter>
+        </Modal>
+      )}
     </>
   );
 }

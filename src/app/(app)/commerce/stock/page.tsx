@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { getCurrentCompany } from "@/lib/supabase";
 import { formatAr } from "@/modules/shared/utils/constants";
-import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty } from "@/modules/shared/components/ui";
+import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
 
 export default function StockPage() {
   const [produits, setProduits] = useState([]);
@@ -17,6 +17,11 @@ export default function StockPage() {
     stockBas: false
   });
   const [currentCompany, setCurrentCompany] = useState<any>(null);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedProduit, setSelectedProduit] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'view' | 'edit' | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [saving, setSaving] = useState(false);
 
   // Fetch current company on mount
   useEffect(() => {
@@ -26,6 +31,21 @@ export default function StockPage() {
       fetchProduits();
     }
   }, []);
+
+  // Fetch distinct categories from produits
+  useEffect(() => {
+    if (!currentCompany) return;
+    supabase
+      .from('produits')
+      .select('categorie')
+      .eq('company_id', currentCompany.id)
+      .then(({ data }) => {
+        if (data) {
+          const cats = [...new Set(data.map((r: any) => r.categorie).filter(Boolean))] as string[];
+          setCategories(cats);
+        }
+      });
+  }, [currentCompany]);
 
   // Fetch produits based on filters
   const fetchProduits = useCallback(async () => {
@@ -96,13 +116,9 @@ export default function StockPage() {
                 className="w-40"
               >
                 <option value="">Toutes catégories</option>
-                <option value="Téléphones">Téléphones</option>
-                <option value="Accessoires téléphones">Accessoires téléphones</option>
-                <option value="Vêtements bébé">Vêtements bébé</option>
-                <option value="Jouets bébé">Jouets bébé</option>
-                <option value="Puériculture">Puériculture</option>
-                <option value="Alimentation bébé">Alimentation bébé</option>
-                <option value="Autres">Autres</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </Select>
               <Input
                 type="text"
@@ -191,22 +207,23 @@ export default function StockPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="flex gap-2">
-                      <Button 
+                      <Button
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          // Handle view details
-                          alert(`Voir détails du produit ${produit.nom}`);
+                          setSelectedProduit(produit);
+                          setModalMode('view');
                         }}
                       >
                         Voir
                       </Button>
-                      <Button 
+                      <Button
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          // Handle edit
-                          alert(`Modifier le produit ${produit.nom}`);
+                          setSelectedProduit(produit);
+                          setEditForm({ ...produit });
+                          setModalMode('edit');
                         }}
                       >
                         Modifier
@@ -219,6 +236,117 @@ export default function StockPage() {
           </Table>
         )}
       </div>
+
+      {/* Modal Voir */}
+      <Modal open={modalMode === 'view'} onClose={() => { setModalMode(null); setSelectedProduit(null); }}>
+        <ModalHeader>
+          <h3 className="text-lg font-semibold">Détails du produit</h3>
+        </ModalHeader>
+        <ModalBody>
+          {selectedProduit && (
+            <div className="space-y-3">
+              <div><span className="font-medium">Nom :</span> {selectedProduit.nom}</div>
+              <div><span className="font-medium">Référence :</span> {selectedProduit.reference ?? '-'}</div>
+              <div><span className="font-medium">Catégorie :</span> {selectedProduit.categorie ?? '-'}</div>
+              <div><span className="font-medium">Unité :</span> {selectedProduit.unite ?? '-'}</div>
+              <div><span className="font-medium">Prix achat :</span> {formatAr(selectedProduit.prix_achat)}</div>
+              <div><span className="font-medium">Prix vente :</span> {formatAr(selectedProduit.prix_vente)}</div>
+              <div><span className="font-medium">Stock :</span> {selectedProduit.quantite_stock}</div>
+              <div><span className="font-medium">Seuil :</span> {selectedProduit.stock_minimum}</div>
+              <div>
+                <span className="font-medium">État stock :</span>{' '}
+                <Badge variant={selectedProduit.quantite_stock <= selectedProduit.stock_minimum ? 'destructive' : 'success'}>
+                  {selectedProduit.quantite_stock === 0 ? 'Épuisé' : selectedProduit.quantite_stock <= selectedProduit.stock_minimum ? 'Bas' : 'OK'}
+                </Badge>
+              </div>
+            </div>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="outline" onClick={() => { setModalMode(null); setSelectedProduit(null); }}>
+            Fermer
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Modal Modifier */}
+      <Modal open={modalMode === 'edit'} onClose={() => { setModalMode(null); setSelectedProduit(null); }}>
+        <ModalHeader>
+          <h3 className="text-lg font-semibold">Modifier le produit</h3>
+        </ModalHeader>
+        <ModalBody>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">Nom</label>
+              <Input value={editForm.nom ?? ''} onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Référence</label>
+              <Input value={editForm.reference ?? ''} onChange={(e) => setEditForm({ ...editForm, reference: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Catégorie</label>
+              <Input value={editForm.categorie ?? ''} onChange={(e) => setEditForm({ ...editForm, categorie: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Unité</label>
+              <Input value={editForm.unite ?? ''} onChange={(e) => setEditForm({ ...editForm, unite: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Prix achat</label>
+              <Input type="number" value={editForm.prix_achat ?? ''} onChange={(e) => setEditForm({ ...editForm, prix_achat: parseFloat(e.target.value) })} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Prix vente</label>
+              <Input type="number" value={editForm.prix_vente ?? ''} onChange={(e) => setEditForm({ ...editForm, prix_vente: parseFloat(e.target.value) })} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Stock</label>
+              <Input type="number" value={editForm.quantite_stock ?? ''} onChange={(e) => setEditForm({ ...editForm, quantite_stock: parseInt(e.target.value) })} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Seuil minimum</label>
+              <Input type="number" value={editForm.stock_minimum ?? ''} onChange={(e) => setEditForm({ ...editForm, stock_minimum: parseInt(e.target.value) })} />
+            </div>
+          </div>
+        </ModalBody>
+        <ModalFooter className="gap-2">
+          <Button variant="outline" onClick={() => { setModalMode(null); setSelectedProduit(null); }}>
+            Annuler
+          </Button>
+          <Button
+            disabled={saving}
+            onClick={async () => {
+              setSaving(true);
+              try {
+                const { error } = await supabase
+                  .from('produits')
+                  .update({
+                    nom: editForm.nom,
+                    reference: editForm.reference,
+                    categorie: editForm.categorie,
+                    unite: editForm.unite,
+                    prix_achat: editForm.prix_achat,
+                    prix_vente: editForm.prix_vente,
+                    quantite_stock: editForm.quantite_stock,
+                    stock_minimum: editForm.stock_minimum,
+                  })
+                  .eq('id', selectedProduit.id);
+                if (error) throw error;
+                setModalMode(null);
+                setSelectedProduit(null);
+                fetchProduits();
+              } catch (err: any) {
+                alert('Erreur : ' + (err.message || 'Impossible de sauvegarder'));
+              } finally {
+                setSaving(false);
+              }
+            }}
+          >
+            {saving ? 'Enregistrement...' : 'Enregistrer'}
+          </Button>
+        </ModalFooter>
+      </Modal>
     </>
   );
 }

@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { getCurrentCompany } from "@/lib/supabase";
 import { formatAr, TODAY, monthLabel } from "@/modules/shared/utils/constants";
-import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty } from "@/modules/shared/components/ui";
+import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
 
 export default function LivraisonDashboardPage() {
   const [livraisons, setLivraisons] = useState([]);
@@ -17,6 +17,10 @@ export default function LivraisonDashboardPage() {
   const [recuperationsJour, setRecuperationsJour] = useState([]);
   const [loadingRecup, setLoadingRecup] = useState(false);
   const [currentCompany, setCurrentCompany] = useState<any>(null);
+  const [selectedLivraison, setSelectedLivraison] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'view' | 'edit' | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [saving, setSaving] = useState(false);
 
   // Fetch current company on mount
   useEffect(() => {
@@ -24,6 +28,7 @@ export default function LivraisonDashboardPage() {
     if (company) {
       setCurrentCompany(company);
       fetchDashboardData();
+      fetchRecuperationsJour();
     }
   }, []);
 
@@ -96,6 +101,54 @@ export default function LivraisonDashboardPage() {
   // Handle date change
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
+  };
+
+  // Reload recuperations when date changes
+  useEffect(() => {
+    if (currentCompany) {
+      fetchRecuperationsJour();
+    }
+  }, [selectedDate, currentCompany, fetchRecuperationsJour]);
+
+  // Modal helpers
+  const openModal = (liv: any, mode: 'view' | 'edit') => {
+    setSelectedLivraison(liv);
+    setModalMode(mode);
+    setEditForm({
+      heure: liv.heure || '',
+      colis: liv.colis || '',
+      destinataire: liv.destinataire || '',
+      destinataire_telephone: liv.destinataire_telephone || '',
+      destinataire_lieu: liv.destinataire_lieu || '',
+      agent_nom: liv.agent_nom || '',
+      montant: liv.montant || 0,
+      frais: liv.frais || 0,
+      statut: liv.statut || '',
+    });
+  };
+
+  const closeModal = () => {
+    setSelectedLivraison(null);
+    setModalMode(null);
+    setEditForm({});
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedLivraison) return;
+    setSaving(true);
+    try {
+      const { error: updateError } = await supabase
+        .from('livraisons')
+        .update({ ...editForm })
+        .eq('id', selectedLivraison.id);
+      if (updateError) throw updateError;
+      closeModal();
+      fetchDashboardData();
+    } catch (err: any) {
+      alert('Erreur lors de la sauvegarde: ' + (err.message || 'inconnue'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -233,20 +286,14 @@ export default function LivraisonDashboardPage() {
                         <Button 
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            // Handle view details
-                            alert(`Voir détails de la livraison #${liv.id}`);
-                          }}
+                          onClick={() => openModal(liv, 'view')}
                         >
                           Voir
                         </Button>
                         <Button 
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            // Handle edit
-                            alert(`Modifier la livraison #${liv.id}`);
-                          }}
+                          onClick={() => openModal(liv, 'edit')}
                         >
                           Modifier
                         </Button>
@@ -259,6 +306,114 @@ export default function LivraisonDashboardPage() {
           )}
         </Card>
       </div>
+
+      {/* Modal */}
+      {modalMode && selectedLivraison && (
+        <Modal open={true} onClose={closeModal}>
+          <ModalHeader>
+            {modalMode === 'view' ? 'Détails de la livraison' : 'Modifier la livraison'} #{selectedLivraison.id}
+          </ModalHeader>
+          <ModalBody>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Heure</label>
+                {modalMode === 'view' ? (
+                  <p>{selectedLivraison.heure ? selectedLivraison.heure.substring(0, 5) : '--:--'}</p>
+                ) : (
+                  <Input type="time" value={editForm.heure || ''} onChange={(e) => setEditForm({ ...editForm, heure: e.target.value })} />
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Colis</label>
+                {modalMode === 'view' ? (
+                  <p>{selectedLivraison.colis ?? '-'}</p>
+                ) : (
+                  <Input type="text" value={editForm.colis || ''} onChange={(e) => setEditForm({ ...editForm, colis: e.target.value })} />
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Destinataire</label>
+                {modalMode === 'view' ? (
+                  <p>{selectedLivraison.destinataire ?? '-'}</p>
+                ) : (
+                  <Input type="text" value={editForm.destinataire || ''} onChange={(e) => setEditForm({ ...editForm, destinataire: e.target.value })} />
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Téléphone</label>
+                {modalMode === 'view' ? (
+                  <p>{selectedLivraison.destinataire_telephone ?? '-'}</p>
+                ) : (
+                  <Input type="text" value={editForm.destinataire_telephone || ''} onChange={(e) => setEditForm({ ...editForm, destinataire_telephone: e.target.value })} />
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Lieu</label>
+                {modalMode === 'view' ? (
+                  <p>{selectedLivraison.destinataire_lieu ?? '-'}</p>
+                ) : (
+                  <Input type="text" value={editForm.destinataire_lieu || ''} onChange={(e) => setEditForm({ ...editForm, destinataire_lieu: e.target.value })} />
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Agent</label>
+                {modalMode === 'view' ? (
+                  <p>{selectedLivraison.agent_nom ?? (selectedLivraison.agent_id ? `Agent #${selectedLivraison.agent_id}` : '-')}</p>
+                ) : (
+                  <Input type="text" value={editForm.agent_nom || ''} onChange={(e) => setEditForm({ ...editForm, agent_nom: e.target.value })} />
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Montant</label>
+                {modalMode === 'view' ? (
+                  <p>{formatAr(selectedLivraison.montant)}</p>
+                ) : (
+                  <Input type="number" value={editForm.montant || 0} onChange={(e) => setEditForm({ ...editForm, montant: parseFloat(e.target.value) || 0 })} />
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Frais</label>
+                {modalMode === 'view' ? (
+                  <p>{formatAr(selectedLivraison.frais || 0)}</p>
+                ) : (
+                  <Input type="number" value={editForm.frais || 0} onChange={(e) => setEditForm({ ...editForm, frais: parseFloat(e.target.value) || 0 })} />
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Statut</label>
+                {modalMode === 'view' ? (
+                  <Badge
+                    variant={selectedLivraison.statut === 'livre' ? 'success' :
+                             selectedLivraison.statut === 'en_cours' ? 'secondary' :
+                             selectedLivraison.statut === 'retourne' ? 'destructive' : 'default'}
+                  >
+                    {selectedLivraison.statut}
+                  </Badge>
+                ) : (
+                  <Select value={editForm.statut || ''} onChange={(e) => setEditForm({ ...editForm, statut: e.target.value })}>
+                    <option value="en_cours">En cours</option>
+                    <option value="livre">Livré</option>
+                    <option value="retourne">Retourné</option>
+                    <option value="en_attente">En attente</option>
+                  </Select>
+                )}
+              </div>
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            {modalMode === 'edit' ? (
+              <>
+                <Button variant="outline" onClick={closeModal} disabled={saving}>Annuler</Button>
+                <Button onClick={handleSaveEdit} disabled={saving}>
+                  {saving ? 'Enregistrement...' : 'Enregistrer'}
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" onClick={closeModal}>Fermer</Button>
+            )}
+          </ModalFooter>
+        </Modal>
+      )}
     </>
   );
 }
