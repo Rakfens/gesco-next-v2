@@ -10,34 +10,34 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        border: "hsl(214.3 31.8% 91.4%)",
-        input: "hsl(214.3 31.8% 91.4%)",
-        ring: "hsl(221.2 83.2% 53.3%)",
-        background: "hsl(0 0% 100%)",
-        foreground: "hsl(222.2 84% 4.9%)",
+        border: "#e5e7eb",
+        input: "#e5e7eb",
+        ring: "#3b82f6",
+        background: "#ffffff",
+        foreground: "#0a0a0a",
         primary: {
-          DEFAULT: "hsl(221.2 83.2% 53.3%)",
-          foreground: "hsl(210 40% 98%)",
+          DEFAULT: "#3b82f6",
+          foreground: "#f8fafc",
         },
         secondary: {
-          DEFAULT: "hsl(210 40% 96.1%)",
-          foreground: "hsl(222.2 84% 4.9%)",
+          DEFAULT: "#f1f5f9",
+          foreground: "#0a0a0a",
         },
         destructive: {
-          DEFAULT: "hsl(0 84.2% 60.2%)",
-          foreground: "hsl(210 40% 98%)",
+          DEFAULT: "#ef4444",
+          foreground: "#f8fafc",
         },
         muted: {
-          DEFAULT: "hsl(210 40% 96.1%)",
-          foreground: "hsl(215.4 16.3% 46.9%)",
+          DEFAULT: "#f1f5f9",
+          foreground: "#64748b",
         },
         accent: {
-          DEFAULT: "hsl(210 40% 96.1%)",
-          foreground: "hsl(222.2 84% 4.9%)",
+          DEFAULT: "#f1f5f9",
+          foreground: "#0a0a0a",
         },
         card: {
-          DEFAULT: "hsl(0 0% 100%)",
-          foreground: "hsl(222.2 84% 4.9%)",
+          DEFAULT: "#ffffff",
+          foreground: "#0a0a0a",
         },
       },
       borderRadius: {
