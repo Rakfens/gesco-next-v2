@@ -17,8 +17,42 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   },
 });
 
-// ── Store mémoire (lu par tous les services) ──────────────────────────
+// ── Company helpers ──────────────────────────────────────────────────
 let _company = null;
+
 export const setCurrentCompany = (c) => { _company = c; };
 export const getCurrentCompany = () => _company;
 export const clearCurrentCompany = () => { _company = null; };
+
+/**
+ * Charge le company depuis la table `companies` en utilisant l'user connecté.
+ * Stocke le résultat en mémoire pour éviter les appels répétés.
+ */
+export async function loadCurrentCompany() {
+  if (_company) return _company;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  // Chercher le company lié à cet user
+  const { data, error } = await supabase
+    .from('companies')
+    .select('*')
+    .eq('user_id', user.id)
+    .limit(1)
+    .single();
+
+  if (error || !data) {
+    // Fallback : prendre le premier company
+    const { data: first } = await supabase
+      .from('companies')
+      .select('*')
+      .limit(1)
+      .single();
+    _company = first || null;
+  } else {
+    _company = data;
+  }
+
+  return _company;
+}
