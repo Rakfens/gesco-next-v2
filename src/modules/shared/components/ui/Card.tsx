@@ -54,6 +54,38 @@ export const CardTitle = ({ children, style = {} }) => (
   </div>
 );
 
+export const CardDescription = ({ children, style = {} }) => (
+  <div style={{
+    fontSize: 13,
+    color: 'var(--muted)',
+    marginTop: 4,
+    ...style,
+  }}>
+    {children}
+  </div>
+);
+
+export const CardContent = ({ children, style = {} }) => (
+  <div style={{ ...style }}>
+    {children}
+  </div>
+);
+
+export const CardFooter = ({ children, style = {} }) => (
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
+    marginTop: 14,
+    paddingTop: 14,
+    borderTop: '1px solid var(--border)',
+    ...style,
+  }}>
+    {children}
+  </div>
+);
+
 export const StatCard = ({ label, value, icon, color, sub, style = {} }) => (
   <div className="stat-card" style={{ borderLeft: `3px solid ${color || 'var(--accent)'}`, padding: 20, ...style }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

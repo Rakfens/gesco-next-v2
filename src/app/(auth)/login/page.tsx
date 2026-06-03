@@ -5,9 +5,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Button } from "@/modules/shared/components/ui/Button";
+import { Input } from "@/modules/shared/components/ui/Input";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/modules/shared/components/ui/Card";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
