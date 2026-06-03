@@ -2,6 +2,11 @@
 // ui/Input.tsx — Input professionnel réutilisable
 import React from 'react';
 
+const DEFAULT_BORDER_COLOR = 'var(--border2)';
+const ERROR_BORDER_COLOR = 'var(--red)';
+const SUCCESS_BORDER_COLOR = 'var(--green)';
+const FOCUS_BORDER_COLOR = 'var(--accent)';
+
 export const Input = ({
   label,
   type = 'text',
@@ -19,12 +24,22 @@ export const Input = ({
   className,
   ...props
 }) => {
-  constBorderColor = error ? 'var(--red)' : success ? 'var(--green)' : 'var(--border2)';
+  const resolvedBorderColor = error ? ERROR_BORDER_COLOR : success ? SUCCESS_BORDER_COLOR : DEFAULT_BORDER_COLOR;
   const focusShadow = error
     ? '0 0 0 3px var(--red-dim)'
     : success
     ? '0 0 0 3px var(--green-dim)'
     : '0 0 0 3px var(--accent-dim)';
+
+  const handleFocus = (e) => {
+    e.target.style.borderColor = FOCUS_BORDER_COLOR;
+    e.target.style.boxShadow = focusShadow;
+  };
+
+  const handleBlur = (e) => {
+    e.target.style.borderColor = resolvedBorderColor;
+    e.target.style.boxShadow = 'none';
+  };
 
   return (
     <div style={{ marginBottom: label || helpText ? 14 : 0 }}>
@@ -63,7 +78,7 @@ export const Input = ({
             width: '100%',
             padding: `10px 14px${icon ? ' 14px 38px' : ''}${iconRight ? ' 38px 14px' : ''}`,
             background: disabled ? 'var(--bg2)' : 'var(--card)',
-            border: `1px solid ${borderColor}`,
+            border: `1px solid ${resolvedBorderColor}`,
             borderRadius: 8,
             color: 'var(--text)',
             fontSize: 14,
@@ -72,14 +87,8 @@ export const Input = ({
             boxSizing: 'border-box',
             transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
           }}
-          onFocus={e => {
-            e.target.style.borderColor = 'var(--accent)';
-            e.target.style.boxShadow = focusShadow;
-          }}
-          onBlur={e => {
-            e.target.style.borderColor = borderColor;
-            e.target.style.boxShadow = 'none';
-          }}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           {...props}
         />
         {iconRight && (
