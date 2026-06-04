@@ -29,7 +29,6 @@ const navGroups: NavGroup[] = [
       { label: "Produits", href: "/commerce/produits", icon: <IconPackage /> },
       { label: "Categories", href: "/commerce/categories", icon: <IconTags /> },
       { label: "Clients", href: "/commerce/clients", icon: <IconUsers /> },
-      { label: "Agents", href: "/commerce/agents", icon: <IconUserCog /> },
       { label: "Stock", href: "/commerce/stock", icon: <IconWarehouse /> },
       { label: "Inventaire", href: "/commerce/inventaire", icon: <IconClipboardList /> },
       { label: "Depenses", href: "/commerce/depenses", icon: <IconReceipt /> },
