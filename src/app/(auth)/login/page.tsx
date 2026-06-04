@@ -32,7 +32,23 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/commerce/dashboard");
+    // Redirect based on company type
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: uc } = await supabase.from('user_companies').select('company:companies(*)').eq('user_id', user.id).limit(1);
+        const company = uc?.[0]?.company;
+        if (company?.type === 'service') {
+          router.push('/livraison/dashboard');
+        } else {
+          router.push('/commerce/dashboard');
+        }
+      } else {
+        router.push('/commerce/dashboard');
+      }
+    } catch {
+      router.push('/commerce/dashboard');
+    }
     router.refresh();
   };
 
