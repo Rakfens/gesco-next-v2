@@ -25,8 +25,9 @@ export const getCurrentCompany = () => _company;
 export const clearCurrentCompany = () => { _company = null; };
 
 /**
- * Charge le company depuis la table `companies` en utilisant l'user connecté.
+ * Charge le company depuis la table `companies` via `user_companies`.
  * Stocke le résultat en mémoire pour éviter les appels répétés.
+ * L'UI (sélecteur dans le layout) appelera setCurrentCompany() pour changer.
  */
 export async function loadCurrentCompany() {
   if (_company) return _company;
@@ -34,25 +35,44 @@ export async function loadCurrentCompany() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // Chercher le company lié à cet user
-  const { data, error } = await supabase
-    .from('companies')
-    .select('*')
+  // 1) Chercher via user_companies → companies
+  const { data: uc } = await supabase
+    .from('user_companies')
+    .select('company_id, company:companies(*)')
     .eq('user_id', user.id)
-    .limit(1)
-    .single();
+    .order('id', { ascending: true });
 
-  if (error || !data) {
-    // Fallback : prendre le premier company
+  if (uc && uc.length > 0) {
+    const first = uc[0];
+    _company = first.company || (first.company_id ? { id: first.company_id } : null);
+  }
+
+  // 2) Fallback : première company dans la table (si pas de user_companies)
+  if (!_company) {
     const { data: first } = await supabase
       .from('companies')
       .select('*')
+      .order('id', { ascending: true })
       .limit(1)
       .single();
     _company = first || null;
-  } else {
-    _company = data;
   }
 
   return _company;
+}
+
+/**
+ * Charge TOUTES les sociétés accessibles à l'utilisateur
+ */
+export async function loadUserCompanies() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data: uc } = await supabase
+    .from('user_companies')
+    .select('company_id, company:companies(*)')
+    .eq('user_id', user.id)
+    .order('id', { ascending: true });
+
+  return (uc || []).map(r => r.company).filter(Boolean);
 }
