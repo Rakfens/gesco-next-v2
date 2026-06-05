@@ -1,7 +1,16 @@
+// @ts-nocheck
 "use client";
-export const dynamic = 'force-dynamic';
 
-import PageComponent from "@/modules/commerce/pages/Dashboard";
+import dynamic from "next/dynamic";
+
+const PageComponent = dynamic(() => import("@/modules/commerce/pages/Dashboard"), {
+  ssr: false,
+  loading: () => (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+      <div>Chargement...</div>
+    </div>
+  ),
+});
 
 export default function Page() {
   return <PageComponent />;

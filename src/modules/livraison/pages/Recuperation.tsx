@@ -6,7 +6,8 @@ import {
   Button, Input, Select, Badge, Card, Modal, ModalHeader, ModalBody, ModalFooter,
 } from '@/modules/shared/components/ui';
 
-export const Recuperation = ({ agents, showToast }) => {
+export const Recuperation = () => {
+  const { agents, showToast } = useApp();
   const [recuperations, setRecuperations] = useState([]);
   const [selectedDate, setSelectedDate] = useState(TODAY());
   const [form, setForm] = useState({ livreur_id: '', livreur_nom: '', client_donneur: '', frais_recuperation: 1000 });

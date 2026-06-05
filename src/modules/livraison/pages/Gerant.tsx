@@ -1,8 +1,13 @@
 // @ts-nocheck
 // Gerant.tsx — Design system professionnel
 import { useState, useMemo, useEffect } from 'react';
-import { formatAr, CURRENT_MONTH, monthLabel, shouldCountGerantCommission, EXCLUDED_CLIENTS } from '@/modules/shared/utils/constants';
+import { COMMISSION_DEFAUT, CURRENT_MONTH, monthLabel, shouldCountGerantCommission, EXCLUDED_CLIENTS } from '@/modules/shared/utils/constants';
+import { useApp } from '@/modules/shared/context/AppContext';
 import { Button, Input, Select, Badge, Card, StatCard, Modal, ModalHeader, ModalBody, ModalFooter, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty } from '@/modules/shared/components/ui';
+
+export const Gerant = () => {
+  const { livraisons, showToast } = useApp();
+  const commissionGerant = COMMISSION_DEFAUT;
 
 const Grid2 = ({ children }) => (
   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>{children}</div>
@@ -21,8 +26,7 @@ const StatValue = ({ value, label, color }) => (
   </Card>
 );
 
-export const Gerant = ({ livraisons, commissionGerant, onUpdateCommission, showToast }) => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [editCommission, setEditCommission] = useState(false);
 
   useEffect(() => {

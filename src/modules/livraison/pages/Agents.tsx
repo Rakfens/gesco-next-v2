@@ -5,7 +5,8 @@ import { formatAr, currentMonth, monthLabel } from '@/modules/shared/utils/const
 import { getRecuperationsByLivreurNom, getTotalRecuperationsByLivreurNom } from '../services/recuperationService';
 import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalBody, ModalFooter, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty } from '@/modules/shared/components/ui';
 
-export const Agents = ({ agents, onAddAgent, onUpdateAgent, onDeleteAgent, showToast }) => {
+export const Agents = () => {
+  const { agents, addAgent: onAddAgent, updateAgent: onUpdateAgent, deleteAgent: onDeleteAgent, showToast } = useApp();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
