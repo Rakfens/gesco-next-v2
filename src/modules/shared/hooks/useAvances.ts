@@ -46,8 +46,8 @@ export const useAvances = (): UseAvancesReturn => {
     const handler = (e: Event) => {
       if ((e as CustomEvent).detail?.table === 'avances') loadAvances();
     };
-    window.addEventListener('getSupabase()_realtime', handler);
-    return () => window.removeEventListener('getSupabase()_realtime', handler);
+    window.addEventListener('supabase_realtime', handler);
+    return () => window.removeEventListener('supabase_realtime', handler);
   }, [loadAvances]);
 
   const handleAddAvance = async (avance: Record<string, unknown>) => {

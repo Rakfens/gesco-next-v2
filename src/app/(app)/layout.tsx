@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { getSupabase } from '@/lib/supabase';
 import { CompanyProvider, useCompany } from "@/modules/shared/context/CompanyContext";
 import { ThemeProvider, useTheme } from "@/modules/shared/context/ThemeContext";
+import { AppProvider } from "@/modules/shared/context/AppContext";
 
 export const dynamic = "force-dynamic";
 
@@ -332,7 +333,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
       <CompanyProvider>
-        <LayoutContent>{children}</LayoutContent>
+        <AppProvider>
+          <LayoutContent>{children}</LayoutContent>
+        </AppProvider>
       </CompanyProvider>
     </ThemeProvider>
   );

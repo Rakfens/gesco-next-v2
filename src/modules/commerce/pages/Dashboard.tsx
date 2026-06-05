@@ -62,8 +62,8 @@ export default function CommerceDashboard() {
 
   useEffect(() => {
     const h = e => { if (['ventes', 'achats', 'produits', 'depenses'].includes(e.detail?.table)) load(); };
-    window.addEventListener('getSupabase()_realtime', h);
-    return () => window.removeEventListener('getSupabase()_realtime', h);
+    window.addEventListener('supabase_realtime', h);
+    return () => window.removeEventListener('supabase_realtime', h);
   }, [currentCompany]);
 
   const load = async () => {

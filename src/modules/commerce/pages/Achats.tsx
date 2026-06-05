@@ -51,8 +51,8 @@ export default function Achats() {
     const handler = (e) => {
       if (['achats', 'achat_details'].includes(e.detail?.table)) loadData();
     };
-    window.addEventListener('getSupabase()_realtime', handler);
-    return () => window.removeEventListener('getSupabase()_realtime', handler);
+    window.addEventListener('supabase_realtime', handler);
+    return () => window.removeEventListener('supabase_realtime', handler);
   }, []);
 
   const loadData = async () => {

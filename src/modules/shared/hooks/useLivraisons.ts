@@ -56,8 +56,8 @@ export const useLivraisons = (): UseLivraisonsReturn => {
 
   useEffect(() => {
     const handler = (e: Event) => { if ((e as CustomEvent).detail?.table === 'livraisons') loadLivraisons(); };
-    window.addEventListener('getSupabase()_realtime', handler);
-    return () => window.removeEventListener('getSupabase()_realtime', handler);
+    window.addEventListener('supabase_realtime', handler);
+    return () => window.removeEventListener('supabase_realtime', handler);
   }, [loadLivraisons]);
 
   const handleAddLivraison = async (livraison: Record<string, unknown>) => {

@@ -45,7 +45,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       try {
         const ch = getSupabase().channel(`rt_${table}_${companyId}`)
           .on('postgres_changes', { event: '*', schema: 'public', table, filter: `company_id=eq.${companyId}` },
-            (p: unknown) => window.dispatchEvent(new CustomEvent('getSupabase()_realtime', { detail: { table, payload: p } })))
+            (p: unknown) => window.dispatchEvent(new CustomEvent('supabase_realtime', { detail: { table, payload: p } })))
           .subscribe();
         rtChannels.current.push(ch);
       } catch (_) { /* noop */ }
