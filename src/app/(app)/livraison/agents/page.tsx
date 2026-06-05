@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic';
 
 import { Agents } from "@/modules/livraison/pages/Agents";
 import { useApp } from "@/modules/shared/context/AppContext";

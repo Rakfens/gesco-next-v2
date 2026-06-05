@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic';
 
 import { Dashboard } from "@/modules/livraison/pages/Dashboard";
 import { useApp } from "@/modules/shared/context/AppContext";

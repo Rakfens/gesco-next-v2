@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic';
 
 import { Historique } from "@/modules/livraison/pages/Historique";
 import { useApp } from "@/modules/shared/context/AppContext";

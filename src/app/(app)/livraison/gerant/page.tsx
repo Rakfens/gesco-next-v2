@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic';
 
 import { Gerant } from "@/modules/livraison/pages/Gerant";
 import { useApp } from "@/modules/shared/context/AppContext";
