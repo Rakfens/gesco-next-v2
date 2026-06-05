@@ -32,8 +32,12 @@ const statusBadge = (statut) => {
 const STATUT_OPTIONS = Object.entries(STATUTS).map(([k, v]) => ({ value: k, label: v.label }));
 const PAIE_OPTIONS = Object.entries(PAIE_MODES).map(([k, v]) => ({ value: k, label: v.label }));
 
-export const Historique = ({ livraisons, agents, onUpdateLivraison, onDeleteLivraison, showToast, logoUrl }) => {
+import { useApp } from '@/modules/shared/context/AppContext';
+
+export const Historique = () => {
+  const { livraisons, agents, showToast, updateLivraison: onUpdateLivraison, deleteLivraison: onDeleteLivraison } = useApp();
   const { currentCompany } = useCompany();
+  const logoUrl = currentCompany?.logo_url || null;
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {

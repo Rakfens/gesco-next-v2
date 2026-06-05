@@ -22,8 +22,13 @@ const StatCard = ({ label, value, color, sub }) => (
   </div>
 );
 
-export const Dashboard = ({ agents, livraisons, commissionGerant, onNavigate }) => {
+import { useApp } from '@/modules/shared/context/AppContext';
+import { COMMISSION_DEFAUT } from '@/modules/shared/utils/constants';
+
+export const Dashboard = () => {
+  const { agents, livraisons } = useApp();
   const { currentCompany } = useCompany();
+  const commissionGerant = COMMISSION_DEFAUT;
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [selectedDate, setSelectedDate] = useState(TODAY());
   const [recuperationsJour, setRecuperationsJour] = useState([]);

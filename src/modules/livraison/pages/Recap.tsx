@@ -14,8 +14,13 @@ const agentMatch = (livraison, agent) => {
   return livraison.agent_nom === agent.nom;
 };
 
-export const Recap = ({ livraisons, avances, agents, commissionGerant, onAddAvance, onDeleteAvance, showToast }) => {
+import { useApp } from '@/modules/shared/context/AppContext';
+import { COMMISSION_DEFAUT } from '@/modules/shared/utils/constants';
+
+export const Recap = () => {
+  const { livraisons, avances, agents, showToast, addAvance: onAddAvance, deleteAvance: onDeleteAvance } = useApp();
   const { currentCompany } = useCompany();
+  const commissionGerant = COMMISSION_DEFAUT;
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
