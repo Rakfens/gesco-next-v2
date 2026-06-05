@@ -108,9 +108,9 @@ export const STATUTS_ACHAT: Record<string, StatutVenteEntry> = {
 
 // ==================== MODES DE PAIEMENT ====================
 export const PAIE_MODES: Record<string, PaieModeEntry> = {
-  espece: { label: 'Espèces', icon: 'ESP' },
-  mobile_money: { label: 'Mobile Money', icon: 'MM' },
-  client: { label: 'Payé au client', icon: 'CL' },
+  espece: { label: 'Espèces', icon: '💵' },
+  mobile_money: { label: 'Mobile Money', icon: '📱' },
+  client: { label: 'Payé au client', icon: '🤝' },
 };
 
 export const PAIE_MODES_LIST: Array<{ value: string; label: string; icon: string }> = Object.entries(
@@ -119,12 +119,12 @@ export const PAIE_MODES_LIST: Array<{ value: string; label: string; icon: string
 
 // ==================== TYPES DE MOUVEMENTS STOCK ====================
 export const TYPES_MOUVEMENT_STOCK: Record<string, MouvementStockEntry> = {
-  entree: { label: 'Entrée', icon: 'ENT', color: '#10b981' },
-  sortie: { label: 'Sortie', icon: 'SOR', color: '#ef4444' },
-  vente: { label: 'Vente', icon: 'VEN', color: '#3b82f6' },
-  achat: { label: 'Achat', icon: 'ACH', color: '#8b5cf6' },
-  inventaire: { label: 'Inventaire', icon: 'INV', color: '#f59e0b' },
-  ajustement: { label: 'Ajustement', icon: 'AJU', color: '#6b7280' },
+  entree: { label: 'Entrée', icon: '📥', color: '#10b981' },
+  sortie: { label: 'Sortie', icon: '📤', color: '#ef4444' },
+  vente: { label: 'Vente', icon: '💰', color: '#3b82f6' },
+  achat: { label: 'Achat', icon: '🛒', color: '#8b5cf6' },
+  inventaire: { label: 'Inventaire', icon: '📋', color: '#f59e0b' },
+  ajustement: { label: 'Ajustement', icon: '⚙️', color: '#6b7280' },
 };
 
 // ==================== COULEURS (Thème clair/sombre avec variables CSS) ====================
@@ -190,19 +190,19 @@ export const getExcludedClientsText = (): string => {
 export const COMPANY_CONFIG: Record<string, CompanyModuleConfig> = {
   service: {
     name: 'Service de livraison',
-    icon: 'LIV',
+    icon: '🚚',
     primaryColor: '#3b82f6',
     modules: ['livraisons', 'agents', 'avances', 'recuperations', 'gerant', 'historique'],
   },
   pomanay: {
     name: 'Boutique accessoires',
-    icon: 'POM',
+    icon: '📱',
     primaryColor: '#10b981',
     modules: ['ventes', 'achats', 'stock', 'inventaire', 'depenses', 'rapports'],
   },
   zazatiana: {
     name: 'Boutique bébé',
-    icon: 'ZAZ',
+    icon: '👶',
     primaryColor: '#ec4899',
     modules: ['ventes', 'achats', 'stock', 'inventaire', 'rapports'],
   },
