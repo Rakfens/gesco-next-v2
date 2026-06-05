@@ -1,32 +1,67 @@
-// @ts-nocheck
-// CompanyContext.jsx — v7 : restauration société depuis sessionStorage après réduction iOS
-import React, { createContext, useState, useEffect, useContext, useRef, useCallback } from 'react';
+'use client';
+
+import React, { createContext, useState, useEffect, useContext, useRef, useCallback, ReactNode } from 'react';
 import { supabase, setCurrentCompany, clearCurrentCompany, getCurrentCompany as getStoredCompany } from '@/lib/supabase';
 import { loadSavedCompanyId, clearAppState } from '../hooks/useAppState';
 
-const CompanyContext = createContext();
+// ── Types ──────────────────────────────────────────────────────────────
+export interface Company {
+  id: string;
+  name?: string;
+  slug?: string;
+  type?: string;
+  [key: string]: unknown;
+}
+
+export interface CompanyContextValue {
+  currentCompany: Company | null;
+  companies: Company[];
+  loading: boolean;
+  switchCompany: (company: Company) => void;
+}
+
+// ── Context ────────────────────────────────────────────────────────────
+const CompanyContext = createContext<CompanyContextValue | null>(null);
+
 export { setCurrentCompany };
-export const getCurrentCompany = () => getStoredCompany?.() ?? null;
 
-export function CompanyProvider({ children }) {
-  const [currentCompany, _setActive] = useState(null);
-  const [companies,       setList]   = useState([]);
-  const [loading,         setLoading] = useState(false);
-  const rtChannels = useRef([]);
-  const mounted    = useRef(true);
+export const getCurrentCompany = (): Company | null => getStoredCompany?.() ?? null;
 
-  const applyActive = useCallback((list, preferredId = null) => {
-    // Priorité : société préférée (sessionStorage) → première de la liste
+// ── Provider ───────────────────────────────────────────────────────────
+export function CompanyProvider({ children }: { children: ReactNode }) {
+  const [currentCompany, _setActive] = useState<Company | null>(null);
+  const [companies, setList] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(false);
+  const rtChannels = useRef<ReturnType<typeof supabase.channel>[]>([]);
+  const mounted = useRef(true);
+
+  const setupRealtime = useCallback((companyId: string | undefined) => {
+    rtChannels.current.forEach(ch => { try { supabase.removeChannel(ch); } catch (_) { /* noop */ } });
+    rtChannels.current = [];
+    if (!companyId) return;
+    const tables = ['livraisons', 'agents', 'avances', 'recuperations', 'ventes', 'achats', 'produits'];
+    tables.forEach(table => {
+      try {
+        const ch = supabase.channel(`rt_${table}_${companyId}`)
+          .on('postgres_changes', { event: '*', schema: 'public', table, filter: `company_id=eq.${companyId}` },
+            (p: unknown) => window.dispatchEvent(new CustomEvent('supabase_realtime', { detail: { table, payload: p } })))
+          .subscribe();
+        rtChannels.current.push(ch);
+      } catch (_) { /* noop */ }
+    });
+  }, []);
+
+  const applyActive = useCallback((list: Company[], preferredId: string | null = null) => {
     const id = preferredId || loadSavedCompanyId();
     const found = id ? list.find(c => c.id === id) : null;
     const active = found || list[0] || null;
-    _setActive(active);
     setCurrentCompany(active);
+    _setActive(active);
     setupRealtime(active?.id);
     return active;
-  }, []);
+  }, [setupRealtime]);
 
-  const loadCompanies = useCallback(async (userId) => {
+  const loadCompanies = useCallback(async (userId: string) => {
     if (!userId || !mounted.current) return;
     setLoading(true);
     try {
@@ -36,7 +71,7 @@ export function CompanyProvider({ children }) {
         .eq('user_id', userId);
       if (!mounted.current) return;
       if (error) throw error;
-      const list = (data || []).map(r => r.company).filter(Boolean);
+      const list: Company[] = (data || []).map((r: { company: Company[] | Company }) => Array.isArray(r.company) ? r.company[0] : r.company).filter(Boolean);
       setList(list);
       applyActive(list);
     } catch (_) {
@@ -46,29 +81,17 @@ export function CompanyProvider({ children }) {
     }
   }, [applyActive]);
 
-  const setupRealtime = (companyId) => {
-    rtChannels.current.forEach(ch => { try { supabase.removeChannel(ch); } catch (_) {} });
-    rtChannels.current = [];
-    if (!companyId) return;
-    ['livraisons','agents','avances','recuperations','ventes','achats','produits'].forEach(table => {
-      try {
-        const ch = supabase.channel(`rt_${table}_${companyId}`)
-          .on('postgres_changes', { event:'*', schema:'public', table, filter:`company_id=eq.${companyId}` },
-            p => window.dispatchEvent(new CustomEvent('supabase_realtime', { detail:{ table, payload:p } })))
-          .subscribe();
-        rtChannels.current.push(ch);
-      } catch (_) {}
-    });
-  };
-
   useEffect(() => {
     mounted.current = true;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted.current) return;
       if (!session || event === 'SIGNED_OUT') {
-        clearCurrentCompany(); clearAppState();
-        setList([]); _setActive(null); setLoading(false);
-        rtChannels.current.forEach(ch => { try { supabase.removeChannel(ch); } catch (_) {} });
+        clearCurrentCompany();
+        clearAppState();
+        setList([]);
+        _setActive(null);
+        setLoading(false);
+        rtChannels.current.forEach(ch => { try { supabase.removeChannel(ch); } catch (_) { /* noop */ } });
         rtChannels.current = [];
         return;
       }
@@ -79,18 +102,17 @@ export function CompanyProvider({ children }) {
     return () => {
       mounted.current = false;
       subscription.unsubscribe();
-      rtChannels.current.forEach(ch => { try { supabase.removeChannel(ch); } catch (_) {} });
+      rtChannels.current.forEach(ch => { try { supabase.removeChannel(ch); } catch (_) { /* noop */ } });
     };
   }, [loadCompanies]);
 
-  const switchCompany = useCallback((company) => {
-    _setActive(company);
+  const switchCompany = useCallback((company: Company) => {
     setCurrentCompany(company);
+    _setActive(company);
     setupRealtime(company?.id);
-    // Sauvegarder dans sessionStorage pour survivre à la réduction iOS
-    try { if (company?.id) sessionStorage.setItem('ht_company_id', company.id); } catch (_) {}
+    try { if (company?.id) sessionStorage.setItem('ht_company_id', company.id); } catch (_) { /* noop */ }
     window.dispatchEvent(new CustomEvent('companyChanged', { detail: company }));
-  }, []);
+  }, [setupRealtime]);
 
   return (
     <CompanyContext.Provider value={{ currentCompany, companies, loading, switchCompany }}>
@@ -99,7 +121,8 @@ export function CompanyProvider({ children }) {
   );
 }
 
-export const useCompany = () => {
+// ── Hook ───────────────────────────────────────────────────────────────
+export const useCompany = (): CompanyContextValue => {
   const ctx = useContext(CompanyContext);
   if (!ctx) throw new Error('useCompany doit être dans CompanyProvider');
   return ctx;

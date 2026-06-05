@@ -1,18 +1,34 @@
-// @ts-nocheck
-// useAuth.js — v5 : simple, fiable, zéro race condition
+'use client';
+
+// useAuth.ts — v5 : simple, fiable, zéro race condition
 import { useState, useEffect, useRef } from 'react';
 import { supabase, clearCurrentCompany } from '@/lib/supabase';
 
-export const useAuth = () => {
-  const [user,      setUser]      = useState(undefined); // undefined = pas encore résolu
-  const [authError, setAuthError] = useState(null);
+interface SupabaseUser {
+  id: string;
+  email?: string;
+  [key: string]: unknown;
+}
+
+interface UseAuthReturn {
+  user: SupabaseUser | null | undefined;
+  loading: boolean;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<unknown>;
+  logout: () => Promise<void>;
+  authError: string | null;
+}
+
+export const useAuth = (): UseAuthReturn => {
+  const [user,      setUser]      = useState<SupabaseUser | null | undefined>(undefined); // undefined = pas encore résolu
+  const [authError, setAuthError] = useState<string | null>(null);
   const resolved = useRef(false);
 
   useEffect(() => {
     // onAuthStateChange est déclenché IMMÉDIATEMENT avec la session en cache
     // C'est LA source de vérité — pas besoin de getSession() en plus
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const u = session?.user ?? null;
+      const u = (session?.user ?? null) as SupabaseUser | null;
       setUser(u);
       resolved.current = true;
     });
@@ -28,7 +44,7 @@ export const useAuth = () => {
     };
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email: string, password: string) => {
     setAuthError(null);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) { setAuthError(error.message); throw error; }

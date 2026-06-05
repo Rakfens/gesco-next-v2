@@ -1,12 +1,20 @@
-// @ts-nocheck
-// modules/shared/components/Layout/Layout.jsx
-import { useState, useEffect } from 'react';
+'use client';
+
+import { useState, useEffect, type ReactNode } from 'react';
 import { useCompany } from '../../context/CompanyContext';
 import { BottomNav } from './BottomNav';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 
-export const Layout = ({ children, page, onNavigate, enCours }) => {
+interface LayoutProps {
+  children: ReactNode;
+  page: string;
+  onNavigate: (key: string) => void;
+  enCours: number;
+  onLogout: () => void;
+}
+
+export const Layout = ({ children, page, onNavigate, enCours, onLogout }: LayoutProps) => {
   const { currentCompany } = useCompany();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -18,11 +26,11 @@ export const Layout = ({ children, page, onNavigate, enCours }) => {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-      <Header />
-      
+      <Header onLogout={onLogout} />
+
       <div style={{ display: 'flex' }}>
-        {!isMobile && <Sidebar currentCompany={currentCompany} page={page} onNavigate={onNavigate} />}
-        
+        {!isMobile && <Sidebar page={page} onNavigate={onNavigate} enCours={enCours} />}
+
         <main
           className={isMobile ? 'mobile-main' : ''}
           style={{
@@ -36,11 +44,11 @@ export const Layout = ({ children, page, onNavigate, enCours }) => {
           {children}
         </main>
       </div>
-      
+
       {isMobile && (
-        <BottomNav 
-          page={page} 
-          onNavigate={onNavigate} 
+        <BottomNav
+          page={page}
+          onNavigate={onNavigate}
           enCours={enCours}
           currentCompany={currentCompany}
         />

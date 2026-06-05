@@ -1,13 +1,30 @@
-// @ts-nocheck
-// useAvances.js — avec Realtime sync
+'use client';
+
+// useAvances.ts — avec Realtime sync
 import { useState, useEffect, useCallback } from 'react';
 import { fetchAvances, addAvance, annulerAvance, deleteAvance } from '../../livraison/services/avanceService';
 import { useCompany } from '../context/CompanyContext';
 
-export const useAvances = () => {
-  const [avances, setAvances] = useState([]);
+interface Avance {
+  id: number;
+  statut: string;
+  [key: string]: unknown;
+}
+
+interface UseAvancesReturn {
+  avances: Avance[];
+  loading: boolean;
+  error: string | null;
+  addAvance: (avance: Record<string, unknown>) => Promise<Avance>;
+  annulerAvance: (id: number) => Promise<void>;
+  deleteAvance: (id: number) => Promise<void>;
+  reloadAvances: () => Promise<void>;
+}
+
+export const useAvances = (): UseAvancesReturn => {
+  const [avances, setAvances] = useState<Avance[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const { currentCompany } = useCompany();
 
   const loadAvances = useCallback(async () => {
@@ -17,7 +34,7 @@ export const useAvances = () => {
       const data = await fetchAvances(currentCompany.id);
       setAvances(data);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -26,36 +43,36 @@ export const useAvances = () => {
   useEffect(() => { loadAvances(); }, [loadAvances]);
 
   useEffect(() => {
-    const handler = (e) => {
-      if (e.detail?.table === 'avances') loadAvances();
+    const handler = (e: Event) => {
+      if ((e as CustomEvent).detail?.table === 'avances') loadAvances();
     };
     window.addEventListener('supabase_realtime', handler);
     return () => window.removeEventListener('supabase_realtime', handler);
   }, [loadAvances]);
 
-  const handleAddAvance = async (avance) => {
+  const handleAddAvance = async (avance: Record<string, unknown>) => {
     try {
       setError(null);
       const newAvance = await addAvance(avance);
       setAvances(prev => [newAvance, ...prev]);
       return newAvance;
-    } catch (err) { setError(err.message); throw err; }
+    } catch (err) { setError((err as Error).message); throw err; }
   };
 
-  const handleAnnulerAvance = async (id) => {
+  const handleAnnulerAvance = async (id: number) => {
     try {
       setError(null);
       await annulerAvance(id);
       setAvances(prev => prev.map(a => a.id === id ? { ...a, statut: 'annule' } : a));
-    } catch (err) { setError(err.message); throw err; }
+    } catch (err) { setError((err as Error).message); throw err; }
   };
 
-  const handleDeleteAvance = async (id) => {
+  const handleDeleteAvance = async (id: number) => {
     try {
       setError(null);
       await deleteAvance(id);
       setAvances(prev => prev.filter(a => a.id !== id));
-    } catch (err) { setError(err.message); throw err; }
+    } catch (err) { setError((err as Error).message); throw err; }
   };
 
   return {

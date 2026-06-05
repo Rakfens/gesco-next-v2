@@ -1,58 +1,112 @@
-// @ts-nocheck
-// AppContext.jsx — v6 : auth et company séparés, logout toujours cliquable
-import { createContext, useContext, useMemo } from 'react';
+'use client';
+
+import { createContext, useContext, useMemo, ReactNode } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useAgents } from '../hooks/useAgents';
 import { useLivraisons } from '../hooks/useLivraisons';
 import { useAvances } from '../hooks/useAvances';
 import { useRecuperations } from '../hooks/useRecuperations';
 import { useToast } from '../hooks/useToast';
-import { useCompany } from './CompanyContext';
+import { useCompany, Company } from './CompanyContext';
 
-const AppContext = createContext(null);
+// ── Types ──────────────────────────────────────────────────────────────
+interface Toast {
+  id: number;
+  msg: string;
+  type: string;
+}
 
-export const AppProvider = ({ children }) => {
-  // Auth — indépendant
+type CrudFn = (...args: unknown[]) => unknown;
+
+interface AppContextValue {
+  // Auth
+  user: ReturnType<typeof useAuth>['user'];
+  authLoading: boolean;
+  companyLoading: boolean;
+  login: (email: string, password: string) => Promise<unknown>;
+  logout: () => Promise<void>;
+  authError: string | null;
+  // Company
+  currentCompany: Company | null;
+  companies: Company[];
+  switchCompany: (company: Company) => void;
+  // Agents
+  agents: unknown[];
+  loadingAgents: boolean;
+  addAgent: CrudFn;
+  updateAgent: CrudFn;
+  deleteAgent: CrudFn;
+  reloadAgents: () => void;
+  // Livraisons
+  livraisons: unknown[];
+  loadingLivraisons: boolean;
+  addLivraison: CrudFn;
+  updateLivraison: CrudFn;
+  deleteLivraison: CrudFn;
+  reloadLivraisons: () => void;
+  // Avances
+  avances: unknown[];
+  loadingAvances: boolean;
+  addAvance: CrudFn;
+  annulerAvance: CrudFn;
+  deleteAvance: CrudFn;
+  reloadAvances: () => void;
+  // Recuperations
+  recuperations: unknown[];
+  loadingRecuperations: boolean;
+  addRecuperation: CrudFn;
+  updateRecuperation: CrudFn;
+  deleteRecuperation: CrudFn;
+  reloadRecuperations: () => void;
+  // Toast
+  toasts: Toast[];
+  showToast: (msg: string, type?: string, duration?: number) => number;
+  hideToast: (id: number) => void;
+  clearAll: () => void;
+  success: (msg: string) => number;
+  error: (msg: string) => number;
+  warn: (msg: string) => number;
+  info: (msg: string) => number;
+}
+
+// ── Context ────────────────────────────────────────────────────────────
+const AppContext = createContext<AppContextValue | null>(null);
+
+// ── Provider ───────────────────────────────────────────────────────────
+export const AppProvider = ({ children }: { children: ReactNode }) => {
   const { user, loading: authLoading, login, logout, authError } = useAuth();
-
-  // Company — indépendant
   const { currentCompany, companies, loading: companyLoading, switchCompany } = useCompany();
 
-  // Données — chargées uniquement si connecté
-  const { agents,        loading: la, addAgent,        updateAgent,        deleteAgent,        reloadAgents        } = useAgents();
-  const { livraisons,    loading: ll, addLivraison,    updateLivraison,    deleteLivraison,    reloadLivraisons    } = useLivraisons();
-  const { avances,       loading: lv, addAvance,       annulerAvance,      deleteAvance,       reloadAvances       } = useAvances();
+  const { agents, loading: la, addAgent, updateAgent, deleteAgent, reloadAgents } = useAgents();
+  const { livraisons, loading: ll, addLivraison, updateLivraison, deleteLivraison, reloadLivraisons } = useLivraisons();
+  const { avances, loading: lv, addAvance, annulerAvance, deleteAvance, reloadAvances } = useAvances();
   const { recuperations, loading: lr, addRecuperation, updateRecuperation, deleteRecuperation, reloadRecuperations } = useRecuperations();
 
-  // Toast
   const { toasts, showToast, hideToast, clearAll, success, error, warn, info } = useToast();
 
-  const value = useMemo(() => ({
-    // ─ Auth ─
+  const value = useMemo<AppContextValue>(() => ({
     user, authLoading, companyLoading, login, logout, authError,
-    // ─ Company ─
     currentCompany, companies, switchCompany,
-    // ─ Données ─
-    agents,        addAgent,        updateAgent,        deleteAgent,        reloadAgents,
-    livraisons,    addLivraison,    updateLivraison,    deleteLivraison,    reloadLivraisons,
-    avances,       addAvance,       annulerAvance,      deleteAvance,       reloadAvances,
-    recuperations, addRecuperation, updateRecuperation, deleteRecuperation, reloadRecuperations,
-    // ─ Toast ─
-    toasts, showToast, hideToast, clearAll, success, error, warn, info,
+    agents, loadingAgents: la, addAgent: addAgent as CrudFn, updateAgent: updateAgent as CrudFn, deleteAgent: deleteAgent as CrudFn, reloadAgents,
+    livraisons, loadingLivraisons: ll, addLivraison: addLivraison as CrudFn, updateLivraison: updateLivraison as CrudFn, deleteLivraison: deleteLivraison as CrudFn, reloadLivraisons,
+    avances, loadingAvances: lv, addAvance: addAvance as CrudFn, annulerAvance: annulerAvance as CrudFn, deleteAvance: deleteAvance as CrudFn, reloadAvances,
+    recuperations, loadingRecuperations: lr, addRecuperation: addRecuperation as CrudFn, updateRecuperation: updateRecuperation as CrudFn, deleteRecuperation: deleteRecuperation as CrudFn, reloadRecuperations,
+    toasts, showToast: showToast as (msg: string, type?: string, duration?: number) => number, hideToast, clearAll, success, error, warn, info,
   }), [
     user, authLoading, companyLoading, login, logout, authError,
     currentCompany, companies, switchCompany,
-    agents, addAgent, updateAgent, deleteAgent, reloadAgents,
-    livraisons, addLivraison, updateLivraison, deleteLivraison, reloadLivraisons,
-    avances, addAvance, annulerAvance, deleteAvance, reloadAvances,
-    recuperations, addRecuperation, updateRecuperation, deleteRecuperation, reloadRecuperations,
+    agents, la, addAgent, updateAgent, deleteAgent, reloadAgents,
+    livraisons, ll, addLivraison, updateLivraison, deleteLivraison, reloadLivraisons,
+    avances, lv, addAvance, annulerAvance, deleteAvance, reloadAvances,
+    recuperations, lr, addRecuperation, updateRecuperation, deleteRecuperation, reloadRecuperations,
     toasts, showToast, hideToast, clearAll, success, error, warn, info,
   ]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
-export const useApp = () => {
+// ── Hook ───────────────────────────────────────────────────────────────
+export const useApp = (): AppContextValue => {
   const ctx = useContext(AppContext);
   if (!ctx) throw new Error('useApp doit être dans AppProvider');
   return ctx;

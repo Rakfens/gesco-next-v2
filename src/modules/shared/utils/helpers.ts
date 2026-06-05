@@ -1,9 +1,15 @@
-// @ts-nocheck
 // helpers.ts — v3 design système professionnel unifié
+
+// ==================== TYPES ====================
+
+import type { CSSProperties } from 'react';
+import { COLORS } from './constants'; // dépendance conservée depuis helpers.js
+
+export type BtnVariant = 'primary' | 'success' | 'danger' | 'warning' | 'secondary' | 'ghost' | 'outline' | 'icon' | 'iconGhost';
 
 // ==================== FORMULAIRES ====================
 
-export const inp = () => ({
+export const inp = (): CSSProperties => ({
   padding: '10px 14px',
   borderRadius: 8,
   border: '1px solid var(--border2)',
@@ -17,20 +23,20 @@ export const inp = () => ({
   transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
 });
 
-export const inpSm = () => ({
+export const inpSm = (): CSSProperties => ({
   ...inp(),
   fontSize: 13,
   padding: '8px 12px',
   borderRadius: 6,
 });
 
-export const inpLg = () => ({
+export const inpLg = (): CSSProperties => ({
   ...inp(),
   fontSize: 15,
   padding: '12px 16px',
 });
 
-export const inpSearch = () => ({
+export const inpSearch = (): CSSProperties => ({
   ...inp(),
   paddingLeft: 38,
   backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238891a5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E")`,
@@ -38,7 +44,7 @@ export const inpSearch = () => ({
   backgroundPosition: '12px center',
 });
 
-export const sel = () => ({
+export const sel = (): CSSProperties => ({
   ...inp(),
   appearance: 'none' as const,
   cursor: 'pointer' as const,
@@ -50,8 +56,8 @@ export const sel = () => ({
 
 // ==================== BOUTONS ====================
 
-export const btn = (variant = 'primary') => {
-  const variants: Record<string, object> = {
+export const btn = (variant: BtnVariant = 'primary'): CSSProperties => {
+  const variants: Record<string, CSSProperties> = {
     primary: {
       padding: '10px 18px',
       background: 'var(--accent)',
@@ -170,7 +176,7 @@ export const btn = (variant = 'primary') => {
   return variants[variant] || variants.primary;
 };
 
-export const btnSm = (variant = 'primary') => ({
+export const btnSm = (variant: BtnVariant = 'primary'): CSSProperties => ({
   ...btn(variant),
   padding: variant === 'icon' ? '0' : variant === 'iconGhost' ? '0' : '7px 12px',
   fontSize: 13,
@@ -179,7 +185,7 @@ export const btnSm = (variant = 'primary') => ({
   ...(variant === 'iconGhost' ? { width: 28, height: 28 } : {}),
 });
 
-export const btnLg = (variant = 'primary') => ({
+export const btnLg = (variant: BtnVariant = 'primary'): CSSProperties => ({
   ...btn(variant),
   padding: variant === 'icon' ? '0' : '14px 24px',
   fontSize: 15,
@@ -189,7 +195,7 @@ export const btnLg = (variant = 'primary') => ({
 
 // ==================== LABELS ====================
 
-export const lbl = () => ({
+export const lbl = (): CSSProperties => ({
   fontSize: 12,
   fontWeight: 600,
   color: 'var(--text2)',
@@ -199,7 +205,7 @@ export const lbl = () => ({
 
 // ==================== CARDS ====================
 
-export const card = () => ({
+export const card = (): CSSProperties => ({
   background: 'var(--card)',
   border: '1px solid var(--border)',
   borderRadius: 'var(--radius-lg)',
@@ -207,7 +213,7 @@ export const card = () => ({
   boxShadow: 'var(--shadow-sm)',
 });
 
-export const cardHeader = () => ({
+export const cardHeader = (): CSSProperties => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
@@ -218,7 +224,7 @@ export const cardHeader = () => ({
 
 // ==================== TAG / BADGE ====================
 
-export const tag = (bg: string, color: string) => ({
+export const tag = (bg: string, color: string): CSSProperties => ({
   display: 'inline-flex',
   alignItems: 'center',
   padding: '2px 10px',
@@ -231,15 +237,17 @@ export const tag = (bg: string, color: string) => ({
   whiteSpace: 'nowrap',
 });
 
-export const badge = (variant = 'default') => {
-  const variants: Record<string, object> = {
+export type BadgeVariant = 'default' | 'primary' | 'success' | 'danger' | 'warning' | 'info' | 'purple';
+
+export const badge = (variant: BadgeVariant = 'default'): CSSProperties => {
+  const variants: Record<string, CSSProperties> = {
     default: { background: 'var(--bg2)', color: 'var(--text2)', border: '1px solid var(--border)' },
     primary: { background: 'var(--accent-dim)', color: 'var(--accent)', border: '1px solid transparent' },
     success: { background: 'var(--green-dim)', color: 'var(--green)', border: '1px solid transparent' },
-    danger:  { background: 'var(--red-dim)',   color: 'var(--red)',   border: '1px solid transparent' },
-    warning: { background: 'var(--orange-dim)',color: 'var(--orange)',border: '1px solid transparent' },
-    info:    { background: 'var(--blue-dim)',  color: 'var(--blue)',  border: '1px solid transparent' },
-    purple:  { background: 'var(--purple-dim)',color: 'var(--purple)',border: '1px solid transparent' },
+    danger: { background: 'var(--red-dim)', color: 'var(--red)', border: '1px solid transparent' },
+    warning: { background: 'var(--orange-dim)', color: 'var(--orange)', border: '1px solid transparent' },
+    info: { background: 'var(--blue-dim)', color: 'var(--blue)', border: '1px solid transparent' },
+    purple: { background: 'var(--purple-dim)', color: 'var(--purple)', border: '1px solid transparent' },
   };
   return {
     display: 'inline-flex',
@@ -256,7 +264,7 @@ export const badge = (variant = 'default') => {
 
 // ==================== SECTIONS ====================
 
-export const section = () => ({
+export const section = (): CSSProperties => ({
   marginBottom: 24,
 });
 
