@@ -5,7 +5,7 @@ import { useCompany } from '@/modules/shared/context/CompanyContext';
 import { fetchProduits, getAlertesStockBas, getValeurTotaleStock } from '../services/produitService';
 import { fetchVentes } from '../services/venteService';
 import { fetchAchats } from '../services/achatService';
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 import { formatAr } from '@/modules/shared/utils/constants';
 import { badge as badgeStyle } from '@/modules/shared/utils/helpers';
 
@@ -62,8 +62,8 @@ export default function CommerceDashboard() {
 
   useEffect(() => {
     const h = e => { if (['ventes', 'achats', 'produits', 'depenses'].includes(e.detail?.table)) load(); };
-    window.addEventListener('supabase_realtime', h);
-    return () => window.removeEventListener('supabase_realtime', h);
+    window.addEventListener('getSupabase()_realtime', h);
+    return () => window.removeEventListener('getSupabase()_realtime', h);
   }, [currentCompany]);
 
   const load = async () => {
@@ -87,8 +87,8 @@ export default function CommerceDashboard() {
       let depensesJour = 0, depensesMois = 0;
       if (currentCompany.slug === 'pomanay') {
         const [{ data: dj }, { data: dm }] = await Promise.all([
-          supabase.from('depenses').select('montant').eq('company_id', currentCompany.id).eq('date_depense', t),
-          supabase.from('depenses').select('montant').eq('company_id', currentCompany.id).gte('date_depense', fm).lte('date_depense', t),
+          getSupabase().from('depenses').select('montant').eq('company_id', currentCompany.id).eq('date_depense', t),
+          getSupabase().from('depenses').select('montant').eq('company_id', currentCompany.id).gte('date_depense', fm).lte('date_depense', t),
         ]);
         depensesJour = (dj || []).reduce((s, d) => s + (d.montant || 0), 0);
         depensesMois = (dm || []).reduce((s, d) => s + (d.montant || 0), 0);

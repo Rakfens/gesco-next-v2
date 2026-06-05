@@ -1,7 +1,7 @@
 // @ts-nocheck
 // Loader.tsx — Professional Design
 import { useState, useEffect } from 'react';
-import { supabase, clearCurrentCompany } from '../../../../supabaseClient';
+import { getSupabase, clearCurrentCompany } from '@/lib/supabase';
 
 export const Loader = ({ message = 'Chargement...', fullScreen = true, timeout = 10000 }) => {
   const [showRetry, setShowRetry] = useState(false);
@@ -14,7 +14,7 @@ export const Loader = ({ message = 'Chargement...', fullScreen = true, timeout =
   const handleForceLogout = async () => {
     try {
       clearCurrentCompany();
-      await supabase.auth.signOut();
+      await getSupabase().auth.signOut();
     } catch (_) {}
     window.location.reload();
   };

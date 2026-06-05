@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
-import { getCurrentCompany } from "@/lib/supabase";
+import { getSupabase } from '@/lib/supabase';
+import { getCurrentCompany } from '@/lib/supabase';
 import { formatAr, formatNumber } from "@/modules/shared/utils/constants";
 import { Button, Input, Badge, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty } from "@/modules/shared/components/ui";
 
@@ -37,7 +37,7 @@ export default function ProduitsPage() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('produits')
         .select('*')
         .eq('company_id', currentCompany.id)
@@ -75,10 +75,10 @@ export default function ProduitsPage() {
         company_id: currentCompany?.id,
       };
       if (isEditing && editingId) {
-        const { error } = await supabase.from('produits').update(payload).eq('id', editingId).eq('company_id', currentCompany?.id);
+        const { error } = await getSupabase().from('produits').update(payload).eq('id', editingId).eq('company_id', currentCompany?.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('produits').insert(payload);
+        const { error } = await getSupabase().from('produits').insert(payload);
         if (error) throw error;
       }
       resetForm();
@@ -106,7 +106,7 @@ export default function ProduitsPage() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Supprimer ce produit ?")) return;
     try {
-      const { error } = await supabase.from('produits').delete().eq('id', id).eq('company_id', currentCompany?.id);
+      const { error } = await getSupabase().from('produits').delete().eq('id', id).eq('company_id', currentCompany?.id);
       if (error) throw error;
       fetchProduits();
     } catch (err: any) {

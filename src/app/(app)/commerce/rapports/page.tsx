@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
-import { getCurrentCompany } from "@/lib/supabase";
+import { getSupabase } from '@/lib/supabase';
+import { getCurrentCompany } from '@/lib/supabase';
 import { formatAr } from "@/modules/shared/utils/constants";
 import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
 
@@ -43,7 +43,7 @@ export default function RapportsPage() {
     try {
       let data = [];
       if (filters.type === "ventes") {
-        let query = supabase
+        let query = getSupabase()
           .from('ventes')
           .select('*')
           .eq('company_id', currentCompany.id)
@@ -68,7 +68,7 @@ export default function RapportsPage() {
           statut: v.statut
         }));
       } else if (filters.type === "achats") {
-        let query = supabase
+        let query = getSupabase()
           .from('achats')
           .select('*')
           .eq('company_id', currentCompany.id)
@@ -93,7 +93,7 @@ export default function RapportsPage() {
           statut: a.statut
         }));
       } else if (filters.type === "livraisons") {
-        let query = supabase
+        let query = getSupabase()
           .from('livraisons')
           .select('*')
           .eq('company_id', currentCompany.id)
@@ -167,7 +167,7 @@ export default function RapportsPage() {
       const tableMap: Record<string, string> = { 'Vente': 'ventes', 'Achat': 'achats', 'Livraison': 'livraisons' };
       const table = tableMap[selectedRapport.type];
       if (table) {
-        const { error } = await supabase.from(table).update({ statut: editForm.statut }).eq('id', selectedRapport.id);
+        const { error } = await getSupabase().from(table).update({ statut: editForm.statut }).eq('id', selectedRapport.id);
         if (error) throw error;
       }
       await fetchRapports();

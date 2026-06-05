@@ -3,7 +3,7 @@
 // @ts-nocheck
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { supabase, getCurrentCompany } from "@/lib/supabase";
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
 import { formatAr, TODAY, currentMonth, monthLabel, shouldCountGerantCommission, COMMISSION_DEFAUT } from "@/modules/shared/utils/constants";
 import { getRecuperationsByMonth } from "@/modules/livraison/services/recuperationService";
 import {
@@ -53,7 +53,7 @@ export default function RecapPage() {
 
     try {
       // Fetch livraisons for the selected month
-      const { data: livData, error: livError } = await supabase
+      const { data: livData, error: livError } = await getSupabase()
         .from("livraisons")
         .select("*")
         .eq("company_id", currentCompany.id)
@@ -64,7 +64,7 @@ export default function RecapPage() {
       setLivraisons(livData || []);
 
       // Fetch agents
-      const { data: agentsData, error: agentsError } = await supabase
+      const { data: agentsData, error: agentsError } = await getSupabase()
         .from("agents")
         .select("*")
         .eq("company_id", currentCompany.id)
@@ -73,7 +73,7 @@ export default function RecapPage() {
       setAgents(agentsData || []);
 
       // Fetch avances for the selected month
-      const { data: avData, error: avError } = await supabase
+      const { data: avData, error: avError } = await getSupabase()
         .from("avances")
         .select("*")
         .eq("company_id", currentCompany.id)
@@ -173,7 +173,7 @@ export default function RecapPage() {
     setSavingAvance(true);
     try {
       const agent = agents.find((a) => a.id === parseInt(avanceAgentId));
-      const { error: insertError } = await supabase.from("avances").insert({
+      const { error: insertError } = await getSupabase().from("avances").insert({
         agent_id: parseInt(avanceAgentId),
         agent_nom: agent?.nom || "",
         montant: parseFloat(avanceMontant),
@@ -201,7 +201,7 @@ export default function RecapPage() {
   const handleDeleteAvance = async (id) => {
     if (!window.confirm("Supprimer cette avance ?")) return;
     try {
-      const { error: delError } = await supabase.from("avances").delete().eq("id", id);
+      const { error: delError } = await getSupabase().from("avances").delete().eq("id", id);
       if (delError) throw delError;
       showToast("Avance supprimée");
       fetchData();

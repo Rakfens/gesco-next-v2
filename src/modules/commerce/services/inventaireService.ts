@@ -1,13 +1,13 @@
 // @ts-nocheck
 // src/modules/commerce/services/inventaireService.js
-import { supabase, getCurrentCompany } from '@/lib/supabase';
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
 
 // Récupérer l'inventaire en cours
 export const getCurrentInventory = async () => {
   const company = getCurrentCompany();
   if (!company) return null;
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('inventaires')
     .select('*')
     .eq('company_id', company.id)
@@ -35,7 +35,7 @@ export const startInventory = async (notes = '') => {
     throw new Error('Un inventaire est déjà en cours. Terminez-le avant d\'en commencer un nouveau.');
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('inventaires')
     .insert([{
       company_id: company.id,
@@ -56,7 +56,7 @@ export const getProductsForInventory = async (categorie = null) => {
   const company = getCurrentCompany();
   if (!company) return [];
 
-  let query = supabase
+  let query = getSupabase()
     .from('produits')
     .select('*')
     .eq('company_id', company.id)
@@ -77,7 +77,7 @@ export const getCountedProducts = async (inventoryId) => {
   const company = getCurrentCompany();
   if (!company) return [];
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('inventaire_details')
     .select(`
       *,
@@ -95,7 +95,7 @@ export const getUncountedProducts = async (inventoryId, categorie = null) => {
   if (!company) return [];
 
   // Récupérer les IDs des produits déjà comptés
-  const { data: counted, error: countedError } = await supabase
+  const { data: counted, error: countedError } = await getSupabase()
     .from('inventaire_details')
     .select('produit_id')
     .eq('inventaire_id', inventoryId);
@@ -105,7 +105,7 @@ export const getUncountedProducts = async (inventoryId, categorie = null) => {
   const countedIds = counted?.map(c => c.produit_id) || [];
 
   // Récupérer tous les produits actifs
-  let query = supabase
+  let query = getSupabase()
     .from('produits')
     .select('*')
     .eq('company_id', company.id)
@@ -130,7 +130,7 @@ export const recordCount = async (inventoryId, productId, actualQuantity, notes 
   if (!company) throw new Error('Aucune société sélectionnée');
 
   // Récupérer la quantité théorique
-  const { data: product, error: productError } = await supabase
+  const { data: product, error: productError } = await getSupabase()
     .from('produits')
     .select('quantite_stock, nom, reference')
     .eq('id', productId)
@@ -143,7 +143,7 @@ export const recordCount = async (inventoryId, productId, actualQuantity, notes 
   const difference = actualQuantity - theoreticalQuantity;
 
   // Vérifier si déjà compté
-  const { data: existing, error: existingError } = await supabase
+  const { data: existing, error: existingError } = await getSupabase()
     .from('inventaire_details')
     .select('id')
     .eq('inventaire_id', inventoryId)
@@ -154,7 +154,7 @@ export const recordCount = async (inventoryId, productId, actualQuantity, notes 
 
   if (existing) {
     // Mettre à jour
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('inventaire_details')
       .update({
         quantite_reelle: actualQuantity,
@@ -170,7 +170,7 @@ export const recordCount = async (inventoryId, productId, actualQuantity, notes 
     result = data;
   } else {
     // Créer
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('inventaire_details')
       .insert([{
         inventaire_id: inventoryId,
@@ -202,7 +202,7 @@ export const finishInventory = async (inventoryId) => {
   if (!company) throw new Error('Aucune société sélectionnée');
 
   // Récupérer tous les écarts
-  const { data: differences, error: diffError } = await supabase
+  const { data: differences, error: diffError } = await getSupabase()
     .from('inventaire_details')
     .select('*')
     .eq('inventaire_id', inventoryId)
@@ -213,7 +213,7 @@ export const finishInventory = async (inventoryId) => {
   // Appliquer les corrections
   for (const diff of differences) {
     // Mettre à jour le stock du produit
-    await supabase
+    await getSupabase()
       .from('produits')
       .update({ 
         quantite_stock: diff.quantite_reelle,
@@ -223,7 +223,7 @@ export const finishInventory = async (inventoryId) => {
       .eq('company_id', company.id);
 
     // Créer un mouvement de stock
-    await supabase
+    await getSupabase()
       .from('mouvements_stock')
       .insert([{
         company_id: company.id,
@@ -237,7 +237,7 @@ export const finishInventory = async (inventoryId) => {
   }
 
   // Terminer l'inventaire
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('inventaires')
     .update({
       date_fin: new Date().toISOString(),
@@ -259,7 +259,7 @@ export const cancelInventory = async (inventoryId) => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('inventaires')
     .update({
       statut: 'annule',
@@ -276,7 +276,7 @@ export const getInventoryHistory = async (limit = 50) => {
   const company = getCurrentCompany();
   if (!company) return [];
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('inventaires')
     .select('*')
     .eq('company_id', company.id)
@@ -292,7 +292,7 @@ export const getInventoryDetails = async (inventoryId) => {
   const company = getCurrentCompany();
   if (!company) return null;
 
-  const { data: inventory, error: invError } = await supabase
+  const { data: inventory, error: invError } = await getSupabase()
     .from('inventaires')
     .select('*')
     .eq('id', inventoryId)
@@ -301,7 +301,7 @@ export const getInventoryDetails = async (inventoryId) => {
 
   if (invError) throw invError;
 
-  const { data: details, error: detailsError } = await supabase
+  const { data: details, error: detailsError } = await getSupabase()
     .from('inventaire_details')
     .select(`
       *,

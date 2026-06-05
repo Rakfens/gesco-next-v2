@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
-import { getCurrentCompany } from "@/lib/supabase";
+import { getSupabase } from '@/lib/supabase';
+import { getCurrentCompany } from '@/lib/supabase';
 import { formatAr, TODAY, monthLabel } from "@/modules/shared/utils/constants";
 import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
 
@@ -41,7 +41,7 @@ export default function LivraisonDashboardPage() {
     
     try {
       // Fetch livraisons for today
-      const { data: livData, error: livError } = await supabase
+      const { data: livData, error: livError } = await getSupabase()
         .from('livraisons')
         .select('*')
         .eq('company_id', currentCompany.id)
@@ -52,7 +52,7 @@ export default function LivraisonDashboardPage() {
       setLivraisons(livData || []);
       
       // Fetch agents
-      const { data: agentsData, error: agentsError } = await supabase
+      const { data: agentsData, error: agentsError } = await getSupabase()
         .from('agents')
         .select('*')
         .eq('company_id', currentCompany.id)
@@ -83,7 +83,7 @@ export default function LivraisonDashboardPage() {
     setLoadingRecup(true);
     
     try {
-      const { data: recupData, error: recupError } = await supabase
+      const { data: recupData, error: recupError } = await getSupabase()
         .from('recuperations')
         .select('*')
         .eq('company_id', currentCompany.id)
@@ -137,7 +137,7 @@ export default function LivraisonDashboardPage() {
     if (!selectedLivraison) return;
     setSaving(true);
     try {
-      const { error: updateError } = await supabase
+      const { error: updateError } = await getSupabase()
         .from('livraisons')
         .update({ ...editForm })
         .eq('id', selectedLivraison.id);

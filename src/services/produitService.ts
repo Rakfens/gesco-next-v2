@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { getSupabase } from '@/lib/supabase';
 
 // ============ TYPES ============
 
@@ -29,7 +29,7 @@ export interface ProduitFilters {
 export const fetchProduits = async (companyId: string | number, filters: ProduitFilters = {}): Promise<Produit[]> => {
   if (!companyId) return [];
 
-  let query = supabase
+  let query = getSupabase()
     .from('produits')
     .select('*')
     .eq('company_id', companyId)
@@ -54,7 +54,7 @@ export const fetchProduits = async (companyId: string | number, filters: Produit
 export const fetchProduit = async (id: number, companyId: string | number): Promise<Produit | null> => {
   if (!companyId) return null;
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('produits')
     .select('*')
     .eq('id', id)
@@ -68,7 +68,7 @@ export const fetchProduit = async (id: number, companyId: string | number): Prom
 export const createProduit = async (produitData: Partial<Produit>, companyId: string | number): Promise<Produit> => {
   if (!companyId) throw new Error('Aucune société sélectionnée');
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('produits')
     .insert([{
       ...produitData,
@@ -86,7 +86,7 @@ export const createProduit = async (produitData: Partial<Produit>, companyId: st
 export const updateProduit = async (id: number, updates: Partial<Produit>, companyId: string | number): Promise<Produit> => {
   if (!companyId) throw new Error('Aucune société sélectionnée');
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('produits')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
@@ -101,7 +101,7 @@ export const updateProduit = async (id: number, updates: Partial<Produit>, compa
 export const deleteProduit = async (id: number, companyId: string | number): Promise<void> => {
   if (!companyId) throw new Error('Aucune société sélectionnée');
 
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('produits')
     .update({ is_active: false, updated_at: new Date().toISOString() })
     .eq('id', id)
@@ -125,7 +125,7 @@ export const updateStock = async (
 
   const difference = nouvelleQuantite - (produit.quantite_stock || 0);
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await getSupabase()
     .from('produits')
     .update({ quantite_stock: nouvelleQuantite, updated_at: new Date().toISOString() })
     .eq('id', id)
@@ -134,7 +134,7 @@ export const updateStock = async (
   if (updateError) throw updateError;
 
   if (difference !== 0) {
-    await supabase
+    await getSupabase()
       .from('mouvements_stock')
       .insert([{
         produit_id: id,
@@ -153,7 +153,7 @@ export const updateStock = async (
 export const fetchCategories = async (companyId: string | number): Promise<string[]> => {
   if (!companyId) return [];
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('produits')
     .select('categorie')
     .eq('company_id', companyId)

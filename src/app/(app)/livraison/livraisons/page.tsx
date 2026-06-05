@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { supabase, getCurrentCompany } from "@/lib/supabase";
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
 import { formatAr, TODAY } from "@/modules/shared/utils/constants";
 import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
 
@@ -204,7 +204,7 @@ export default function LivraisonsPage() {
     setLoading(true);
     setError(null);
     try {
-      let q = supabase
+      let q = getSupabase()
         .from("livraisons")
         .select("*")
         .eq("company_id", currentCompany.id)
@@ -218,7 +218,7 @@ export default function LivraisonsPage() {
       const { data: livData, error: livError } = await q;
       if (livError) throw livError;
 
-      const { data: agentsData, error: agentsError } = await supabase
+      const { data: agentsData, error: agentsError } = await getSupabase()
         .from("agents")
         .select("*")
         .eq("company_id", currentCompany.id)
@@ -263,7 +263,7 @@ export default function LivraisonsPage() {
     setSaving(true);
     setError(null);
     try {
-      const { error: insertError } = await supabase.from("livraisons").insert({
+      const { error: insertError } = await getSupabase().from("livraisons").insert({
         company_id: currentCompany.id,
         colis: form.colis || null,
         client_donneur: form.client_donneur || null,
@@ -296,7 +296,7 @@ export default function LivraisonsPage() {
     setSaving(true);
     setError(null);
     try {
-      const { error: updateError } = await supabase
+      const { error: updateError } = await getSupabase()
         .from("livraisons")
         .update({
           colis: form.colis || null,
@@ -330,7 +330,7 @@ export default function LivraisonsPage() {
     const id = confirmDelete;
     setConfirmDelete(null);
     try {
-      const { error: delError } = await supabase.from("livraisons").delete().eq("id", id);
+      const { error: delError } = await getSupabase().from("livraisons").delete().eq("id", id);
       if (delError) throw delError;
       loadData();
     } catch (err) {

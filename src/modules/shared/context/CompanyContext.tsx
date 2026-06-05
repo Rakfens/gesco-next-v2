@@ -1,7 +1,8 @@
 'use client';
 
 import React, { createContext, useState, useEffect, useContext, useRef, useCallback, ReactNode } from 'react';
-import { supabase, setCurrentCompany, clearCurrentCompany, getCurrentCompany as getStoredCompany } from '@/lib/supabase';
+import { getSupabase, setCurrentCompany, clearCurrentCompany, getCurrentCompany as getStoredCompany } from '@/lib/supabase';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import { loadSavedCompanyId, clearAppState } from '../hooks/useAppState';
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -25,26 +26,26 @@ const CompanyContext = createContext<CompanyContextValue | null>(null);
 
 export { setCurrentCompany };
 
-export const getCurrentCompany = (): Company | null => getStoredCompany?.() ?? null;
+export const getCurrentCompany = (): Company | null => (getStoredCompany?.() as Company | null) ?? null;
 
 // ── Provider ───────────────────────────────────────────────────────────
 export function CompanyProvider({ children }: { children: ReactNode }) {
   const [currentCompany, _setActive] = useState<Company | null>(null);
   const [companies, setList] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
-  const rtChannels = useRef<ReturnType<typeof supabase.channel>[]>([]);
+  const rtChannels = useRef<RealtimeChannel[]>([]);
   const mounted = useRef(true);
 
   const setupRealtime = useCallback((companyId: string | undefined) => {
-    rtChannels.current.forEach(ch => { try { supabase.removeChannel(ch); } catch (_) { /* noop */ } });
+    rtChannels.current.forEach(ch => { try { getSupabase().removeChannel(ch); } catch (_) { /* noop */ } });
     rtChannels.current = [];
     if (!companyId) return;
     const tables = ['livraisons', 'agents', 'avances', 'recuperations', 'ventes', 'achats', 'produits'];
     tables.forEach(table => {
       try {
-        const ch = supabase.channel(`rt_${table}_${companyId}`)
+        const ch = getSupabase().channel(`rt_${table}_${companyId}`)
           .on('postgres_changes', { event: '*', schema: 'public', table, filter: `company_id=eq.${companyId}` },
-            (p: unknown) => window.dispatchEvent(new CustomEvent('supabase_realtime', { detail: { table, payload: p } })))
+            (p: unknown) => window.dispatchEvent(new CustomEvent('getSupabase()_realtime', { detail: { table, payload: p } })))
           .subscribe();
         rtChannels.current.push(ch);
       } catch (_) { /* noop */ }
@@ -65,7 +66,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     if (!userId || !mounted.current) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('user_companies')
         .select('company:companies(*)')
         .eq('user_id', userId);
@@ -83,7 +84,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     mounted.current = true;
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = getSupabase().auth.onAuthStateChange((event, session) => {
       if (!mounted.current) return;
       if (!session || event === 'SIGNED_OUT') {
         clearCurrentCompany();
@@ -91,7 +92,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         setList([]);
         _setActive(null);
         setLoading(false);
-        rtChannels.current.forEach(ch => { try { supabase.removeChannel(ch); } catch (_) { /* noop */ } });
+        rtChannels.current.forEach(ch => { try { getSupabase().removeChannel(ch); } catch (_) { /* noop */ } });
         rtChannels.current = [];
         return;
       }
@@ -102,7 +103,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted.current = false;
       subscription.unsubscribe();
-      rtChannels.current.forEach(ch => { try { supabase.removeChannel(ch); } catch (_) { /* noop */ } });
+      rtChannels.current.forEach(ch => { try { getSupabase().removeChannel(ch); } catch (_) { /* noop */ } });
     };
   }, [loadCompanies]);
 

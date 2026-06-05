@@ -1,10 +1,10 @@
 // @ts-nocheck
 // agentService.js — v2 : companyId passé en paramètre (plus de getCurrentCompany)
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 
 export const fetchAgents = async (companyId) => {
   if (!companyId) return [];
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('agents')
     .select('*')
     .eq('company_id', companyId)
@@ -15,7 +15,7 @@ export const fetchAgents = async (companyId) => {
 
 export const addAgent = async (nom, salaire, companyId) => {
   if (!companyId) throw new Error('Société non sélectionnée');
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('agents')
     .insert([{ nom, salaire: parseFloat(salaire), company_id: companyId }])
     .select();
@@ -25,7 +25,7 @@ export const addAgent = async (nom, salaire, companyId) => {
 
 export const updateAgent = async (id, updates, companyId) => {
   if (!companyId) throw new Error('Société non sélectionnée');
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('agents')
     .update(updates)
     .eq('id', id)
@@ -35,7 +35,7 @@ export const updateAgent = async (id, updates, companyId) => {
 
 export const deleteAgent = async (id, companyId) => {
   if (!companyId) throw new Error('Société non sélectionnée');
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('agents')
     .delete()
     .eq('id', id)

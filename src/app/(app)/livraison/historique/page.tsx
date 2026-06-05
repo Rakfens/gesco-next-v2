@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { supabase, getCurrentCompany } from "@/lib/supabase";
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
 import { formatAr, TODAY } from "@/modules/shared/utils/constants";
 import {
   Button, Input, Select, Badge, Card, CardHeader, CardTitle,
@@ -97,7 +97,7 @@ export default function HistoriquePage() {
     setLoading(true);
     setError(null);
     try {
-      let q = supabase
+      let q = getSupabase()
         .from("livraisons")
         .select("*")
         .eq("company_id", currentCompany.id)
@@ -113,7 +113,7 @@ export default function HistoriquePage() {
       const { data: livData, error: livError } = await q;
       if (livError) throw livError;
 
-      const { data: agentsData, error: agentsError } = await supabase
+      const { data: agentsData, error: agentsError } = await getSupabase()
         .from("agents")
         .select("*")
         .eq("company_id", currentCompany.id)

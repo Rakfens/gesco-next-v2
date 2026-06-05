@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 
 // ============ TYPES ============
 
@@ -15,7 +15,7 @@ export interface Agent {
 
 export const fetchAgents = async (companyId: string | number): Promise<Agent[]> => {
   if (!companyId) return [];
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('agents')
     .select('*')
     .eq('company_id', companyId)
@@ -26,7 +26,7 @@ export const fetchAgents = async (companyId: string | number): Promise<Agent[]> 
 
 export const addAgent = async (nom: string, salaire: number, companyId: string | number): Promise<Agent> => {
   if (!companyId) throw new Error('Société non sélectionnée');
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('agents')
     .insert([{ nom, salaire: parseFloat(salaire as unknown as string), company_id: companyId }])
     .select();
@@ -36,7 +36,7 @@ export const addAgent = async (nom: string, salaire: number, companyId: string |
 
 export const updateAgent = async (id: number, updates: Partial<Agent>, companyId: string | number): Promise<void> => {
   if (!companyId) throw new Error('Société non sélectionnée');
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('agents')
     .update(updates)
     .eq('id', id)
@@ -46,7 +46,7 @@ export const updateAgent = async (id: number, updates: Partial<Agent>, companyId
 
 export const deleteAgent = async (id: number, companyId: string | number): Promise<void> => {
   if (!companyId) throw new Error('Société non sélectionnée');
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('agents')
     .delete()
     .eq('id', id)

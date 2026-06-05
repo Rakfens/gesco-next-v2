@@ -4,8 +4,9 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from '@/lib/supabase';
 import { CompanyProvider, useCompany } from "@/modules/shared/context/CompanyContext";
+import { ThemeProvider, useTheme } from "@/modules/shared/context/ThemeContext";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ const NAV_CONFIG = {
   ],
 };
 
-// ─── Icons (identiques à l'app d'origine) ───────────────────────
+// ─── Icons ──────────────────────────────────────────────────────
 const Moon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
@@ -74,14 +75,12 @@ const NavIcons = {
   cash: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>),
   cart: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></svg>),
   box: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" /></svg>),
-  tags: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 5H2v7l6.29 6.29c.94.94 2.48.94 3.42 0l3.58-3.58c.94-.94.94-2.48 0-3.42L9 5Z" /><path d="M6 9h.01" /></svg>),
-  warehouse: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z" /><path d="M6 18h12" /><path d="M6 14h12" /></svg>),
   list: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>),
   wallet: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" /><line x1="1" y1="10" x2="23" y2="10" /></svg>),
   document: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>),
 };
 
-// ─── Company Meta (identique à l'app d'origine) ──────────────────
+// ─── Company Meta ───────────────────────────────────────────────
 const getCompanyMeta = (c) => {
   if (!c) return { label: "Gestion", color: "var(--accent)", icon: "HT", bg: "var(--accent-dim)" };
   if (c.slug === "pomanay")  return { label: "Boutique", color: "var(--purple)", icon: "PM", bg: "var(--purple-dim)" };
@@ -96,7 +95,7 @@ const getLogoSrc = (c) => {
   return "/logos/aterinay/logo.png";
 };
 
-// ─── Company Switcher Sheet (style app d'origine) ──────────────
+// ─── Company Switcher Sheet ─────────────────────────────────────
 function CompanySheet({ companies, currentCompany, onSelect, onClose }) {
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 500, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
@@ -155,12 +154,12 @@ function CompanySheet({ companies, currentCompany, onSelect, onClose }) {
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [theme, setTheme] = useState("light");
-  const [logoError, setLogoError] = useState(false);
   const { currentCompany, companies, switchCompany } = useCompany();
+  const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
   const [isMobile, setIsMobile] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     const fn = () => setIsMobile(window.innerWidth <= 768);
@@ -169,21 +168,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("resize", fn);
   }, []);
 
-  useEffect(() => {
-    const saved = localStorage.getItem("ht_theme") || "light";
-    setTheme(saved);
-    document.documentElement.setAttribute("data-theme", saved);
-  }, []);
-
-  const toggleTheme = useCallback(() => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    localStorage.setItem("ht_theme", next);
-    document.documentElement.setAttribute("data-theme", next);
-  }, [theme]);
-
   const handleLogout = useCallback(async () => {
-    await supabase.auth.signOut();
+    const sb = getSupabase();
+    await sb.auth.signOut();
     router.push("/login");
     router.refresh();
   }, [router]);
@@ -247,7 +234,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* ═══ HEADER (style app d'origine) ═══ */}
+        {/* Header */}
         <header style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           height: "var(--header-h)",
@@ -343,8 +330,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <CompanyProvider>
-      <LayoutContent>{children}</LayoutContent>
-    </CompanyProvider>
+    <ThemeProvider>
+      <CompanyProvider>
+        <LayoutContent>{children}</LayoutContent>
+      </CompanyProvider>
+    </ThemeProvider>
   );
 }

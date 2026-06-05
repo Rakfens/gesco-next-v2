@@ -1,6 +1,6 @@
 // @ts-nocheck
 // src/services/avanceService.js
-import { supabase, getCurrentCompany } from '@/lib/supabase';
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
 
 export const fetchAvances = async (companyId) => {
   try {
@@ -9,7 +9,7 @@ export const fetchAvances = async (companyId) => {
       return [];
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('avances')
       .select('*')
       .eq('company_id', companyId)
@@ -38,7 +38,7 @@ export const addAvance = async (avance) => {
       throw new Error('Date requise');
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('avances')
       .insert([{
         agent_id: avance.agent_id,
@@ -64,7 +64,7 @@ export const annulerAvance = async (id) => {
     const company = getCurrentCompany();
     if (!company) throw new Error('Aucune société sélectionnée');
 
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('avances')
       .update({ annule: true })
       .eq('id', id)
@@ -81,7 +81,7 @@ export const deleteAvance = async (id) => {
     const company = getCurrentCompany();
     if (!company) throw new Error('Aucune société sélectionnée');
 
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('avances')
       .delete()
       .eq('id', id)

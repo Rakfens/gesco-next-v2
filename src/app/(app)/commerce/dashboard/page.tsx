@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { supabase, getCurrentCompany } from "@/lib/supabase";
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
 import { formatAr, TODAY } from "@/modules/shared/utils/constants";
 import { Button, Input, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell } from "@/modules/shared/components/ui";
 
@@ -163,7 +163,7 @@ export default function CommerceDashboardPage() {
     try {
       const [ventesData, produitsData, achatsData, depensesData] = await Promise.all([
         // Ventes 30 last days
-        supabase
+        getSupabase()
           .from("ventes")
           .select("*")
           .eq("company_id", company.id)
@@ -172,7 +172,7 @@ export default function CommerceDashboardPage() {
           .then(({ data, error }) => { if (error) throw error; return data || []; }),
 
         // Produits
-        supabase
+        getSupabase()
           .from("produits")
           .select("*")
           .eq("company_id", company.id)
@@ -181,7 +181,7 @@ export default function CommerceDashboardPage() {
           .then(({ data, error }) => { if (error) throw error; return data || []; }),
 
         // Achats du mois
-        supabase
+        getSupabase()
           .from("achats")
           .select("*")
           .eq("company_id", company.id)
@@ -190,7 +190,7 @@ export default function CommerceDashboardPage() {
           .then(({ data, error }) => { if (error) return data || []; return data || []; }),
 
         // Dépenses du mois
-        supabase
+        getSupabase()
           .from("depenses")
           .select("*")
           .eq("company_id", company.id)

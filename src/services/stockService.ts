@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { getSupabase } from '@/lib/supabase';
 
 // ============ TYPES ============
 
@@ -52,7 +52,7 @@ export interface InventaireDetail {
 export const createMouvementStock = async (mouvementData: MouvementStock, companyId: string | number): Promise<MouvementStock> => {
   if (!companyId) throw new Error('Aucune société sélectionnée');
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('mouvements_stock')
     .insert([{
       produit_id: mouvementData.produit_id,
@@ -77,7 +77,7 @@ export const createMouvementStock = async (mouvementData: MouvementStock, compan
 export const fetchMouvementsStock = async (companyId: string | number, filters: MouvementStockFilters = {}): Promise<MouvementStock[]> => {
   if (!companyId) return [];
 
-  let query = supabase
+  let query = getSupabase()
     .from('mouvements_stock')
     .select('*, produit:produits(id, nom, reference)')
     .eq('company_id', companyId)
@@ -97,7 +97,7 @@ export const fetchMouvementsStock = async (companyId: string | number, filters: 
 export const createMouvementStockManuel = async (mouvementData: MouvementStock, companyId: string | number): Promise<MouvementStock> => {
   if (!companyId) throw new Error('Aucune société sélectionnée');
 
-  const { data: produit, error: produitError } = await supabase
+  const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock')
     .eq('id', mouvementData.produit_id)
@@ -117,7 +117,7 @@ export const createMouvementStockManuel = async (mouvementData: MouvementStock, 
 
   if (nouvelleQuantite < 0) throw new Error('Stock insuffisant pour cette sortie');
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await getSupabase()
     .from('produits')
     .update({ quantite_stock: nouvelleQuantite, updated_at: new Date().toISOString() })
     .eq('id', mouvementData.produit_id)
@@ -125,7 +125,7 @@ export const createMouvementStockManuel = async (mouvementData: MouvementStock, 
 
   if (updateError) throw updateError;
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('mouvements_stock')
     .insert([{
       ...mouvementData,
@@ -145,7 +145,7 @@ export const createMouvementStockManuel = async (mouvementData: MouvementStock, 
 export const createInventaire = async (companyId: string | number, notes: string = ''): Promise<Inventaire> => {
   if (!companyId) throw new Error('Aucune société sélectionnée');
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('inventaires')
     .insert([{
       company_id: companyId,
@@ -164,7 +164,7 @@ export const createInventaire = async (companyId: string | number, notes: string
 export const getInventaireEnCours = async (companyId: string | number): Promise<Inventaire | null> => {
   if (!companyId) return null;
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('inventaires')
     .select('*')
     .eq('company_id', companyId)
@@ -185,7 +185,7 @@ export const enregistrerComptage = async (
 ): Promise<{ quantiteTheorique: number; quantiteReelle: number; ecart: number }> => {
   if (!companyId) throw new Error('Aucune société sélectionnée');
 
-  const { data: produit, error: produitError } = await supabase
+  const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock')
     .eq('id', produitId)
@@ -197,7 +197,7 @@ export const enregistrerComptage = async (
   const quantiteTheorique = produit.quantite_stock;
   const ecart = quantiteReelle - quantiteTheorique;
 
-  const { data: existing } = await supabase
+  const { data: existing } = await getSupabase()
     .from('inventaire_details')
     .select('id')
     .eq('inventaire_id', inventaireId)
@@ -205,7 +205,7 @@ export const enregistrerComptage = async (
     .maybeSingle();
 
   if (existing) {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('inventaire_details')
       .update({
         quantite_reelle: quantiteReelle,
@@ -217,7 +217,7 @@ export const enregistrerComptage = async (
 
     if (error) throw error;
   } else {
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('inventaire_details')
       .insert([{
         inventaire_id: inventaireId,
@@ -238,7 +238,7 @@ export const enregistrerComptage = async (
 export const terminerInventaire = async (inventaireId: number, companyId: string | number): Promise<void> => {
   if (!companyId) throw new Error('Aucune société sélectionnée');
 
-  const { data: ecarts, error: ecartsError } = await supabase
+  const { data: ecarts, error: ecartsError } = await getSupabase()
     .from('inventaire_details')
     .select('*')
     .eq('inventaire_id', inventaireId)
@@ -247,13 +247,13 @@ export const terminerInventaire = async (inventaireId: number, companyId: string
   if (ecartsError) throw ecartsError;
 
   for (const ecart of ecarts || []) {
-    await supabase
+    await getSupabase()
       .from('produits')
       .update({ quantite_stock: ecart.quantite_reelle, updated_at: new Date().toISOString() })
       .eq('id', ecart.produit_id)
       .eq('company_id', companyId);
 
-    await supabase
+    await getSupabase()
       .from('mouvements_stock')
       .insert([{
         company_id: companyId,
@@ -266,7 +266,7 @@ export const terminerInventaire = async (inventaireId: number, companyId: string
       }]);
   }
 
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('inventaires')
     .update({ date_fin: new Date().toISOString(), statut: 'termine' })
     .eq('id', inventaireId)
@@ -278,7 +278,7 @@ export const terminerInventaire = async (inventaireId: number, companyId: string
 export const getInventaires = async (companyId: string | number): Promise<Inventaire[]> => {
   if (!companyId) return [];
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('inventaires')
     .select('*')
     .eq('company_id', companyId)
@@ -293,7 +293,7 @@ export const getInventaires = async (companyId: string | number): Promise<Invent
 export const getRupturesStock = async (companyId: string | number): Promise<unknown[]> => {
   if (!companyId) return [];
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('produits')
     .select('*')
     .eq('company_id', companyId)
@@ -307,7 +307,7 @@ export const getRupturesStock = async (companyId: string | number): Promise<unkn
 export const getStockBas = async (companyId: string | number): Promise<unknown[]> => {
   if (!companyId) return [];
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('produits')
     .select('*')
     .eq('company_id', companyId)
@@ -327,7 +327,7 @@ export const getRotationStock = async (
 ): Promise<{ produitId: number; quantiteVendue: number; stockMoyen: number; rotation: string } | null> => {
   if (!companyId) return null;
 
-  let query = supabase
+  let query = getSupabase()
     .from('vente_details')
     .select('quantite')
     .eq('ventes.company_id', companyId)
@@ -341,7 +341,7 @@ export const getRotationStock = async (
 
   const quantiteVendue = ventes.reduce((sum, v) => sum + v.quantite, 0);
 
-  const { data: produit, error: produitError } = await supabase
+  const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock')
     .eq('id', produitId)

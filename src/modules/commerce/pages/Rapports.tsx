@@ -5,7 +5,7 @@ import { useCompany } from '@/modules/shared/context/CompanyContext';
 import { fetchVentes, getCA, getTopProduits } from '../services/venteService';
 import { getTotalAchats } from '../services/achatService';
 import { fetchProduits, getAlertesStockBas } from '../services/produitService';
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 import { formatAr } from '@/modules/shared/utils/constants';
 import { Card, CardHeader, CardTitle, StatCard, Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/modules/shared/components/ui';
 
@@ -69,7 +69,7 @@ export default function Rapports() {
       setVentesParJour([...byDay.entries()].map(([date, total]) => ({ date, total })).sort((a, b) => a.date.localeCompare(b.date)));
       let totalDepenses = 0;
       if (currentCompany.slug === 'pomanay') {
-        const { data: dep } = await supabase.from('depenses').select('*').eq('company_id', currentCompany.id).gte('date_depense', dateDebut).lte('date_depense', dateFin).order('date_depense', { ascending: false });
+        const { data: dep } = await getSupabase().from('depenses').select('*').eq('company_id', currentCompany.id).gte('date_depense', dateDebut).lte('date_depense', dateFin).order('date_depense', { ascending: false });
         setDepenses(dep || []);
         totalDepenses = (dep || []).reduce((s, d) => s + (d.montant || 0), 0);
       }

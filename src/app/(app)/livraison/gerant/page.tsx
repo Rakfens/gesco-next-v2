@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { supabase, getCurrentCompany } from "@/lib/supabase";
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
 import { formatAr, TODAY, currentMonth } from "@/modules/shared/utils/constants";
 import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell } from "@/modules/shared/components/ui";
 
@@ -39,7 +39,7 @@ export default function GerantPage() {
     setLoading(true);
     (async () => {
       try {
-        const { data, error } = await supabase.from("livraisons").select("*")
+        const { data, error } = await getSupabase().from("livraisons").select("*")
           .eq("company_id", currentCompany.id)
           .gte("date", `${selectedMonth}-01`)
           .lte("date", `${selectedMonth}-31`)

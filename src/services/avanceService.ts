@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 
 // ============ TYPES ============
 
@@ -19,7 +19,7 @@ export interface Avance {
 
 export const fetchAvances = async (companyId: string | number): Promise<Avance[]> => {
   if (!companyId) return [];
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('avances')
     .select('*')
     .eq('company_id', companyId)
@@ -34,7 +34,7 @@ export const addAvance = async (avance: Avance, companyId: string | number): Pro
   if (!avance.montant || avance.montant <= 0) throw new Error('Montant valide requis');
   if (!avance.date) throw new Error('Date requise');
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('avances')
     .insert([{
       agent_id: avance.agent_id,
@@ -53,7 +53,7 @@ export const addAvance = async (avance: Avance, companyId: string | number): Pro
 
 export const updateAvance = async (id: number, updates: Partial<Avance>, companyId: string | number): Promise<void> => {
   if (!companyId) throw new Error('Aucune société sélectionnée');
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('avances')
     .update(updates)
     .eq('id', id)
@@ -63,7 +63,7 @@ export const updateAvance = async (id: number, updates: Partial<Avance>, company
 
 export const deleteAvance = async (id: number, companyId: string | number): Promise<void> => {
   if (!companyId) throw new Error('Aucune société sélectionnée');
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('avances')
     .delete()
     .eq('id', id)
@@ -73,7 +73,7 @@ export const deleteAvance = async (id: number, companyId: string | number): Prom
 
 export const getAvancesByAgent = async (agentId: string | number, companyId: string | number): Promise<Avance[]> => {
   if (!companyId) return [];
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('avances')
     .select('*')
     .eq('company_id', companyId)
@@ -87,7 +87,7 @@ export const getAvancesByAgent = async (agentId: string | number, companyId: str
 
 export const annulerAvance = async (id: number, companyId: string | number): Promise<void> => {
   if (!companyId) throw new Error('Aucune société sélectionnée');
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('avances')
     .update({ annule: true })
     .eq('id', id)

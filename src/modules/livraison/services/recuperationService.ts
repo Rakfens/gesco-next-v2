@@ -1,6 +1,6 @@
 // @ts-nocheck
 // src/modules/livraison/services/recuperationService.js
-import { supabase, getCurrentCompany } from '@/lib/supabase';
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
 
 // ==================== REQUÊTES DE BASE ====================
 
@@ -8,7 +8,7 @@ import { supabase, getCurrentCompany } from '@/lib/supabase';
 export const fetchRecuperations = async (companyId) => {
   try {
     if (!companyId) return [];
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('recuperations')
       .select('*')
       .eq('company_id', companyId)
@@ -28,7 +28,7 @@ export const getRecuperationsByDate = async (date) => {
     if (!company) return [];
 
     
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('recuperations')
       .select('*')
       .eq('company_id', company.id)
@@ -60,7 +60,7 @@ export const getRecuperationsByMonth = async (mois, companyId) => {
     const endDate = `${year}-${month}-${lastDay}`;
     
     
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('recuperations')
       .select('*')
       .eq('company_id', companyId)
@@ -103,7 +103,7 @@ export const addRecuperation = async (recuperation) => {
     };
     
     
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('recuperations')
       .insert([insertData])
       .select();
@@ -123,7 +123,7 @@ export const updateRecuperation = async (id, updates) => {
     if (!company) throw new Error('Aucune société sélectionnée');
 
     
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('recuperations')
       .update(updates)
       .eq('id', id)
@@ -145,7 +145,7 @@ export const deleteRecuperation = async (id) => {
     if (!company) throw new Error('Aucune société sélectionnée');
 
     
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('recuperations')
       .delete()
       .eq('id', id)
@@ -171,7 +171,7 @@ export const getRecuperationsByLivreur = async (livreurId, mois) => {
       return [];
     }
     
-    let query = supabase
+    let query = getSupabase()
       .from('recuperations')
       .select('*')
       .eq('livreur_id', livreurId)
@@ -208,7 +208,7 @@ export const getRecuperationsByLivreurNom = async (livreurNom, mois) => {
       return [];
     }
     
-    let query = supabase
+    let query = getSupabase()
       .from('recuperations')
       .select('*')
       .eq('livreur_nom', livreurNom)
@@ -251,7 +251,7 @@ export const getTotalRecuperationsByLivreurNom = async (livreurNom) => {
       return { total: 0, count: 0 };
     }
     
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('recuperations')
       .select('frais_recuperation, date, client_donneur')
       .eq('livreur_nom', livreurNom)
@@ -286,7 +286,7 @@ export const getTotalRecuperationsByLivreur = async (livreurId) => {
       return { total: 0, count: 0 };
     }
     
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('recuperations')
       .select('frais_recuperation')
       .eq('livreur_id', livreurId)
@@ -314,7 +314,7 @@ export const getAllRecuperationsByLivreurNom = async (livreurNom) => {
       return [];
     }
     
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('recuperations')
       .select('*')
       .eq('livreur_nom', livreurNom)
@@ -343,7 +343,7 @@ export const getRecuperationsStatsByMonth = async (mois) => {
     const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
     const endDate = `${year}-${month}-${lastDay}`;
     
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('recuperations')
       .select('*')
       .eq('company_id', company.id)

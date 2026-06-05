@@ -128,8 +128,8 @@ export default function Ventes() {
     const handler = (e) => {
       if (['ventes', 'vente_details'].includes(e.detail?.table)) loadData();
     };
-    window.addEventListener('supabase_realtime', handler);
-    return () => window.removeEventListener('supabase_realtime', handler);
+    window.addEventListener('getSupabase()_realtime', handler);
+    return () => window.removeEventListener('getSupabase()_realtime', handler);
   }, []);
 
   // FIX #2 : suppression des console.log

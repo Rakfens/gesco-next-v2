@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
 import { fetchProduits, createProduit, updateProduit, deleteProduit, fetchCategories, updateStock } from '../services/produitService';
 import { fetchMouvementsStock } from '../services/stockService';
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 import { formatAr } from '@/modules/shared/utils/constants';
 import {
   Button, Input, Select, Badge, Card, Modal, ModalHeader, ModalBody, ModalFooter,
@@ -147,8 +147,8 @@ export default function Stock() {
 
   useEffect(() => {
     const handler = e => { if (['produits','mouvements_stock'].includes(e.detail?.table)) loadData(); };
-    window.addEventListener('supabase_realtime', handler);
-    return () => window.removeEventListener('supabase_realtime', handler);
+    window.addEventListener('getSupabase()_realtime', handler);
+    return () => window.removeEventListener('getSupabase()_realtime', handler);
   }, []);
 
   const loadData = async () => {
@@ -164,7 +164,7 @@ export default function Stock() {
   const loadMouvements = async (produitId) => {
     if (!currentCompany) return;
     try {
-      const { data, error } = await supabase.from('mouvements_stock').select('*, produit:produits(id,nom)').eq('produit_id', produitId).eq('company_id', currentCompany.id).order('date_mouvement', { ascending:false }).limit(50);
+      const { data, error } = await getSupabase().from('mouvements_stock').select('*, produit:produits(id,nom)').eq('produit_id', produitId).eq('company_id', currentCompany.id).order('date_mouvement', { ascending:false }).limit(50);
       if (error) throw error;
       setMouvements(data || []);
     } catch (_) { toast.error('Erreur historique'); }

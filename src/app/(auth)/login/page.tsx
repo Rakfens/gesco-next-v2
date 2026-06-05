@@ -2,7 +2,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from '@/lib/supabase';
 
 const EyeOpen = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -41,12 +41,13 @@ export default function LoginPage() {
     setTimeout(() => setMounted(true), 50);
   }, []);
 
-  // Vérifier si déjà connecté → rediriger selon la première société
+  // Vérifier si déjà connecté → rediriger
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
+    const sb = getSupabase();
+    sb.auth.getSession().then(async ({ data }) => {
       if (data.session) {
         const userId = data.session.user.id;
-        const { data: uc } = await supabase
+        const { data: uc } = await sb
           .from('user_companies')
           .select('company:companies(*)')
           .eq('user_id', userId);
@@ -69,14 +70,14 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      const sb = getSupabase();
+      const { error: authError } = await sb.auth.signInWithPassword({ email, password });
       if (authError) throw authError;
 
-      // Après login, charger les sociétés pour rediriger selon le type
-      const { data: sessionData } = await supabase.auth.getSession();
+      const { data: sessionData } = await sb.auth.getSession();
       const userId = sessionData.session?.user.id;
       if (userId) {
-        const { data: uc } = await supabase
+        const { data: uc } = await sb
           .from('user_companies')
           .select('company:companies(*)')
           .eq('user_id', userId);

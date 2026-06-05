@@ -1,10 +1,10 @@
 // @ts-nocheck
 // livraisonService.js — v2 : companyId passé en paramètre (plus de getCurrentCompany)
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 
 export const fetchLivraisons = async (companyId) => {
   if (!companyId) return [];
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('livraisons')
     .select('*')
     .eq('company_id', companyId)
@@ -21,7 +21,7 @@ export const addLivraison = async (livraison, companyId) => {
   if (!livraison.agent_id && !livraison.agent_nom) throw new Error('Le livreur est requis');
   if (!livraison.date)           throw new Error('La date est requise');
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('livraisons')
     .insert([{
       colis:                   livraison.colis,
@@ -47,7 +47,7 @@ export const addLivraison = async (livraison, companyId) => {
 
 export const updateLivraison = async (id, updates, companyId) => {
   if (!companyId) throw new Error('Société non sélectionnée');
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('livraisons')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
@@ -57,7 +57,7 @@ export const updateLivraison = async (id, updates, companyId) => {
 
 export const deleteLivraison = async (id, companyId) => {
   if (!companyId) throw new Error('Société non sélectionnée');
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('livraisons')
     .delete()
     .eq('id', id)
@@ -67,7 +67,7 @@ export const deleteLivraison = async (id, companyId) => {
 
 export const fetchLivraisonsByStatut = async (statut, companyId) => {
   if (!companyId) return [];
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('livraisons').select('*')
     .eq('company_id', companyId).eq('statut', statut)
     .order('date', { ascending: false });
@@ -77,7 +77,7 @@ export const fetchLivraisonsByStatut = async (statut, companyId) => {
 
 export const fetchLivraisonsByAgent = async (agentId, companyId) => {
   if (!companyId) return [];
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('livraisons').select('*')
     .eq('company_id', companyId).eq('agent_id', agentId)
     .order('date', { ascending: false });
@@ -87,7 +87,7 @@ export const fetchLivraisonsByAgent = async (agentId, companyId) => {
 
 export const fetchLivraisonsByDate = async (date, companyId) => {
   if (!companyId) return [];
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('livraisons').select('*')
     .eq('company_id', companyId).eq('date', date)
     .order('created_at', { ascending: false });

@@ -1,6 +1,6 @@
 // @ts-nocheck
 // src/modules/commerce/services/venteService.js
-import { supabase, getCurrentCompany } from '@/lib/supabase';
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
 import { createMouvementStock } from './stockService';
 import { cache } from '@/modules/shared/utils/cache';
 
@@ -14,7 +14,7 @@ export const fetchVentes = async (filters = {}) => {
   const cacheKey = `ventes_${company.id}_${JSON.stringify(filters)}`;
   
   return cache.get(cacheKey, async () => {
-    let query = supabase
+    let query = getSupabase()
       .from('ventes')
       .select('*')
       .eq('company_id', company.id)
@@ -48,7 +48,7 @@ export const fetchVenteWithDetails = async (id) => {
   
   return cache.get(cacheKey, async () => {
     // Récupérer la vente
-    const { data: vente, error: venteError } = await supabase
+    const { data: vente, error: venteError } = await getSupabase()
       .from('ventes')
       .select('*')
       .eq('id', id)
@@ -58,7 +58,7 @@ export const fetchVenteWithDetails = async (id) => {
     if (venteError) throw venteError;
 
     // Récupérer les détails
-    const { data: details, error: detailsError } = await supabase
+    const { data: details, error: detailsError } = await getSupabase()
       .from('vente_details')
       .select(`
         *,
@@ -92,7 +92,7 @@ export const createVente = async (venteData, details) => {
   const numeroFacture = await generateNumeroFacture();
 
   // Créer la vente
-  const { data: vente, error: venteError } = await supabase
+  const { data: vente, error: venteError } = await getSupabase()
     .from('ventes')
     .insert([{
       company_id: company.id,
@@ -120,7 +120,7 @@ export const createVente = async (venteData, details) => {
   // Créer les détails et mettre à jour le stock
   for (const item of details) {
     // Ajouter le détail
-    const { error: detailError } = await supabase
+    const { error: detailError } = await getSupabase()
       .from('vente_details')
       .insert([{
         vente_id: vente.id,
@@ -159,7 +159,7 @@ export const updateVente = async (id, venteData, details) => {
   }
 
   // Supprimer les anciens détails
-  const { error: deleteDetailsError } = await supabase
+  const { error: deleteDetailsError } = await getSupabase()
     .from('vente_details')
     .delete()
     .eq('vente_id', id);
@@ -178,7 +178,7 @@ export const updateVente = async (id, venteData, details) => {
   const resteAPayer = montantFinal - (venteData.montant_paye || 0);
 
   // Mettre à jour la vente
-  const { error: venteError } = await supabase
+  const { error: venteError } = await getSupabase()
     .from('ventes')
     .update({
       date_vente: venteData.date_vente || new Date().toISOString(),
@@ -202,7 +202,7 @@ export const updateVente = async (id, venteData, details) => {
 
   // Créer les nouveaux détails et mettre à jour le stock
   for (const item of details) {
-    const { error: detailError } = await supabase
+    const { error: detailError } = await getSupabase()
       .from('vente_details')
       .insert([{
         vente_id: id,
@@ -241,7 +241,7 @@ export const deleteVente = async (id) => {
   }
 
   // Supprimer les détails
-  const { error: deleteDetailsError } = await supabase
+  const { error: deleteDetailsError } = await getSupabase()
     .from('vente_details')
     .delete()
     .eq('vente_id', id);
@@ -249,7 +249,7 @@ export const deleteVente = async (id) => {
   if (deleteDetailsError) throw deleteDetailsError;
 
   // Supprimer la vente
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('ventes')
     .delete()
     .eq('id', id)
@@ -268,7 +268,7 @@ export const deleteVente = async (id) => {
 const updateStockAfterSale = async (produitId, quantite, venteId) => {
   const company = getCurrentCompany();
   
-  const { data: produit, error: produitError } = await supabase
+  const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock')
     .eq('id', produitId)
@@ -283,7 +283,7 @@ const updateStockAfterSale = async (produitId, quantite, venteId) => {
     throw new Error(`Stock insuffisant pour le produit ${produitId}`);
   }
 
-  await supabase
+  await getSupabase()
     .from('produits')
     .update({ 
       quantite_stock: nouvelleQuantite,
@@ -307,7 +307,7 @@ const updateStockAfterSale = async (produitId, quantite, venteId) => {
 const restoreStockAfterUpdate = async (produitId, quantite, venteId) => {
   const company = getCurrentCompany();
   
-  const { data: produit, error: produitError } = await supabase
+  const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock')
     .eq('id', produitId)
@@ -318,7 +318,7 @@ const restoreStockAfterUpdate = async (produitId, quantite, venteId) => {
 
   const nouvelleQuantite = produit.quantite_stock + quantite;
 
-  await supabase
+  await getSupabase()
     .from('produits')
     .update({ 
       quantite_stock: nouvelleQuantite,
@@ -343,7 +343,7 @@ const restoreStockAfterUpdate = async (produitId, quantite, venteId) => {
 // Générer un numéro de facture unique
 const generateNumeroFacture = async () => {
   const company = getCurrentCompany();
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('ventes')
     .select('numero_facture')
     .eq('company_id', company.id)
@@ -377,7 +377,7 @@ export const getCA = async (dateDebut, dateFin) => {
   const cacheKey = `ca_${company.id}_${dateDebut}_${dateFin}`;
   
   return cache.get(cacheKey, async () => {
-    let query = supabase
+    let query = getSupabase()
       .from('ventes')
       .select('montant_total')
       .eq('company_id', company.id)
@@ -408,7 +408,7 @@ export const getTopProduits = async (limit = 10, dateDebut, dateFin) => {
       const startDate = dateDebut || firstDayOfMonth;
       const endDate = dateFin || today;
 
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .rpc('get_top_produits', {
           p_company_id: company.id,
           p_date_debut: startDate,
@@ -433,7 +433,7 @@ export const getVentesByDay = async (date) => {
   const cacheKey = `ventes_day_${company.id}_${date}`;
   
   return cache.get(cacheKey, async () => {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('ventes')
       .select('*')
       .eq('company_id', company.id)
@@ -456,7 +456,7 @@ export const getVentesByMonth = async (annee, mois) => {
     const dateDebut = `${annee}-${String(mois).padStart(2, '0')}-01`;
     const dateFin = `${annee}-${String(mois).padStart(2, '0')}-31`;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('ventes')
       .select('*')
       .eq('company_id', company.id)
@@ -477,7 +477,7 @@ export const getVentesStats = async () => {
   const cacheKey = `ventes_stats_${company.id}`;
   
   return cache.get(cacheKey, async () => {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('ventes')
       .select('statut')
       .eq('company_id', company.id);

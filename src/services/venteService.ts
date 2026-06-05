@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { getSupabase } from '@/lib/supabase';
 
 // ============ TYPES ============
 
@@ -53,7 +53,7 @@ export interface VentesStats {
 export const fetchVentes = async (companyId: string | number, filters: VenteFilters = {}): Promise<Vente[]> => {
   if (!companyId) return [];
 
-  let query = supabase
+  let query = getSupabase()
     .from('ventes')
     .select('*')
     .eq('company_id', companyId)
@@ -72,7 +72,7 @@ export const fetchVentes = async (companyId: string | number, filters: VenteFilt
 export const fetchVenteWithDetails = async (id: number, companyId: string | number): Promise<Vente | null> => {
   if (!companyId) return null;
 
-  const { data: vente, error: venteError } = await supabase
+  const { data: vente, error: venteError } = await getSupabase()
     .from('ventes')
     .select('*')
     .eq('id', id)
@@ -81,7 +81,7 @@ export const fetchVenteWithDetails = async (id: number, companyId: string | numb
 
   if (venteError) throw venteError;
 
-  const { data: details, error: detailsError } = await supabase
+  const { data: details, error: detailsError } = await getSupabase()
     .from('vente_details')
     .select('*, produit:produits(id, nom, reference, prix_vente)')
     .eq('vente_id', id);
@@ -108,7 +108,7 @@ export const createVente = async (
   const montantFinal = montantTotal - remise;
   const resteAPayer = montantFinal - (venteData.montant_paye || 0);
 
-  const { data: vente, error: venteError } = await supabase
+  const { data: vente, error: venteError } = await getSupabase()
     .from('ventes')
     .insert([{
       company_id: companyId,
@@ -133,7 +133,7 @@ export const createVente = async (
   if (venteError) throw venteError;
 
   for (const item of details) {
-    const { error: detailError } = await supabase
+    const { error: detailError } = await getSupabase()
       .from('vente_details')
       .insert([{
         vente_id: vente.id,
@@ -170,7 +170,7 @@ export const updateVente = async (
   }
 
   // Supprimer les anciens détails
-  const { error: deleteDetailsError } = await supabase
+  const { error: deleteDetailsError } = await getSupabase()
     .from('vente_details')
     .delete()
     .eq('vente_id', id);
@@ -187,7 +187,7 @@ export const updateVente = async (
   const montantFinal = montantTotal - remise;
   const resteAPayer = montantFinal - (venteData.montant_paye || 0);
 
-  const { error: venteError } = await supabase
+  const { error: venteError } = await getSupabase()
     .from('ventes')
     .update({
       date_vente: venteData.date_vente || new Date().toISOString(),
@@ -210,7 +210,7 @@ export const updateVente = async (
   if (venteError) throw venteError;
 
   for (const item of details) {
-    const { error: detailError } = await supabase
+    const { error: detailError } = await getSupabase()
       .from('vente_details')
       .insert([{
         vente_id: id,
@@ -238,14 +238,14 @@ export const deleteVente = async (id: number, companyId: string | number): Promi
     await restoreStockAfterUpdate(item.produit_id, item.quantite, id, companyId);
   }
 
-  const { error: deleteDetailsError } = await supabase
+  const { error: deleteDetailsError } = await getSupabase()
     .from('vente_details')
     .delete()
     .eq('vente_id', id);
 
   if (deleteDetailsError) throw deleteDetailsError;
 
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('ventes')
     .delete()
     .eq('id', id)
@@ -257,7 +257,7 @@ export const deleteVente = async (id: number, companyId: string | number): Promi
 // ============ FONCTIONS STOCK INTERNES ============
 
 const updateStockAfterSale = async (produitId: number, quantite: number, venteId: number, companyId: string | number): Promise<void> => {
-  const { data: produit, error: produitError } = await supabase
+  const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock')
     .eq('id', produitId)
@@ -269,13 +269,13 @@ const updateStockAfterSale = async (produitId: number, quantite: number, venteId
   const nouvelleQuantite = produit.quantite_stock - quantite;
   if (nouvelleQuantite < 0) throw new Error(`Stock insuffisant pour le produit ${produitId}`);
 
-  await supabase
+  await getSupabase()
     .from('produits')
     .update({ quantite_stock: nouvelleQuantite, updated_at: new Date().toISOString() })
     .eq('id', produitId)
     .eq('company_id', companyId);
 
-  await supabase
+  await getSupabase()
     .from('mouvements_stock')
     .insert([{
       produit_id: produitId,
@@ -291,7 +291,7 @@ const updateStockAfterSale = async (produitId: number, quantite: number, venteId
 };
 
 const restoreStockAfterUpdate = async (produitId: number, quantite: number, venteId: number, companyId: string | number): Promise<void> => {
-  const { data: produit, error: produitError } = await supabase
+  const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock')
     .eq('id', produitId)
@@ -302,13 +302,13 @@ const restoreStockAfterUpdate = async (produitId: number, quantite: number, vent
 
   const nouvelleQuantite = produit.quantite_stock + quantite;
 
-  await supabase
+  await getSupabase()
     .from('produits')
     .update({ quantite_stock: nouvelleQuantite, updated_at: new Date().toISOString() })
     .eq('id', produitId)
     .eq('company_id', companyId);
 
-  await supabase
+  await getSupabase()
     .from('mouvements_stock')
     .insert([{
       produit_id: produitId,
@@ -328,7 +328,7 @@ const restoreStockAfterUpdate = async (produitId: number, quantite: number, vent
 export const getCA = async (companyId: string | number, dateDebut?: string, dateFin?: string): Promise<number> => {
   if (!companyId) return 0;
 
-  let query = supabase
+  let query = getSupabase()
     .from('ventes')
     .select('montant_total')
     .eq('company_id', companyId)
@@ -358,7 +358,7 @@ export const getTopProduits = async (
     const startDate = dateDebut || firstDayOfMonth;
     const endDate = dateFin || today;
 
-    const { data, error } = await supabase.rpc('get_top_produits', {
+    const { data, error } = await getSupabase().rpc('get_top_produits', {
       p_company_id: companyId,
       p_date_debut: startDate,
       p_date_fin: endDate,
@@ -376,7 +376,7 @@ export const getTopProduits = async (
 export const getVentesByDay = async (companyId: string | number, date: string): Promise<Vente[]> => {
   if (!companyId) return [];
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('ventes')
     .select('*')
     .eq('company_id', companyId)
@@ -393,7 +393,7 @@ export const getVentesByMonth = async (companyId: string | number, annee: number
   const dateDebut = `${annee}-${String(mois).padStart(2, '0')}-01`;
   const dateFin = `${annee}-${String(mois).padStart(2, '0')}-31`;
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('ventes')
     .select('*')
     .eq('company_id', companyId)
@@ -408,7 +408,7 @@ export const getVentesByMonth = async (companyId: string | number, annee: number
 export const getVentesStats = async (companyId: string | number): Promise<VentesStats> => {
   if (!companyId) return { paye: 0, credit: 0, en_attente: 0, annule: 0 };
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('ventes')
     .select('statut')
     .eq('company_id', companyId);

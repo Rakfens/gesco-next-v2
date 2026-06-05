@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 
 // ============ TYPES ============
 
@@ -26,7 +26,7 @@ export interface Livraison {
 
 export const fetchLivraisons = async (companyId: string | number): Promise<Livraison[]> => {
   if (!companyId) return [];
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('livraisons')
     .select('*')
     .eq('company_id', companyId)
@@ -43,7 +43,7 @@ export const addLivraison = async (livraison: Livraison, companyId: string | num
   if (!livraison.agent_id && !livraison.agent_nom) throw new Error('Le livreur est requis');
   if (!livraison.date) throw new Error('La date est requise');
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('livraisons')
     .insert([{
       colis: livraison.colis,
@@ -69,7 +69,7 @@ export const addLivraison = async (livraison: Livraison, companyId: string | num
 
 export const updateLivraison = async (id: number, updates: Partial<Livraison>, companyId: string | number): Promise<void> => {
   if (!companyId) throw new Error('Société non sélectionnée');
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('livraisons')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
@@ -79,7 +79,7 @@ export const updateLivraison = async (id: number, updates: Partial<Livraison>, c
 
 export const deleteLivraison = async (id: number, companyId: string | number): Promise<void> => {
   if (!companyId) throw new Error('Société non sélectionnée');
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('livraisons')
     .delete()
     .eq('id', id)
@@ -91,7 +91,7 @@ export const deleteLivraison = async (id: number, companyId: string | number): P
 
 export const fetchLivraisonsByStatut = async (statut: string, companyId: string | number): Promise<Livraison[]> => {
   if (!companyId) return [];
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('livraisons').select('*')
     .eq('company_id', companyId).eq('statut', statut)
     .order('date', { ascending: false });
@@ -101,7 +101,7 @@ export const fetchLivraisonsByStatut = async (statut: string, companyId: string 
 
 export const fetchLivraisonsByAgent = async (agentId: string | number, companyId: string | number): Promise<Livraison[]> => {
   if (!companyId) return [];
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('livraisons').select('*')
     .eq('company_id', companyId).eq('agent_id', agentId)
     .order('date', { ascending: false });
@@ -111,7 +111,7 @@ export const fetchLivraisonsByAgent = async (agentId: string | number, companyId
 
 export const fetchLivraisonsByDate = async (date: string, companyId: string | number): Promise<Livraison[]> => {
   if (!companyId) return [];
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('livraisons').select('*')
     .eq('company_id', companyId).eq('date', date)
     .order('created_at', { ascending: false });

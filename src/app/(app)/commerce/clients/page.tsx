@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
-import { getCurrentCompany } from "@/lib/supabase";
+import { getSupabase } from '@/lib/supabase';
+import { getCurrentCompany } from '@/lib/supabase';
 import { Button, Input, Badge, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty } from "@/modules/shared/components/ui";
 
 export default function ClientsPage() {
@@ -29,7 +29,7 @@ export default function ClientsPage() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('clients')
         .select('*')
         .eq('company_id', currentCompany.id)
@@ -62,10 +62,10 @@ export default function ClientsPage() {
         company_id: currentCompany?.id,
       };
       if (isEditing && editingId) {
-        const { error } = await supabase.from('clients').update(payload).eq('id', editingId).eq('company_id', currentCompany?.id);
+        const { error } = await getSupabase().from('clients').update(payload).eq('id', editingId).eq('company_id', currentCompany?.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('clients').insert(payload);
+        const { error } = await getSupabase().from('clients').insert(payload);
         if (error) throw error;
       }
       resetForm();
@@ -91,7 +91,7 @@ export default function ClientsPage() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Supprimer ce client ?")) return;
     try {
-      const { error } = await supabase.from('clients').delete().eq('id', id).eq('company_id', currentCompany?.id);
+      const { error } = await getSupabase().from('clients').delete().eq('id', id).eq('company_id', currentCompany?.id);
       if (error) throw error;
       fetchClients();
     } catch (err: any) {

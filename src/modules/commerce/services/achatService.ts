@@ -1,6 +1,6 @@
 // @ts-nocheck
 // src/modules/commerce/services/achatService.js
-import { supabase, getCurrentCompany } from '@/lib/supabase';
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
 import { createMouvementStock } from './stockService';
 
 // ============ CRUD ACHATS ============
@@ -10,7 +10,7 @@ export const fetchAchats = async (filters = {}) => {
   const company = getCurrentCompany();
   if (!company) return [];
 
-  let query = supabase
+  let query = getSupabase()
     .from('achats')
     .select('*')
     .eq('company_id', company.id)
@@ -39,7 +39,7 @@ export const fetchAchatWithDetails = async (id) => {
   const company = getCurrentCompany();
   if (!company) return null;
 
-  const { data: achat, error: achatError } = await supabase
+  const { data: achat, error: achatError } = await getSupabase()
     .from('achats')
     .select('*')
     .eq('id', id)
@@ -48,7 +48,7 @@ export const fetchAchatWithDetails = async (id) => {
 
   if (achatError) throw achatError;
 
-  const { data: details, error: detailsError } = await supabase
+  const { data: details, error: detailsError } = await getSupabase()
     .from('achat_details')
     .select(`
       *,
@@ -73,7 +73,7 @@ export const createAchat = async (achatData, details) => {
     montantTotal += item.sous_total;
   }
 
-  const { data: achat, error: achatError } = await supabase
+  const { data: achat, error: achatError } = await getSupabase()
     .from('achats')
     .insert([{
       company_id: company.id,
@@ -98,7 +98,7 @@ export const createAchat = async (achatData, details) => {
 
   // Créer les détails et mettre à jour le stock
   for (const item of details) {
-    const { error: detailError } = await supabase
+    const { error: detailError } = await getSupabase()
       .from('achat_details')
       .insert([{
         achat_id: achat.id,
@@ -131,7 +131,7 @@ export const updateAchat = async (id, achatData, details) => {
   }
 
   // Supprimer les anciens détails
-  const { error: deleteDetailsError } = await supabase
+  const { error: deleteDetailsError } = await getSupabase()
     .from('achat_details')
     .delete()
     .eq('achat_id', id);
@@ -146,7 +146,7 @@ export const updateAchat = async (id, achatData, details) => {
   }
 
   // Mettre à jour l'achat
-  const { error: achatError } = await supabase
+  const { error: achatError } = await getSupabase()
     .from('achats')
     .update({
       date_achat: achatData.date_achat || new Date().toISOString(),
@@ -166,7 +166,7 @@ export const updateAchat = async (id, achatData, details) => {
 
   // Créer les nouveaux détails et mettre à jour le stock
   for (const item of details) {
-    const { error: detailError } = await supabase
+    const { error: detailError } = await getSupabase()
       .from('achat_details')
       .insert([{
         achat_id: id,
@@ -199,7 +199,7 @@ export const deleteAchat = async (id) => {
   }
 
   // Supprimer les détails
-  const { error: deleteDetailsError } = await supabase
+  const { error: deleteDetailsError } = await getSupabase()
     .from('achat_details')
     .delete()
     .eq('achat_id', id);
@@ -207,7 +207,7 @@ export const deleteAchat = async (id) => {
   if (deleteDetailsError) throw deleteDetailsError;
 
   // Supprimer l'achat
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('achats')
     .delete()
     .eq('id', id)
@@ -220,7 +220,7 @@ export const deleteAchat = async (id) => {
 const updateStockAfterPurchase = async (produitId, quantite, achatId) => {
   const company = getCurrentCompany();
   
-  const { data: produit, error: produitError } = await supabase
+  const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock, prix_achat')
     .eq('id', produitId)
@@ -231,7 +231,7 @@ const updateStockAfterPurchase = async (produitId, quantite, achatId) => {
 
   const nouvelleQuantite = produit.quantite_stock + quantite;
 
-  await supabase
+  await getSupabase()
     .from('produits')
     .update({ 
       quantite_stock: nouvelleQuantite,
@@ -255,7 +255,7 @@ const updateStockAfterPurchase = async (produitId, quantite, achatId) => {
 const revertStockAfterUpdate = async (produitId, quantite, achatId) => {
   const company = getCurrentCompany();
   
-  const { data: produit, error: produitError } = await supabase
+  const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock')
     .eq('id', produitId)
@@ -270,7 +270,7 @@ const revertStockAfterUpdate = async (produitId, quantite, achatId) => {
     console.warn(`Stock potentiellement négatif pour le produit ${produitId}`);
   }
 
-  await supabase
+  await getSupabase()
     .from('produits')
     .update({ 
       quantite_stock: Math.max(0, nouvelleQuantite),
@@ -293,7 +293,7 @@ const revertStockAfterUpdate = async (produitId, quantite, achatId) => {
 // Générer un numéro de commande unique
 const generateNumeroCommande = async () => {
   const company = getCurrentCompany();
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('achats')
     .select('numero_commande')
     .eq('company_id', company.id)
@@ -320,7 +320,7 @@ export const getTotalAchats = async (dateDebut, dateFin) => {
   const company = getCurrentCompany();
   if (!company) return 0;
 
-  let query = supabase
+  let query = getSupabase()
     .from('achats')
     .select('montant_total')
     .eq('company_id', company.id);

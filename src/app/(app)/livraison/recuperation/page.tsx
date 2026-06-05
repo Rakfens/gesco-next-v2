@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { supabase, getCurrentCompany } from "@/lib/supabase";
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
 import { formatAr, TODAY } from "@/modules/shared/utils/constants";
 import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
 
@@ -98,7 +98,7 @@ export default function RecuperationPage() {
     setError(null);
     try {
       // Fetch recuperations for selected date
-      const { data: recData, error: recError } = await supabase
+      const { data: recData, error: recError } = await getSupabase()
         .from("recuperations")
         .select("*")
         .eq("company_id", currentCompany.id)
@@ -107,7 +107,7 @@ export default function RecuperationPage() {
       if (recError) throw recError;
 
       // Fetch agents for dropdown
-      const { data: agentsData, error: agentsError } = await supabase
+      const { data: agentsData, error: agentsError } = await getSupabase()
         .from("agents")
         .select("*")
         .eq("company_id", currentCompany.id)
@@ -150,7 +150,7 @@ export default function RecuperationPage() {
     setError(null);
     try {
       const selectedAgent = agents.find((a) => String(a.id) === String(form.livreur_id));
-      const { error: insertError } = await supabase.from("recuperations").insert({
+      const { error: insertError } = await getSupabase().from("recuperations").insert({
         company_id: currentCompany.id,
         date: selectedDate,
         livreur_id: form.livreur_id,
@@ -181,7 +181,7 @@ export default function RecuperationPage() {
     setSaving(true);
     setError(null);
     try {
-      const { error: updateError } = await supabase
+      const { error: updateError } = await getSupabase()
         .from("recuperations")
         .update({ frais_recuperation: parseFloat(editFrais) })
         .eq("id", editRecup.id)
@@ -203,7 +203,7 @@ export default function RecuperationPage() {
     const id = confirmDelete;
     setConfirmDelete(null);
     try {
-      const { error: delError } = await supabase
+      const { error: delError } = await getSupabase()
         .from("recuperations")
         .delete()
         .eq("id", id)

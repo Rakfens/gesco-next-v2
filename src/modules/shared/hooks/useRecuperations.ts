@@ -45,8 +45,8 @@ export const useRecuperations = (): UseRecuperationsReturn => {
     const handler = (e: Event) => {
       if ((e as CustomEvent).detail?.table === 'recuperations') loadRecuperations();
     };
-    window.addEventListener('supabase_realtime', handler);
-    return () => window.removeEventListener('supabase_realtime', handler);
+    window.addEventListener('getSupabase()_realtime', handler);
+    return () => window.removeEventListener('getSupabase()_realtime', handler);
   }, [loadRecuperations]);
 
   const handleAddRecuperation = async (rec: Record<string, unknown>) => {

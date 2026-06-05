@@ -28,12 +28,12 @@ export const useTheme = (): ThemeContextValue => {
 // ── Provider ───────────────────────────────────────────────────────────
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<ThemeMode>(() => {
+    if (typeof window === 'undefined') return 'light';
     try {
       const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-      return savedTheme === 'light' ? 'light' : 'dark';
+      return savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'light';
     } catch (e) {
-      console.warn('Erreur lecture thème:', e);
-      return 'dark';
+      return 'light';
     }
   });
 

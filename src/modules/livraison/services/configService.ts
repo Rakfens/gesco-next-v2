@@ -1,6 +1,6 @@
 // @ts-nocheck
 // src/services/configService.js
-import { supabase, getCurrentCompany } from '@/lib/supabase';  
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';  
 
 // Récupérer la commission gérant pour la société actuelle
 export const fetchCommission = async () => {
@@ -11,7 +11,7 @@ export const fetchCommission = async () => {
   }
   
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('config')
       .select('valeur')
       .eq('cle', 'commission_gerant')
@@ -33,7 +33,7 @@ export const updateCommission = async (newVal) => {
     throw new Error('Aucune société sélectionnée');
   }
   
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('config')
     .upsert({ 
       cle: 'commission_gerant', 
@@ -55,7 +55,7 @@ export const fetchLogo = async () => {
   }
   
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('config')
       .select('valeur')
       .eq('cle', 'logo_url')
@@ -77,7 +77,7 @@ export const updateLogo = async (url) => {
     throw new Error('Aucune société sélectionnée');
   }
   
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('config')
     .upsert({ 
       cle: 'logo_url', 
@@ -101,13 +101,13 @@ export const uploadLogoFile = async (file) => {
   const fileExt = file.name.split('.').pop();
   const fileName = `logos/${company.slug}/logo_${Date.now()}.${fileExt}`;
   
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await getSupabase().storage
     .from('logos')
     .upload(fileName, file);
     
   if (uploadError) throw uploadError;
   
-  const { data: publicUrl } = supabase.storage
+  const { data: publicUrl } = getSupabase().storage
     .from('logos')
     .getPublicUrl(fileName);
     
@@ -123,7 +123,7 @@ export const fetchAllConfig = async () => {
   }
   
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('config')
       .select('cle, valeur')
       .eq('company_id', company.id);
@@ -148,7 +148,7 @@ export const getConfigValue = async (key, defaultValue = null) => {
   if (!company) return defaultValue;
   
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('config')
       .select('valeur')
       .eq('cle', key)
@@ -170,7 +170,7 @@ export const setConfigValue = async (key, value) => {
     throw new Error('Aucune société sélectionnée');
   }
   
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('config')
     .upsert({ 
       cle: key, 

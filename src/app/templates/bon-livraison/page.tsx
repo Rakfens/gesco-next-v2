@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase, getCurrentCompany } from "@/lib/supabase";
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
 import { formatAr, TODAY } from "@/modules/shared/utils/constants";
 import { Button, Input, Select, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, Modal, ModalHeader, ModalBody, ModalFooter, Badge } from "@/modules/shared/components/ui";
 import { THERMAL_CSS, getCompanyConfig, openPrintWindow } from "../printStyles";
@@ -33,14 +33,14 @@ export default function BonLivraisonPage() {
     setLoading(true);
     const [livRes, agentsRes] = await Promise.all([
       (async () => {
-        let q = supabase.from("livraisons").select("*, agents(nom)").eq("company_id", currentCompany.id).order("date", { ascending: false }).limit(100);
+        let q = getSupabase().from("livraisons").select("*, agents(nom)").eq("company_id", currentCompany.id).order("date", { ascending: false }).limit(100);
         if (filters.date) q = q.eq("date", filters.date);
         if (filters.agent_id) q = q.eq("agent_id", filters.agent_id);
         if (filters.statut) q = q.eq("statut", filters.statut);
         const { data, error } = await q;
         return error ? [] : (data || []);
       })(),
-      supabase.from("agents").select("*").eq("company_id", currentCompany.id).order("nom"),
+      getSupabase().from("agents").select("*").eq("company_id", currentCompany.id).order("nom"),
     ]);
     setLivraisons(livRes);
     setAgents(agentsRes.data || []);
@@ -57,7 +57,7 @@ export default function BonLivraisonPage() {
     setSaving(true);
     try {
       const agentNom = agents.find(a => a.id === parseInt(form.agent_id))?.nom || "";
-      const { error } = await supabase.from("livraisons").insert({
+      const { error } = await getSupabase().from("livraisons").insert({
         company_id: currentCompany.id, colis: form.colis, client_donneur: form.client_donneur,
         destinataire: form.destinataire, destinataire_telephone: form.destinataire_telephone,
         destinataire_lieu: form.destinataire_lieu, agent_id: form.agent_id ? parseInt(form.agent_id) : null,

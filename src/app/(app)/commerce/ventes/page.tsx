@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { supabase, getCurrentCompany } from "@/lib/supabase";
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
 import { formatAr, TODAY } from "@/modules/shared/utils/constants";
 import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
 
@@ -127,7 +127,7 @@ export default function VentesPage() {
     try {
       const [ventesData, produitsData] = await Promise.all([
         (async () => {
-          let q = supabase.from("ventes").select("*").eq("company_id", currentCompany.id).order("date_vente", { ascending: false });
+          let q = getSupabase().from("ventes").select("*").eq("company_id", currentCompany.id).order("date_vente", { ascending: false });
           if (filters.dateDebut) q = q.gte("date_vente", filters.dateDebut);
           if (filters.dateFin) q = q.lte("date_vente", filters.dateFin);
           if (filters.statut) q = q.eq("statut", filters.statut);
@@ -136,7 +136,7 @@ export default function VentesPage() {
           if (error) throw error;
           return data || [];
         })(),
-        supabase.from("produits").select("*").eq("company_id", currentCompany.id).eq("is_active", true).order("nom").then(({ data, error }) => { if (error) throw error; return data || []; }),
+        getSupabase().from("produits").select("*").eq("company_id", currentCompany.id).eq("is_active", true).order("nom").then(({ data, error }) => { if (error) throw error; return data || []; }),
       ]);
       if (!mountedRef.current) return;
       setVentes(ventesData);
@@ -191,7 +191,7 @@ export default function VentesPage() {
   // ─── Generate invoice number ─────────────────────────────────
   const generateNumeroFacture = async () => {
     const year = new Date().getFullYear().toString().slice(-2);
-    const { data } = await supabase.from("ventes").select("numero_facture").eq("company_id", currentCompany.id).order("created_at", { ascending: false }).limit(1);
+    const { data } = await getSupabase().from("ventes").select("numero_facture").eq("company_id", currentCompany.id).order("created_at", { ascending: false }).limit(1);
     if (!data || data.length === 0) return `FACT-${year}-0001`;
     const lastNum = data[0].numero_facture;
     const match = lastNum.match(/\d+$/);
@@ -210,19 +210,19 @@ export default function VentesPage() {
 
       if (editMode && selectedVente) {
         // Restore old stock
-        const { data: oldDetails } = await supabase.from("vente_details").select("*").eq("vente_id", selectedVente.id);
+        const { data: oldDetails } = await getSupabase().from("vente_details").select("*").eq("vente_id", selectedVente.id);
         for (const item of (oldDetails || [])) {
-          const { data: prod } = await supabase.from("produits").select("quantite_stock").eq("id", item.produit_id).single();
-          if (prod) await supabase.from("produits").update({ quantite_stock: prod.quantite_stock + item.quantite }).eq("id", item.produit_id);
+          const { data: prod } = await getSupabase().from("produits").select("quantite_stock").eq("id", item.produit_id).single();
+          if (prod) await getSupabase().from("produits").update({ quantite_stock: prod.quantite_stock + item.quantite }).eq("id", item.produit_id);
         }
         // Delete old details
-        await supabase.from("vente_details").delete().eq("vente_id", selectedVente.id);
+        await getSupabase().from("vente_details").delete().eq("vente_id", selectedVente.id);
         // Update totals
         const remise = venteData.remise;
         const montantHT = details.reduce((s, d) => s + d.sous_total, 0);
         const montantFinal = montantHT - remise;
         const reste = montantFinal - venteData.montant_paye;
-        await supabase.from("ventes").update({
+        await getSupabase().from("ventes").update({
           client_nom: venteData.client_nom, client_telephone: venteData.client_telephone,
           type_paiement: venteData.type_paiement, remise, montant_ht: montantHT,
           montant_total: montantFinal, montant_paye: venteData.montant_paye,
@@ -231,9 +231,9 @@ export default function VentesPage() {
         }).eq("id", selectedVente.id);
         // Insert new details + update stock
         for (const d of details) {
-          await supabase.from("vente_details").insert({ vente_id: selectedVente.id, produit_id: d.produit_id, quantite: d.quantite, prix_unitaire: d.prix_unitaire, sous_total: d.sous_total });
-          const { data: prod } = await supabase.from("produits").select("quantite_stock").eq("id", d.produit_id).single();
-          if (prod) await supabase.from("produits").update({ quantite_stock: prod.quantite_stock - d.quantite }).eq("id", d.produit_id);
+          await getSupabase().from("vente_details").insert({ vente_id: selectedVente.id, produit_id: d.produit_id, quantite: d.quantite, prix_unitaire: d.prix_unitaire, sous_total: d.sous_total });
+          const { data: prod } = await getSupabase().from("produits").select("quantite_stock").eq("id", d.produit_id).single();
+          if (prod) await getSupabase().from("produits").update({ quantite_stock: prod.quantite_stock - d.quantite }).eq("id", d.produit_id);
         }
         resetForm();
         loadData();
@@ -244,7 +244,7 @@ export default function VentesPage() {
         const montantHT = details.reduce((s, d) => s + d.sous_total, 0);
         const montantFinal = montantHT - remise;
         const reste = montantFinal - venteData.montant_paye;
-        const { data: newVente, error: venteError } = await supabase.from("ventes").insert({
+        const { data: newVente, error: venteError } = await getSupabase().from("ventes").insert({
           company_id: currentCompany.id, numero_facture: numeroFacture,
           date_vente: venteData.date_vente, client_nom: venteData.client_nom,
           client_telephone: venteData.client_telephone, montant_ht: montantHT,
@@ -254,9 +254,9 @@ export default function VentesPage() {
         }).select().single();
         if (venteError) throw venteError;
         for (const d of details) {
-          await supabase.from("vente_details").insert({ vente_id: newVente.id, produit_id: d.produit_id, quantite: d.quantite, prix_unitaire: d.prix_unitaire, sous_total: d.sous_total });
-          const { data: prod } = await supabase.from("produits").select("quantite_stock").eq("id", d.produit_id).single();
-          if (prod) await supabase.from("produits").update({ quantite_stock: prod.quantite_stock - d.quantite }).eq("id", d.produit_id);
+          await getSupabase().from("vente_details").insert({ vente_id: newVente.id, produit_id: d.produit_id, quantite: d.quantite, prix_unitaire: d.prix_unitaire, sous_total: d.sous_total });
+          const { data: prod } = await getSupabase().from("produits").select("quantite_stock").eq("id", d.produit_id).single();
+          if (prod) await getSupabase().from("produits").update({ quantite_stock: prod.quantite_stock - d.quantite }).eq("id", d.produit_id);
         }
         resetForm();
         loadData();
@@ -278,7 +278,7 @@ export default function VentesPage() {
       montant_paye: vente.montant_paye || 0, date_vente: vente.date_vente?.split("T")[0] || TODAY(),
       notes: vente.notes || "",
     });
-    const { data: details } = await supabase.from("vente_details").select("*, produit:produits(nom)").eq("vente_id", vente.id);
+    const { data: details } = await getSupabase().from("vente_details").select("*, produit:produits(nom)").eq("vente_id", vente.id);
     if (details) {
       setPanier(details.map(d => ({
         produit_id: d.produit_id, nom: d.produit?.nom || "Produit",
@@ -293,13 +293,13 @@ export default function VentesPage() {
     const { id } = confirmDelete;
     setConfirmDelete(null);
     try {
-      const { data: details } = await supabase.from("vente_details").select("*").eq("vente_id", id);
+      const { data: details } = await getSupabase().from("vente_details").select("*").eq("vente_id", id);
       for (const item of (details || [])) {
-        const { data: prod } = await supabase.from("produits").select("quantite_stock").eq("id", item.produit_id).single();
-        if (prod) await supabase.from("produits").update({ quantite_stock: prod.quantite_stock + item.quantite }).eq("id", item.produit_id);
+        const { data: prod } = await getSupabase().from("produits").select("quantite_stock").eq("id", item.produit_id).single();
+        if (prod) await getSupabase().from("produits").update({ quantite_stock: prod.quantite_stock + item.quantite }).eq("id", item.produit_id);
       }
-      await supabase.from("vente_details").delete().eq("vente_id", id);
-      await supabase.from("ventes").delete().eq("id", id);
+      await getSupabase().from("vente_details").delete().eq("vente_id", id);
+      await getSupabase().from("ventes").delete().eq("id", id);
       loadData();
     } catch (err) {
       setError("Erreur lors de la suppression");
@@ -309,14 +309,14 @@ export default function VentesPage() {
   // ─── View details ────────────────────────────────────────────
   const handleViewVente = async (vente) => {
     setViewVente(vente); setLoadingDetails(true);
-    const { data } = await supabase.from("vente_details").select("*, produit:produits(nom,reference,prix_vente)").eq("vente_id", vente.id);
+    const { data } = await getSupabase().from("vente_details").select("*, produit:produits(nom,reference,prix_vente)").eq("vente_id", vente.id);
     setViewDetails(data || []);
     setLoadingDetails(false);
   };
 
   // ─── Print ───────────────────────────────────────────────────
   const handlePrint = async (vente) => {
-    const { data: details } = await supabase.from("vente_details").select("*, produit:produits(nom)").eq("vente_id", vente.id);
+    const { data: details } = await getSupabase().from("vente_details").select("*, produit:produits(nom)").eq("vente_id", vente.id);
     printTicket(vente, details || [], currentCompany);
   };
 

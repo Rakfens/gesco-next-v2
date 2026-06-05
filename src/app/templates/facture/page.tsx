@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase, getCurrentCompany } from "@/lib/supabase";
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
 import { formatAr } from "@/modules/shared/utils/constants";
 import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
 import { THERMAL_CSS, getCompanyConfig, openPrintWindow } from "../printStyles";
@@ -23,7 +23,7 @@ export default function FactureTemplatePage() {
   const loadVentes = async () => {
     if (!currentCompany) return;
     setLoading(true);
-    let q = supabase.from("ventes").select("*").eq("company_id", currentCompany.id).order("date_vente", { ascending: false }).limit(50);
+    let q = getSupabase().from("ventes").select("*").eq("company_id", currentCompany.id).order("date_vente", { ascending: false }).limit(50);
     if (filters.dateDebut) q = q.gte("date_vente", filters.dateDebut);
     if (filters.dateFin) q = q.lte("date_vente", filters.dateFin);
     if (filters.statut) q = q.eq("statut", filters.statut);
@@ -34,7 +34,7 @@ export default function FactureTemplatePage() {
   };
 
   const loadDetails = async (venteId) => {
-    const { data } = await supabase.from("vente_details").select("*, produit:produits(nom,reference,prix_vente)").eq("vente_id", venteId);
+    const { data } = await getSupabase().from("vente_details").select("*, produit:produits(nom,reference,prix_vente)").eq("vente_id", venteId);
     return data || [];
   };
 

@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
-import { getCurrentCompany } from "@/lib/supabase";
+import { getSupabase } from '@/lib/supabase';
+import { getCurrentCompany } from '@/lib/supabase';
 import { formatAr } from "@/modules/shared/utils/constants";
 import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
 
@@ -40,7 +40,7 @@ export default function AchatsPage() {
     setError(null);
     
     try {
-      let query = supabase
+      let query = getSupabase()
         .from('achats')
         .select('*')
         .eq('company_id', currentCompany.id)
@@ -109,7 +109,7 @@ export default function AchatsPage() {
     if (!selectedAchat) return;
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('achats')
         .update({ ...editForm })
         .eq('id', selectedAchat.id);

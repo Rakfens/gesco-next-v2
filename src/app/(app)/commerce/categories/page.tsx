@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
-import { getCurrentCompany } from "@/lib/supabase";
+import { getSupabase } from '@/lib/supabase';
+import { getCurrentCompany } from '@/lib/supabase';
 import { Button, Input, Badge, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty } from "@/modules/shared/components/ui";
 
 export default function CategoriesPage() {
@@ -29,7 +29,7 @@ export default function CategoriesPage() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('categories')
         .select('*')
         .eq('company_id', currentCompany.id)
@@ -56,10 +56,10 @@ export default function CategoriesPage() {
     try {
       const payload = { nom: formData.nom, description: formData.description || null, company_id: currentCompany?.id };
       if (isEditing && editingId) {
-        const { error } = await supabase.from('categories').update(payload).eq('id', editingId).eq('company_id', currentCompany?.id);
+        const { error } = await getSupabase().from('categories').update(payload).eq('id', editingId).eq('company_id', currentCompany?.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('categories').insert(payload);
+        const { error } = await getSupabase().from('categories').insert(payload);
         if (error) throw error;
       }
       resetForm();
@@ -80,7 +80,7 @@ export default function CategoriesPage() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Supprimer cette catégorie ?")) return;
     try {
-      const { error } = await supabase.from('categories').delete().eq('id', id).eq('company_id', currentCompany?.id);
+      const { error } = await getSupabase().from('categories').delete().eq('id', id).eq('company_id', currentCompany?.id);
       if (error) throw error;
       fetchCategories();
     } catch (err: any) {

@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
-import { getCurrentCompany } from "@/lib/supabase";
+import { getSupabase } from '@/lib/supabase';
+import { getCurrentCompany } from '@/lib/supabase';
 import { formatAr } from "@/modules/shared/utils/constants";
 import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty } from "@/modules/shared/components/ui";
 
@@ -36,7 +36,7 @@ export default function AgentsPage() {
     setError(null);
     
     try {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('agents')
         .select('*')
         .eq('company_id', currentCompany.id)
@@ -69,7 +69,7 @@ export default function AgentsPage() {
     try {
       if (isEditing && editingId) {
         // Update agent
-        const { error } = await supabase
+        const { error } = await getSupabase()
           .from('agents')
           .update({ 
             nom: formData.nom,
@@ -81,7 +81,7 @@ export default function AgentsPage() {
         if (error) throw error;
       } else {
         // Add agent
-        const { error } = await supabase
+        const { error } = await getSupabase()
           .from('agents')
           .insert({ 
             nom: formData.nom,
@@ -110,7 +110,7 @@ export default function AgentsPage() {
     if (!window.confirm("Supprimer cet agent ? Cette action est irréversible.")) return;
     
     try {
-      const { error } = await supabase
+      const { error } = await getSupabase()
         .from('agents')
         .delete()
         .eq('id', id)

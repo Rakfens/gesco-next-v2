@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 
 // ============ TYPES ============
 
@@ -30,7 +30,7 @@ export interface RecuperationTotal {
 
 export const fetchRecuperations = async (companyId: string | number): Promise<Recuperation[]> => {
   if (!companyId) return [];
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('recuperations')
     .select('*')
     .eq('company_id', companyId)
@@ -41,7 +41,7 @@ export const fetchRecuperations = async (companyId: string | number): Promise<Re
 
 export const getRecuperationsByDate = async (date: string, companyId: string | number): Promise<Recuperation[]> => {
   if (!companyId) return [];
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('recuperations')
     .select('*')
     .eq('company_id', companyId)
@@ -60,7 +60,7 @@ export const getRecuperationsByMonth = async (mois: string, companyId: string | 
   const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
   const endDate = `${year}-${month}-${lastDay}`;
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('recuperations')
     .select('*')
     .eq('company_id', companyId)
@@ -86,7 +86,7 @@ export const addRecuperation = async (recuperation: Recuperation, companyId: str
     company_id: companyId,
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('recuperations')
     .insert([insertData])
     .select();
@@ -96,7 +96,7 @@ export const addRecuperation = async (recuperation: Recuperation, companyId: str
 
 export const updateRecuperation = async (id: number, updates: Partial<Recuperation>, companyId: string | number): Promise<Recuperation> => {
   if (!companyId) throw new Error('Aucune société sélectionnée');
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('recuperations')
     .update(updates)
     .eq('id', id)
@@ -108,7 +108,7 @@ export const updateRecuperation = async (id: number, updates: Partial<Recuperati
 
 export const deleteRecuperation = async (id: number, companyId: string | number): Promise<void> => {
   if (!companyId) throw new Error('Aucune société sélectionnée');
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('recuperations')
     .delete()
     .eq('id', id)
@@ -121,7 +121,7 @@ export const deleteRecuperation = async (id: number, companyId: string | number)
 export const getRecuperationsByLivreur = async (livreurId: string | number, mois: string | null, companyId: string | number): Promise<Recuperation[]> => {
   if (!companyId || !livreurId) return [];
 
-  let query = supabase
+  let query = getSupabase()
     .from('recuperations')
     .select('*')
     .eq('livreur_id', livreurId)
@@ -145,7 +145,7 @@ export const getRecuperationsByLivreur = async (livreurId: string | number, mois
 export const getRecuperationsByLivreurNom = async (livreurNom: string, mois: string | null, companyId: string | number): Promise<Recuperation[]> => {
   if (!companyId || !livreurNom) return [];
 
-  let query = supabase
+  let query = getSupabase()
     .from('recuperations')
     .select('*')
     .eq('livreur_nom', livreurNom)
@@ -169,7 +169,7 @@ export const getRecuperationsByLivreurNom = async (livreurNom: string, mois: str
 export const getTotalRecuperationsByLivreurNom = async (livreurNom: string, companyId: string | number): Promise<RecuperationTotal> => {
   if (!companyId || !livreurNom) return { total: 0, count: 0 };
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('recuperations')
     .select('frais_recuperation, date, client_donneur, livreur_nom')
     .eq('livreur_nom', livreurNom)
@@ -185,7 +185,7 @@ export const getTotalRecuperationsByLivreurNom = async (livreurNom: string, comp
 export const getTotalRecuperationsByLivreur = async (livreurId: string | number, companyId: string | number): Promise<{ total: number; count: number }> => {
   if (!companyId || !livreurId) return { total: 0, count: 0 };
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('recuperations')
     .select('frais_recuperation')
     .eq('livreur_id', livreurId)
@@ -200,7 +200,7 @@ export const getTotalRecuperationsByLivreur = async (livreurId: string | number,
 export const getAllRecuperationsByLivreurNom = async (livreurNom: string, companyId: string | number): Promise<Recuperation[]> => {
   if (!companyId || !livreurNom) return [];
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('recuperations')
     .select('*')
     .eq('livreur_nom', livreurNom)
@@ -220,7 +220,7 @@ export const getRecuperationsStatsByMonth = async (mois: string, companyId: stri
   const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
   const endDate = `${year}-${month}-${lastDay}`;
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('recuperations')
     .select('*')
     .eq('company_id', companyId)

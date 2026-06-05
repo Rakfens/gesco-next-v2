@@ -1,8 +1,8 @@
 'use client';
 
-// useAuth.ts — v5 : simple, fiable, zéro race condition
+// useAuth.ts — utilise getSupabase() au lieu du Proxy
 import { useState, useEffect, useRef } from 'react';
-import { supabase, clearCurrentCompany } from '@/lib/supabase';
+import { getSupabase, clearCurrentCompany } from '@/lib/supabase';
 
 interface SupabaseUser {
   id: string;
@@ -20,20 +20,18 @@ interface UseAuthReturn {
 }
 
 export const useAuth = (): UseAuthReturn => {
-  const [user,      setUser]      = useState<SupabaseUser | null | undefined>(undefined); // undefined = pas encore résolu
+  const [user,      setUser]      = useState<SupabaseUser | null | undefined>(undefined);
   const [authError, setAuthError] = useState<string | null>(null);
   const resolved = useRef(false);
 
   useEffect(() => {
-    // onAuthStateChange est déclenché IMMÉDIATEMENT avec la session en cache
-    // C'est LA source de vérité — pas besoin de getSession() en plus
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const sb = getSupabase();
+    const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
       const u = (session?.user ?? null) as SupabaseUser | null;
       setUser(u);
       resolved.current = true;
     });
 
-    // Sécurité : si onAuthStateChange ne se déclenche pas dans 4s → null
     const guard = setTimeout(() => {
       if (!resolved.current) setUser(null);
     }, 4000);
@@ -46,16 +44,19 @@ export const useAuth = (): UseAuthReturn => {
 
   const login = async (email: string, password: string) => {
     setAuthError(null);
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const sb = getSupabase();
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
     if (error) { setAuthError(error.message); throw error; }
     return data;
   };
 
   const logout = async () => {
     clearCurrentCompany();
-    // Forcer immédiatement AVANT signOut pour débloquer l'UI
     setUser(null);
-    try { await supabase.auth.signOut(); } catch (_) {}
+    try {
+      const sb = getSupabase();
+      await sb.auth.signOut();
+    } catch (_) {}
   };
 
   return {

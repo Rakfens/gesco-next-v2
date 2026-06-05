@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase, getCurrentCompany } from "@/lib/supabase";
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
 import { formatAr, TODAY } from "@/modules/shared/utils/constants";
 import { Button, Input, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
 import { THERMAL_CSS, getCompanyConfig, openPrintWindow } from "../printStyles";
@@ -41,8 +41,8 @@ export default function DevisTemplatePage() {
     if (!currentCompany) return;
     setLoading(true);
     const [produitsRes, devisRes] = await Promise.all([
-      supabase.from("produits").select("*").eq("company_id", currentCompany.id).eq("is_active", true).order("nom"),
-      supabase.from("devis").select("*").eq("company_id", currentCompany.id).order("date_devis", { ascending: false }).limit(50),
+      getSupabase().from("produits").select("*").eq("company_id", currentCompany.id).eq("is_active", true).order("nom"),
+      getSupabase().from("devis").select("*").eq("company_id", currentCompany.id).order("date_devis", { ascending: false }).limit(50),
     ]);
     if (!produitsRes.error) setProduits(produitsRes.data || []);
     if (!devisRes.error) setDevisList(devisRes.data || []);
@@ -82,7 +82,7 @@ export default function DevisTemplatePage() {
 
   const generateNumeroDevis = async () => {
     const year = new Date().getFullYear().toString().slice(-2);
-    const { data } = await supabase.from("devis").select("numero_devis").eq("company_id", currentCompany.id).order("created_at", { ascending: false }).limit(1);
+    const { data } = await getSupabase().from("devis").select("numero_devis").eq("company_id", currentCompany.id).order("created_at", { ascending: false }).limit(1);
     if (!data || data.length === 0) return `DEV-${year}-0001`;
     const match = data[0].numero_devis.match(/\d+$/);
     if (match) return `DEV-${year}-${String(parseInt(match[0]) + 1).padStart(4, "0")}`;
@@ -94,7 +94,7 @@ export default function DevisTemplatePage() {
     setSaving(true);
     try {
       const numero = await generateNumeroDevis();
-      const { data: devis, error } = await supabase.from("devis").insert({
+      const { data: devis, error } = await getSupabase().from("devis").insert({
         company_id: currentCompany.id, numero_devis: numero,
         client_nom: devisInfo.client_nom, client_telephone: devisInfo.client_telephone,
         date_devis: devisInfo.date_devis, validite_jours: devisInfo.validite_jours,
@@ -102,7 +102,7 @@ export default function DevisTemplatePage() {
       }).select().single();
       if (error) throw error;
       for (const item of devisItems) {
-        await supabase.from("devis_details").insert({
+        await getSupabase().from("devis_details").insert({
           devis_id: devis.id, produit_id: item.produit_id, quantite: item.quantite,
           prix_unitaire: item.prix_unitaire, sous_total: item.sous_total,
         });
@@ -122,7 +122,7 @@ export default function DevisTemplatePage() {
   };
 
   const printDevis = async (devis) => {
-    const { data: items } = await supabase.from("devis_details").select("*, produit:produits(nom,reference)").eq("devis_id", devis.id);
+    const { data: items } = await getSupabase().from("devis_details").select("*, produit:produits(nom,reference)").eq("devis_id", devis.id);
     const config = getCompanyConfig(currentCompany?.slug);
     const date = new Date(devis.date_devis).toLocaleDateString("fr-FR");
     const validite = new Date(new Date(devis.date_devis).getTime() + devis.validite_jours * 86400000).toLocaleDateString("fr-FR");

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
 import { useApp } from '@/modules/shared/context/AppContext';
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 import { formatAr } from '@/modules/shared/utils/constants';
 import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, StatCard, Modal, ModalHeader, ModalBody, ModalFooter, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty, TableFooter } from '@/modules/shared/components/ui';
 
@@ -32,7 +32,7 @@ export default function Depenses() {
     if (!currentCompany) return;
     setLoading(true);
     try {
-      let q = supabase.from('depenses').select('*')
+      let q = getSupabase().from('depenses').select('*')
         .eq('company_id', currentCompany.id)
         .order('date_depense', { ascending: false });
       if (filterCat) q = q.eq('categorie', filterCat);
@@ -75,7 +75,7 @@ export default function Depenses() {
     if (form.montant <= 0) { showWarn('Montant doit être > 0'); return; }
     setSaving(true);
     try {
-      const { error } = await supabase.from('depenses').insert([{
+      const { error } = await getSupabase().from('depenses').insert([{
         company_id: currentCompany.id, categorie: form.categorie,
         description: form.description, montant: form.montant,
         date_depense: form.date_depense, created_at: new Date().toISOString(),
@@ -95,7 +95,7 @@ export default function Depenses() {
     const id = confirmDelete.id;
     setConfirmDelete(null);
     try {
-      const { error } = await supabase.from('depenses').delete().eq('id', id).eq('company_id', currentCompany.id);
+      const { error } = await getSupabase().from('depenses').delete().eq('id', id).eq('company_id', currentCompany.id);
       if (error) throw error;
       showSuccess('Dépense supprimée');
       loadDepenses();

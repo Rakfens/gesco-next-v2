@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { getSupabase } from '@/lib/supabase';
 
 // ============ TYPES ============
 
@@ -53,7 +53,7 @@ export interface RecordCountResult {
 export const getCurrentInventory = async (companyId: string | number): Promise<Inventaire | null> => {
   if (!companyId) return null;
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('inventaires')
     .select('*')
     .eq('company_id', companyId)
@@ -73,7 +73,7 @@ export const startInventory = async (companyId: string | number, notes: string =
     throw new Error("Un inventaire est déjà en cours. Terminez-le avant d'en commencer un nouveau.");
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('inventaires')
     .insert([{
       company_id: companyId,
@@ -100,7 +100,7 @@ export const recordCount = async (
 ): Promise<RecordCountResult> => {
   if (!companyId) throw new Error('Aucune société sélectionnée');
 
-  const { data: product, error: productError } = await supabase
+  const { data: product, error: productError } = await getSupabase()
     .from('produits')
     .select('quantite_stock, nom, reference')
     .eq('id', productId)
@@ -112,7 +112,7 @@ export const recordCount = async (
   const theoreticalQuantity = product.quantite_stock;
   const difference = actualQuantity - theoreticalQuantity;
 
-  const { data: existing } = await supabase
+  const { data: existing } = await getSupabase()
     .from('inventaire_details')
     .select('id')
     .eq('inventaire_id', inventoryId)
@@ -122,7 +122,7 @@ export const recordCount = async (
   let result;
 
   if (existing) {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('inventaire_details')
       .update({
         quantite_reelle: actualQuantity,
@@ -137,7 +137,7 @@ export const recordCount = async (
     if (error) throw error;
     result = data;
   } else {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('inventaire_details')
       .insert([{
         inventaire_id: inventoryId,
@@ -169,7 +169,7 @@ export const finishInventory = async (
 ): Promise<{ success: boolean; corrections_appliquees: number }> => {
   if (!companyId) throw new Error('Aucune société sélectionnée');
 
-  const { data: differences, error: diffError } = await supabase
+  const { data: differences, error: diffError } = await getSupabase()
     .from('inventaire_details')
     .select('*')
     .eq('inventaire_id', inventoryId)
@@ -178,13 +178,13 @@ export const finishInventory = async (
   if (diffError) throw diffError;
 
   for (const diff of differences || []) {
-    await supabase
+    await getSupabase()
       .from('produits')
       .update({ quantite_stock: diff.quantite_reelle, updated_at: new Date().toISOString() })
       .eq('id', diff.produit_id)
       .eq('company_id', companyId);
 
-    await supabase
+    await getSupabase()
       .from('mouvements_stock')
       .insert([{
         company_id: companyId,
@@ -197,7 +197,7 @@ export const finishInventory = async (
       }]);
   }
 
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('inventaires')
     .update({ date_fin: new Date().toISOString(), statut: 'termine' })
     .eq('id', inventoryId)
@@ -216,7 +216,7 @@ export const finishInventory = async (
 export const getInventoryHistory = async (companyId: string | number, limit: number = 50): Promise<Inventaire[]> => {
   if (!companyId) return [];
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('inventaires')
     .select('*')
     .eq('company_id', companyId)
@@ -230,7 +230,7 @@ export const getInventoryHistory = async (companyId: string | number, limit: num
 export const getInventoryDetails = async (inventoryId: number, companyId: string | number): Promise<InventaireWithDetails | null> => {
   if (!companyId) return null;
 
-  const { data: inventory, error: invError } = await supabase
+  const { data: inventory, error: invError } = await getSupabase()
     .from('inventaires')
     .select('*')
     .eq('id', inventoryId)
@@ -239,7 +239,7 @@ export const getInventoryDetails = async (inventoryId: number, companyId: string
 
   if (invError) throw invError;
 
-  const { data: details, error: detailsError } = await supabase
+  const { data: details, error: detailsError } = await getSupabase()
     .from('inventaire_details')
     .select('*, produit:produits(id, nom, reference, categorie, unite)')
     .eq('inventaire_id', inventoryId)
@@ -270,7 +270,7 @@ export const getInventoryDetails = async (inventoryId: number, companyId: string
 export const getCountedProducts = async (inventoryId: number, companyId: string | number): Promise<InventaireDetail[]> => {
   if (!companyId) return [];
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('inventaire_details')
     .select('*, produit:produits(id, nom, reference, categorie)')
     .eq('inventaire_id', inventoryId);
@@ -286,7 +286,7 @@ export const getUncountedProducts = async (
 ): Promise<unknown[]> => {
   if (!companyId) return [];
 
-  const { data: counted, error: countedError } = await supabase
+  const { data: counted, error: countedError } = await getSupabase()
     .from('inventaire_details')
     .select('produit_id')
     .eq('inventaire_id', inventoryId);
@@ -295,7 +295,7 @@ export const getUncountedProducts = async (
 
   const countedIds = counted?.map(c => c.produit_id) || [];
 
-  let query = supabase
+  let query = getSupabase()
     .from('produits')
     .select('*')
     .eq('company_id', companyId)

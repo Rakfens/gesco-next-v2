@@ -33,7 +33,7 @@ export const cache = new CacheService();
 
 // FIX #3 : écouter le Realtime et invalider le cache immédiatement
 // → quand un autre appareil modifie des ventes/achats, le cache local se vide
-window.addEventListener('supabase_realtime', (e) => {
+window.addEventListener('getSupabase()_realtime', (e) => {
   const { table } = e.detail || {};
   if (table) {
     cache.invalidate(table); // ex: invalide toutes les clés contenant "ventes"
