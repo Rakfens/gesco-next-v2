@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabase } from '@/lib/supabase';
+import { LOGIN_EMAIL, LOGIN_PASSWORD } from '@/modules/shared/utils/constants';
 
 const EyeOpen = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -29,8 +30,10 @@ const LockIcon = () => (
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '';
+  const [email, setEmail] = useState(LOGIN_EMAIL);
+  const [password, setPassword] = useState(LOGIN_PASSWORD);
   const [error, setError] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -53,9 +56,9 @@ export default function LoginPage() {
         const list: Array<{ type?: string }> = (uc || []).map((r: { company: { type?: string }[] | { type?: string } }) => Array.isArray(r.company) ? r.company[0] : r.company).filter(Boolean) as Array<{ type?: string }>;
         const first = list[0];
         if (first?.type === 'service') {
-          router.replace("/livraison/dashboard");
+          router.replace(redirectTo || "/livraison/dashboard");
         } else {
-          router.replace("/commerce/dashboard");
+          router.replace(redirectTo || "/commerce/dashboard");
         }
       }
     });
@@ -83,12 +86,12 @@ export default function LoginPage() {
         const list: Array<{ type?: string }> = (uc || []).map((r: { company: { type?: string }[] | { type?: string } }) => Array.isArray(r.company) ? r.company[0] : r.company).filter(Boolean) as Array<{ type?: string }>;
         const first = list[0];
         if (first?.type === 'service') {
-          router.replace("/livraison/dashboard");
+          router.replace(redirectTo || "/livraison/dashboard");
         } else {
-          router.replace("/commerce/dashboard");
+          router.replace(redirectTo || "/commerce/dashboard");
         }
       } else {
-        router.replace("/commerce/dashboard");
+        router.replace(redirectTo || "/commerce/dashboard");
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Identifiants incorrects");

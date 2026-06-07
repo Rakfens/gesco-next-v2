@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 export default function RootPage() {
-  redirect("/commerce/ventes");
+  redirect("/login");
 }
 
 export const dynamic = "force-dynamic";
