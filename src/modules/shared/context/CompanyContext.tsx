@@ -79,6 +79,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     mounted.current = true;
     const { data: { subscription } } = getSupabase().auth.onAuthStateChange((event, session) => {
+      console.log('[COMPANY] Auth event:', event, 'session:', !!session);
       if (!mounted.current) return;
       if (!session || event === 'SIGNED_OUT') {
         clearCurrentCompany();
@@ -91,6 +92,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         return;
       }
       if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        console.log('[COMPANY] Loading companies for user:', session.user.id);
         loadCompanies(session.user.id);
       }
     });

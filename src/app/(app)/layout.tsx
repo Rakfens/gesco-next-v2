@@ -23,6 +23,7 @@ function LayoutContent({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { currentCompany, companies, switchCompany } = useCompany();
+  console.log('[LAYOUT] currentCompany:', currentCompany?.name, 'companies:', companies?.length);
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
