@@ -84,19 +84,28 @@ export default function LoginPage() {
 
       const { data: sessionData } = await sb.auth.getSession();
       const userId = sessionData.session?.user.id;
+      console.log('[LOGIN] Session userId:', userId);
+
       if (userId) {
-        const { data: uc } = await sb
+        console.log('[LOGIN] Fetching user_companies...');
+        const { data: uc, error: ucErr } = await sb
           .from('user_companies')
           .select('company:companies(*)')
           .eq('user_id', userId);
+        if (ucErr) console.error('[LOGIN] user_companies error:', ucErr.message);
+        console.log('[LOGIN] user_companies result:', JSON.stringify(uc));
         const list: Array<{ type?: string }> = (uc || []).map((r: { company: { type?: string }[] | { type?: string } }) => Array.isArray(r.company) ? r.company[0] : r.company).filter(Boolean) as Array<{ type?: string }>;
         const first = list[0];
+        console.log('[LOGIN] first company:', JSON.stringify(first));
         if (first?.type === 'service') {
+          console.log('[LOGIN] Redirecting to /livraison/dashboard');
           router.replace("/livraison/dashboard");
         } else {
+          console.log('[LOGIN] Redirecting to /commerce/dashboard');
           router.replace("/commerce/dashboard");
         }
       } else {
+        console.log('[LOGIN] No userId, redirecting to /commerce/dashboard');
         router.replace("/commerce/dashboard");
       }
     } catch (err: unknown) {
