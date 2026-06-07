@@ -12,20 +12,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Vérifier le cookie de session Supabase
-  const supabaseCookies = request.cookies.getAll().filter(
-    c => c.name.startsWith('sb-') && c.name.includes('auth-token')
-  );
-
-  const hasSession = supabaseCookies.length > 0 && supabaseCookies.some(c => c.value && c.value !== 'null');
-
-  // Pas de session → rediriger vers /login
-  if (!hasSession) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
+  // Laisser passer toutes les routes — la protection auth est gérée côté client
+  // par le CompanyProvider dans le layout (app)
   return NextResponse.next();
 }
 

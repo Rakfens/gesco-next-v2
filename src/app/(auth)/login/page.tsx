@@ -97,16 +97,12 @@ export default function LoginPage() {
         const list: Array<{ type?: string }> = (uc || []).map((r: { company: { type?: string }[] | { type?: string } }) => Array.isArray(r.company) ? r.company[0] : r.company).filter(Boolean) as Array<{ type?: string }>;
         const first = list[0];
         console.log('[LOGIN] first company:', JSON.stringify(first));
-        if (first?.type === 'service') {
-          console.log('[LOGIN] Redirecting to /livraison/dashboard');
-          window.location.href = "/livraison/dashboard";
-        } else {
-          console.log('[LOGIN] Redirecting to /commerce/dashboard');
-          window.location.href = "/commerce/dashboard";
-        }
+        const dest = first?.type === 'service' ? '/livraison/dashboard' : '/commerce/dashboard';
+        console.log('[LOGIN] Redirecting to', dest);
+        setTimeout(() => { window.location.href = dest; }, 500);
       } else {
         console.log('[LOGIN] No userId, redirecting to /commerce/dashboard');
-        window.location.href = "/commerce/dashboard";
+        setTimeout(() => { window.location.href = '/commerce/dashboard'; }, 500);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Identifiants incorrects";
