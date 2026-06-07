@@ -72,9 +72,15 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
+      console.log('[LOGIN] Attempting login for:', email);
       const sb = getSupabase();
+      console.log('[LOGIN] Supabase client created');
       const { error: authError } = await sb.auth.signInWithPassword({ email, password });
-      if (authError) throw authError;
+      if (authError) {
+        console.error('[LOGIN] Auth error:', authError.message);
+        throw authError;
+      }
+      console.log('[LOGIN] Auth success, fetching session...');
 
       const { data: sessionData } = await sb.auth.getSession();
       const userId = sessionData.session?.user.id;
@@ -94,7 +100,9 @@ export default function LoginPage() {
         router.replace("/commerce/dashboard");
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Identifiants incorrects");
+      const msg = err instanceof Error ? err.message : "Identifiants incorrects";
+      console.error('[LOGIN] Error:', msg);
+      setError(msg);
     } finally {
       setLoading(false);
     }
