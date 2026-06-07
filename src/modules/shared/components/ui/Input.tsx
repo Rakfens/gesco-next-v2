@@ -1,4 +1,3 @@
-// @ts-nocheck
 // ui/Input.tsx — Input professionnel réutilisable
 import React from 'react';
 
@@ -7,7 +6,25 @@ const ERROR_BORDER_COLOR = 'var(--red)';
 const SUCCESS_BORDER_COLOR = 'var(--green)';
 const FOCUS_BORDER_COLOR = 'var(--accent)';
 
-export const Input = ({
+interface InputProps {
+  label?: string;
+  type?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  error?: string;
+  success?: string;
+  disabled?: boolean;
+  required?: boolean;
+  icon?: React.ReactNode;
+  iconRight?: React.ReactNode;
+  helpText?: string;
+  style?: React.CSSProperties;
+  className?: string;
+  list?: string;
+}
+
+export const Input: React.FC<InputProps> = ({
   label,
   type = 'text',
   value,
@@ -31,12 +48,12 @@ export const Input = ({
     ? '0 0 0 3px var(--green-dim)'
     : '0 0 0 3px var(--accent-dim)';
 
-  const handleFocus = (e) => {
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     e.target.style.borderColor = FOCUS_BORDER_COLOR;
     e.target.style.boxShadow = focusShadow;
   };
 
-  const handleBlur = (e) => {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     e.target.style.borderColor = resolvedBorderColor;
     e.target.style.boxShadow = 'none';
   };
@@ -45,11 +62,8 @@ export const Input = ({
     <div style={{ marginBottom: label || helpText ? 14 : 0 }}>
       {label && (
         <label style={{
-          fontSize: 12,
-          fontWeight: 600,
-          color: 'var(--text2)',
-          display: 'block',
-          marginBottom: 6,
+          fontSize: 12, fontWeight: 600, color: 'var(--text2)',
+          display: 'block', marginBottom: 6,
         }}>
           {label}
           {required && <span style={{ color: 'var(--red)', marginLeft: 2 }}>*</span>}
@@ -59,10 +73,8 @@ export const Input = ({
         {icon && (
           <div style={{
             position: 'absolute', left: 12, top: '50%',
-            transform: 'translateY(-50%)',
-            color: 'var(--muted)',
-            display: 'flex',
-            pointerEvents: 'none',
+            transform: 'translateY(-50%)', color: 'var(--muted)',
+            display: 'flex', pointerEvents: 'none',
           }}>
             {icon}
           </div>
@@ -94,9 +106,7 @@ export const Input = ({
         {iconRight && (
           <div style={{
             position: 'absolute', right: 12, top: '50%',
-            transform: 'translateY(-50%)',
-            color: 'var(--muted)',
-            display: 'flex',
+            transform: 'translateY(-50%)', color: 'var(--muted)', display: 'flex',
           }}>
             {iconRight}
           </div>
@@ -112,7 +122,20 @@ export const Input = ({
   );
 };
 
-export const Select = ({
+interface SelectProps {
+  label?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  options: Array<{ value: string; label: string }>;
+  error?: string;
+  disabled?: boolean;
+  required?: boolean;
+  placeholder?: string;
+  style?: React.CSSProperties;
+  className?: string;
+}
+
+export const Select: React.FC<SelectProps> = ({
   label,
   value,
   onChange,
@@ -162,7 +185,7 @@ export const Select = ({
         {...props}
       >
         <option value="">{placeholder}</option>
-        {options.map(opt => (
+        {options.map((opt) => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>

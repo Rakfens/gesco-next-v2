@@ -1,7 +1,10 @@
-// @ts-nocheck
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { Company } from '@/modules/shared/types';
+
+export type { Company };
 
 let _client: SupabaseClient | null = null;
+let _company: Company | null = null;
 
 /**
  * Retourne le client Supabase singleton.
@@ -34,8 +37,7 @@ export function getSupabase(): SupabaseClient {
 }
 
 // ── Company helpers ──────────────────────────────────────────────────
-let _company: unknown = null;
 
-export const setCurrentCompany = (c: unknown) => { _company = c; };
-export const getCurrentCompany = () => _company;
+export const setCurrentCompany = (c: Company | null) => { _company = c; };
+export const getCurrentCompany = (): Company | null => _company;
 export const clearCurrentCompany = () => { _company = null; };

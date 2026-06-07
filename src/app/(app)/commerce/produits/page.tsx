@@ -1,17 +1,27 @@
-// @ts-nocheck
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getSupabase } from '@/lib/supabase';
-import { getCurrentCompany } from '@/lib/supabase';
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
+import { type Company } from '@/modules/shared/types';
 import { formatAr, formatNumber } from "@/modules/shared/utils/constants";
-import { Button, Input, Badge, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty } from "@/modules/shared/components/ui";
+import { Button, Input, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalTitle, ModalBody, Table, TableHead, TableBody, TableRow, TableCell } from "@/modules/shared/components/ui";
+
+interface Produit {
+  id: string;
+  nom: string;
+  categorie?: string;
+  prix_achat?: number;
+  prix_vente?: number;
+  stock?: number;
+  unite?: string;
+  company_id: string;
+}
 
 export default function ProduitsPage() {
-  const [produits, setProduits] = useState([]);
+  const [produits, setProduits] = useState<Produit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentCompany, setCurrentCompany] = useState<any>(null);
+  const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -44,8 +54,8 @@ export default function ProduitsPage() {
         .order('nom');
       if (error) throw error;
       setProduits(data || []);
-    } catch (err: any) {
-      setError(err.message || "Erreur lors du chargement des produits");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur lors du chargement des produits");
       setProduits([]);
     } finally {
       setLoading(false);
@@ -84,12 +94,12 @@ export default function ProduitsPage() {
       resetForm();
       setShowModal(false);
       fetchProduits();
-    } catch (err: any) {
-      setError(err.message || "Erreur lors de l'enregistrement");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur lors de l'enregistrement");
     }
   };
 
-  const handleEdit = (produit: any) => {
+  const handleEdit = (produit: Produit) => {
     setFormData({
       nom: produit.nom || "",
       categorie: produit.categorie || "",
@@ -109,8 +119,8 @@ export default function ProduitsPage() {
       const { error } = await getSupabase().from('produits').delete().eq('id', id).eq('company_id', currentCompany?.id);
       if (error) throw error;
       fetchProduits();
-    } catch (err: any) {
-      setError(err.message || "Erreur lors de la suppression");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur lors de la suppression");
     }
   };
 
@@ -129,9 +139,7 @@ export default function ProduitsPage() {
       </div>
 
       <Modal open={showModal} onOpenChange={setShowModal}>
-        <ModalHeader>
-          <ModalTitle>{isEditing ? "Modifier le produit" : "Nouveau Produit"}</ModalTitle>
-        </ModalHeader>
+        <ModalHeader title={isEditing ? "Modifier le produit" : "Nouveau Produit"} />
         <ModalBody>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

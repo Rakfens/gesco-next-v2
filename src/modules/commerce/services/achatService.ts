@@ -1,12 +1,38 @@
-// @ts-nocheck
-// src/modules/commerce/services/achatService.js
 import { getSupabase, getCurrentCompany } from '@/lib/supabase';
-import { createMouvementStock } from './stockService';
+import { createMouvementStockManuel as createMouvementStock } from './stockService';
+import type { Achat } from '@/modules/shared/types';
 
-// ============ CRUD ACHATS ============
+interface AchatFilters {
+  dateDebut?: string;
+  dateFin?: string;
+  statut?: string;
+  fournisseur_nom?: string;
+}
 
-// Récupérer tous les achats
-export const fetchAchats = async (filters = {}) => {
+interface AchatData {
+  numero_commande?: string;
+  date_achat?: string;
+  fournisseur_nom?: string;
+  fournisseur_contact?: string;
+  tva?: number;
+  montant_paye?: number;
+  statut?: string;
+  notes?: string;
+  created_by?: string;
+}
+
+interface AchatDetailItem {
+  produit_id: string;
+  quantite: number;
+  prix_unitaire: number;
+  sous_total?: number;
+}
+
+interface AchatWithDetails extends Achat {
+  details: AchatDetailItem[];
+}
+
+export const fetchAchats = async (filters: AchatFilters = {}): Promise<Achat[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
@@ -31,11 +57,10 @@ export const fetchAchats = async (filters = {}) => {
 
   const { data, error } = await query;
   if (error) throw error;
-  return data;
+  return data as Achat[];
 };
 
-// Récupérer un achat avec ses détails
-export const fetchAchatWithDetails = async (id) => {
+export const fetchAchatWithDetails = async (id: string): Promise<AchatWithDetails | null> => {
   const company = getCurrentCompany();
   if (!company) return null;
 
@@ -58,15 +83,13 @@ export const fetchAchatWithDetails = async (id) => {
 
   if (detailsError) throw detailsError;
 
-  return { ...achat, details };
+  return { ...achat, details: details || [] } as AchatWithDetails;
 };
 
-// Créer un nouvel achat
-export const createAchat = async (achatData, details) => {
+export const createAchat = async (achatData: AchatData, details: AchatDetailItem[]): Promise<Achat> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
-  // Calculer les totaux
   let montantTotal = 0;
   for (const item of details) {
     item.sous_total = item.quantite * item.prix_unitaire;
@@ -96,7 +119,6 @@ export const createAchat = async (achatData, details) => {
 
   if (achatError) throw achatError;
 
-  // Créer les détails et mettre à jour le stock
   for (const item of details) {
     const { error: detailError } = await getSupabase()
       .from('achat_details')
@@ -113,39 +135,33 @@ export const createAchat = async (achatData, details) => {
     await updateStockAfterPurchase(item.produit_id, item.quantite, achat.id);
   }
 
-  return achat;
+  return achat as Achat;
 };
 
-// Mettre à jour un achat
-export const updateAchat = async (id, achatData, details) => {
+export const updateAchat = async (id: string, achatData: AchatData, details: AchatDetailItem[]): Promise<boolean> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
-  // Récupérer l'ancien achat
   const oldAchat = await fetchAchatWithDetails(id);
   if (!oldAchat) throw new Error('Achat non trouvé');
 
-  // Annuler l'ancien stock (diminuer car on annule l'ancien achat)
   for (const item of oldAchat.details) {
     await revertStockAfterUpdate(item.produit_id, item.quantite, id);
   }
 
-  // Supprimer les anciens détails
   const { error: deleteDetailsError } = await getSupabase()
     .from('achat_details')
     .delete()
     .eq('achat_id', id);
-  
+
   if (deleteDetailsError) throw deleteDetailsError;
 
-  // Calculer les nouveaux totaux
   let montantTotal = 0;
   for (const item of details) {
     item.sous_total = item.quantite * item.prix_unitaire;
     montantTotal += item.sous_total;
   }
 
-  // Mettre à jour l'achat
   const { error: achatError } = await getSupabase()
     .from('achats')
     .update({
@@ -164,7 +180,6 @@ export const updateAchat = async (id, achatData, details) => {
 
   if (achatError) throw achatError;
 
-  // Créer les nouveaux détails et mettre à jour le stock
   for (const item of details) {
     const { error: detailError } = await getSupabase()
       .from('achat_details')
@@ -184,29 +199,24 @@ export const updateAchat = async (id, achatData, details) => {
   return true;
 };
 
-// Supprimer un achat
-export const deleteAchat = async (id) => {
+export const deleteAchat = async (id: string): Promise<void> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
-  // Récupérer l'achat avec ses détails
   const achat = await fetchAchatWithDetails(id);
   if (!achat) throw new Error('Achat non trouvé');
 
-  // Annuler le stock (diminuer car on annule l'achat)
   for (const item of achat.details) {
     await revertStockAfterUpdate(item.produit_id, item.quantite, id);
   }
 
-  // Supprimer les détails
   const { error: deleteDetailsError } = await getSupabase()
     .from('achat_details')
     .delete()
     .eq('achat_id', id);
-  
+
   if (deleteDetailsError) throw deleteDetailsError;
 
-  // Supprimer l'achat
   const { error } = await getSupabase()
     .from('achats')
     .delete()
@@ -216,15 +226,14 @@ export const deleteAchat = async (id) => {
   if (error) throw error;
 };
 
-// Mettre à jour le stock après un achat
-const updateStockAfterPurchase = async (produitId, quantite, achatId) => {
+const updateStockAfterPurchase = async (produitId: string, quantite: number, achatId: string): Promise<void> => {
   const company = getCurrentCompany();
-  
+
   const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock, prix_achat')
     .eq('id', produitId)
-    .eq('company_id', company.id)
+    .eq('company_id', company!.id)
     .single();
 
   if (produitError) throw produitError;
@@ -233,12 +242,12 @@ const updateStockAfterPurchase = async (produitId, quantite, achatId) => {
 
   await getSupabase()
     .from('produits')
-    .update({ 
+    .update({
       quantite_stock: nouvelleQuantite,
       updated_at: new Date().toISOString()
     })
     .eq('id', produitId)
-    .eq('company_id', company.id);
+    .eq('company_id', company!.id);
 
   await createMouvementStock({
     produit_id: produitId,
@@ -251,15 +260,14 @@ const updateStockAfterPurchase = async (produitId, quantite, achatId) => {
   });
 };
 
-// Annuler le stock après modification/suppression d'achat
-const revertStockAfterUpdate = async (produitId, quantite, achatId) => {
+const revertStockAfterUpdate = async (produitId: string, quantite: number, achatId: string): Promise<void> => {
   const company = getCurrentCompany();
-  
+
   const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock')
     .eq('id', produitId)
-    .eq('company_id', company.id)
+    .eq('company_id', company!.id)
     .single();
 
   if (produitError) throw produitError;
@@ -272,12 +280,12 @@ const revertStockAfterUpdate = async (produitId, quantite, achatId) => {
 
   await getSupabase()
     .from('produits')
-    .update({ 
+    .update({
       quantite_stock: Math.max(0, nouvelleQuantite),
       updated_at: new Date().toISOString()
     })
     .eq('id', produitId)
-    .eq('company_id', company.id);
+    .eq('company_id', company!.id);
 
   await createMouvementStock({
     produit_id: produitId,
@@ -290,13 +298,12 @@ const revertStockAfterUpdate = async (produitId, quantite, achatId) => {
   });
 };
 
-// Générer un numéro de commande unique
-const generateNumeroCommande = async () => {
+const generateNumeroCommande = async (): Promise<string> => {
   const company = getCurrentCompany();
   const { data, error } = await getSupabase()
     .from('achats')
     .select('numero_commande')
-    .eq('company_id', company.id)
+    .eq('company_id', company!.id)
     .order('created_at', { ascending: false })
     .limit(1);
 
@@ -313,10 +320,7 @@ const generateNumeroCommande = async () => {
   return `CMD-${String(new Date().getFullYear()).slice(-2)}-0001`;
 };
 
-// ============ STATISTIQUES ACHATS ============
-
-// Total des achats par période
-export const getTotalAchats = async (dateDebut, dateFin) => {
+export const getTotalAchats = async (dateDebut?: string, dateFin?: string): Promise<number> => {
   const company = getCurrentCompany();
   if (!company) return 0;
 
@@ -331,5 +335,5 @@ export const getTotalAchats = async (dateDebut, dateFin) => {
   const { data, error } = await query;
   if (error) throw error;
 
-  return data.reduce((sum, a) => sum + (a.montant_total || 0), 0);
+  return (data || []).reduce((sum: number, a: { montant_total: number }) => sum + (a.montant_total || 0), 0);
 };

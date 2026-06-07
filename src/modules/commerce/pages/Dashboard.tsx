@@ -1,7 +1,7 @@
-// @ts-nocheck
 // CommerceDashboard.tsx — Professional Design
 import { useState, useEffect } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
+import { Produit, Vente } from '@/modules/shared/types';
 import { fetchProduits, getAlertesStockBas, getValeurTotaleStock } from '../services/produitService';
 import { fetchVentes } from '../services/venteService';
 import { fetchAchats } from '../services/achatService';
@@ -12,7 +12,7 @@ import { badge as badgeStyle } from '@/modules/shared/utils/helpers';
 const today = () => new Date().toISOString().split('T')[0];
 const firstOfMonth = () => { const d = new Date(); d.setDate(1); return d.toISOString().split('T')[0]; };
 
-const StatCard = ({ label, value, icon, color, sub }) => (
+const StatCard = ({ label, value, icon, color, sub }: { label: string; value: string | number; icon: string; color: string; sub?: string }) => (
   <div className="stat-card" style={{ borderLeft: `3px solid ${color}` }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
       <div>
@@ -34,25 +34,36 @@ const StatCard = ({ label, value, icon, color, sub }) => (
   </div>
 );
 
-const StatusBadge = ({ status }) => {
-  const cfg = {
+const StatusBadge = ({ status }: { status?: string }) => {
+  const cfg: Record<string, { variant: string; label: string }> = {
     paye:       { variant: 'success', label: 'Payé' },
     credit:     { variant: 'warning', label: 'Crédit' },
     en_attente: { variant: 'info',    label: 'En attente' },
     annule:     { variant: 'danger',  label: 'Annulé' },
   };
-  const c = cfg[status] || cfg.en_attente;
+  const c = cfg[status || ''] || cfg.en_attente;
   const styles = badgeStyle(c.variant);
   return <span className="badge" style={styles}>{c.label}</span>;
 };
 
 export default function CommerceDashboard() {
   const { currentCompany } = useCompany();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [loading, setLoading] = useState(true);
-  const [recentVentes, setRecentVentes] = useState([]);
-  const [alertes, setAlertes] = useState([]);
-  const [stats, setStats] = useState({
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [recentVentes, setRecentVentes] = useState<Vente[]>([]);
+  const [alertes, setAlertes] = useState<Produit[]>([]);
+  const [stats, setStats] = useState<{
+    ventesJour: number;
+    ventesMois: number;
+    caJour: number;
+    caMois: number;
+    nbProduits: number;
+    stockBas: number;
+    valeurStock: number;
+    achatsMois: number;
+    depensesJour: number;
+    depensesMois: number;
+  }>({
     ventesJour: 0, ventesMois: 0, caJour: 0, caMois: 0,
     nbProduits: 0, stockBas: 0, valeurStock: 0, achatsMois: 0,
     depensesJour: 0, depensesMois: 0,
@@ -61,7 +72,7 @@ export default function CommerceDashboard() {
   useEffect(() => { if (currentCompany) load(); }, [currentCompany]);
 
   useEffect(() => {
-    const h = e => { if (['ventes', 'achats', 'produits', 'depenses'].includes(e.detail?.table)) load(); };
+    const h = (e: Event) => { if (['ventes', 'achats', 'produits', 'depenses'].includes((e as CustomEvent).detail?.table)) load(); };
     window.addEventListener('supabase_realtime', h);
     return () => window.removeEventListener('supabase_realtime', h);
   }, [currentCompany]);
@@ -109,7 +120,9 @@ export default function CommerceDashboard() {
   if (loading) return (
     <div style={{ padding: '0 0 20px' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 12, marginBottom: 20 }}>
-        {Array(6).fill(0).map((_, i) => <CardSkeleton key={i} />)}
+        {Array(6).fill(0).map((_, i) => (
+          <div key={i} style={{ height: 80, borderRadius: 12, background: 'var(--border)', opacity: 0.5 }} />
+        ))}
       </div>
     </div>
   );
@@ -223,9 +236,9 @@ export default function CommerceDashboard() {
                   <tr key={v.id} style={{ borderBottom: '1px solid var(--border)' }}>
                     <td style={{ padding: '10px 14px', fontSize: 13, fontWeight: 600, fontFamily: 'var(--font-mono)' }}>{v.numero_facture}</td>
                     <td style={{ padding: '10px 14px', fontSize: 13 }}>{v.client_nom || '—'}</td>
-                    <td style={{ padding: '10px 14px', fontSize: 13, color: 'var(--text2)' }}>{new Date(v.date_vente).toLocaleDateString('fr-FR')}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 13, color: 'var(--text2)' }}>{new Date(v.date_vente ?? '').toLocaleDateString('fr-FR')}</td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', fontSize: 13, fontWeight: 600, color: 'var(--green)' }}>{formatAr(v.montant_total)}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'center' }}><StatusBadge status={v.statut} /></td>
+                    <td style={{ padding: '10px 14px', textAlign: 'center' }}><StatusBadge status={v.statut as string} /></td>
                   </tr>
                 ))
               }

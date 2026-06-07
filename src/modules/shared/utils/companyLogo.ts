@@ -1,20 +1,25 @@
-// @ts-nocheck
-// companyLogo.js — source de vérité unique pour les logos par société
-// Les logos sont dans /public/logos/{slug}/logo.png
+// companyLogo.ts — source de vérité unique pour les logos par société
+import { type Company } from '@/modules/shared/types';
 
-export const getLogoPath = (company) => {
+export const getLogoPath = (company: Company | null): string => {
   if (!company) return '/logos/aterinay/logo.png';
-  if (company.logo_url) return company.logo_url; // logo custom uploadé
+  if (company.logo_url) return String(company.logo_url);
   const slug = company.slug || '';
-  if (slug === 'pomanay')  return '/logos/pomanay/logo.png';
+  if (slug === 'pomanay') return '/logos/pomanay/logo.png';
   if (slug === 'zazatiana') return '/logos/zazatiana/logo.png';
-  // Aterinay et tout service de livraison
   return '/logos/aterinay/logo.png';
 };
 
-export const getCompanyMeta = (company) => {
-  if (!company) return { label:'Livraison', color:'var(--blue)', icon:'LIV', bg:'var(--blue-dim)' };
-  if (company.slug === 'pomanay')  return { label:'Boutique', color:'var(--purple)', icon:'POM', bg:'var(--purple-dim)' };
-  if (company.slug === 'zazatiana') return { label:'Bébé',    color:'var(--pink)',   icon:'ZAZ', bg:'rgba(244,114,182,0.12)' };
-  return { label:'Livraison', color:'var(--blue)', icon:'LIV', bg:'var(--blue-dim)' };
+interface CompanyMeta {
+  label: string;
+  color: string;
+  icon: string;
+  bg: string;
+}
+
+export const getCompanyMeta = (company: Company | null): CompanyMeta => {
+  if (!company) return { label: 'Livraison', color: 'var(--blue)', icon: 'LIV', bg: 'var(--blue-dim)' };
+  if (company.slug === 'pomanay') return { label: 'Boutique', color: 'var(--purple)', icon: 'POM', bg: 'var(--purple-dim)' };
+  if (company.slug === 'zazatiana') return { label: 'Bébé', color: 'var(--pink)', icon: 'ZAZ', bg: 'rgba(244,114,182,0.12)' };
+  return { label: 'Livraison', color: 'var(--blue)', icon: 'LIV', bg: 'var(--blue-dim)' };
 };

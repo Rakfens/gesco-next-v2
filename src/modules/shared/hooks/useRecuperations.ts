@@ -4,19 +4,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchRecuperations, addRecuperation, updateRecuperation, deleteRecuperation } from '../../livraison/services/recuperationService';
 import { useCompany } from '../context/CompanyContext';
-
-interface Recuperation {
-  id: number;
-  [key: string]: unknown;
-}
+import type { Recuperation } from '@/modules/shared/types';
 
 interface UseRecuperationsReturn {
   recuperations: Recuperation[];
   loading: boolean;
   error: string | null;
   addRecuperation: (rec: Record<string, unknown>) => Promise<Recuperation>;
-  updateRecuperation: (id: number, updates: Partial<Recuperation>) => Promise<void>;
-  deleteRecuperation: (id: number) => Promise<void>;
+  updateRecuperation: (id: string, updates: Partial<Recuperation>) => Promise<void>;
+  deleteRecuperation: (id: string) => Promise<void>;
   reloadRecuperations: () => Promise<void>;
 }
 
@@ -58,15 +54,15 @@ export const useRecuperations = (): UseRecuperationsReturn => {
     } catch (err) { setError((err as Error).message); throw err; }
   };
 
-  const handleUpdateRecuperation = async (id: number, updates: Partial<Recuperation>) => {
+  const handleUpdateRecuperation = async (id: string, updates: Partial<Recuperation>) => {
     try {
       setError(null);
       await updateRecuperation(id, updates);
-      setRecuperations(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+      setRecuperations(prev => prev.map(r => r.id === id ? { ...r, ...updates } as Recuperation : r));
     } catch (err) { setError((err as Error).message); throw err; }
   };
 
-  const handleDeleteRecuperation = async (id: number) => {
+  const handleDeleteRecuperation = async (id: string) => {
     try {
       setError(null);
       await deleteRecuperation(id);

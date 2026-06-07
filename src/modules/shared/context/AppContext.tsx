@@ -8,6 +8,7 @@ import { useAvances } from '../hooks/useAvances';
 import { useRecuperations } from '../hooks/useRecuperations';
 import { useToast } from '../hooks/useToast';
 import { useCompany, Company } from './CompanyContext';
+import type { Agent, Livraison, Avance, Recuperation } from '../types';
 
 // ── Types ──────────────────────────────────────────────────────────────
 interface Toast {
@@ -31,28 +32,28 @@ interface AppContextValue {
   companies: Company[];
   switchCompany: (company: Company) => void;
   // Agents
-  agents: unknown[];
+  agents: Agent[];
   loadingAgents: boolean;
   addAgent: CrudFn;
   updateAgent: CrudFn;
   deleteAgent: CrudFn;
   reloadAgents: () => void;
   // Livraisons
-  livraisons: unknown[];
+  livraisons: Livraison[];
   loadingLivraisons: boolean;
   addLivraison: CrudFn;
   updateLivraison: CrudFn;
   deleteLivraison: CrudFn;
   reloadLivraisons: () => void;
   // Avances
-  avances: unknown[];
+  avances: Avance[];
   loadingAvances: boolean;
   addAvance: CrudFn;
   annulerAvance: CrudFn;
   deleteAvance: CrudFn;
   reloadAvances: () => void;
   // Recuperations
-  recuperations: unknown[];
+  recuperations: Recuperation[];
   loadingRecuperations: boolean;
   addRecuperation: CrudFn;
   updateRecuperation: CrudFn;

@@ -4,21 +4,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchAgents, addAgent, updateAgent, deleteAgent } from '../../livraison/services/agentService';
 import { useCompany } from '../context/CompanyContext';
-
-interface Agent {
-  id: number;
-  nom: string;
-  salaire: number;
-  [key: string]: unknown;
-}
+import type { Agent } from '@/modules/shared/types';
 
 interface UseAgentsReturn {
   agents: Agent[];
   loading: boolean;
   error: string | null;
   addAgent: (nom: string, salaire: number) => Promise<Agent>;
-  updateAgent: (id: number, updates: Partial<Agent>) => Promise<void>;
-  deleteAgent: (id: number) => Promise<void>;
+  updateAgent: (id: string, updates: Partial<Agent>) => Promise<void>;
+  deleteAgent: (id: string) => Promise<void>;
   reloadAgents: () => Promise<void>;
 }
 
@@ -32,7 +26,6 @@ export const useAgents = (): UseAgentsReturn => {
     if (!currentCompany?.id) { setAgents([]); setLoading(false); return; }
     try {
       setError(null);
-      // Passer companyId directement — plus de getCurrentCompany() dans le service
       const data = await fetchAgents(currentCompany.id);
       setAgents(data);
     } catch (err) {
@@ -51,18 +44,24 @@ export const useAgents = (): UseAgentsReturn => {
   }, [loadAgents]);
 
   const handleAddAgent = async (nom: string, salaire: number) => {
-    const a = await addAgent(nom, salaire, currentCompany?.id);
+    const companyId = currentCompany?.id;
+    if (!companyId) throw new Error('Société non sélectionnée');
+    const a = await addAgent(nom, salaire, companyId);
     setAgents(prev => [...prev, a]);
     return a;
   };
 
-  const handleUpdateAgent = async (id: number, updates: Partial<Agent>) => {
-    await updateAgent(id, updates, currentCompany?.id);
+  const handleUpdateAgent = async (id: string, updates: Partial<Agent>) => {
+    const companyId = currentCompany?.id;
+    if (!companyId) throw new Error('Société non sélectionnée');
+    await updateAgent(id, updates, companyId);
     setAgents(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
   };
 
-  const handleDeleteAgent = async (id: number) => {
-    await deleteAgent(id, currentCompany?.id);
+  const handleDeleteAgent = async (id: string) => {
+    const companyId = currentCompany?.id;
+    if (!companyId) throw new Error('Société non sélectionnée');
+    await deleteAgent(id, companyId);
     setAgents(prev => prev.filter(a => a.id !== id));
   };
 

@@ -1,27 +1,40 @@
-// @ts-nocheck
 import { useCompany } from '@/modules/shared/context/CompanyContext';
 import { useState, useMemo, useEffect } from 'react';
 import { formatAr, currentMonth, monthLabel, shouldCountGerantCommission } from '@/modules/shared/utils/constants';
 import { getRecuperationsByMonth } from '../services/recuperationService';
+import type { Recuperation, Avance, Livraison, Agent } from '@/modules/shared/types';
+import { useApp } from '@/modules/shared/context/AppContext';
+import { COMMISSION_DEFAUT } from '@/modules/shared/utils/constants';
 import {
   Button, Input, Select, Badge, Card, Modal, ModalHeader, ModalBody, ModalFooter,
 } from '@/modules/shared/components/ui';
 
-const agentMatch = (livraison, agent) => {
+const agentMatch = (livraison: Livraison, agent: Agent): boolean => {
   if (livraison.agent_id != null && agent.id != null) {
     return Number(livraison.agent_id) === Number(agent.id);
   }
   return livraison.agent_nom === agent.nom;
 };
 
-import { useApp } from '@/modules/shared/context/AppContext';
-import { COMMISSION_DEFAUT } from '@/modules/shared/utils/constants';
+interface AgentStats extends Agent {
+  nbLivs: number;
+  nbLivres: number;
+  nbRetours: number;
+  nbReportes: number;
+  totalFrais: number;
+  totalAvances: number;
+  netSalaire: number;
+  avances: Avance[];
+  recuperations: Recuperation[];
+  totalRecuperations: number;
+  nbRecuperations: number;
+}
 
 export const Recap = () => {
   const { livraisons, avances, agents, showToast, addAvance: onAddAvance, deleteAvance: onDeleteAvance } = useApp();
   const { currentCompany } = useCompany();
   const commissionGerant = COMMISSION_DEFAUT;
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
 
   useEffect(() => {
     const fn = () => setIsMobile(window.innerWidth < 768);
@@ -29,13 +42,13 @@ export const Recap = () => {
     return () => window.removeEventListener('resize', fn);
   }, []);
 
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth());
-  const [avanceAgentId, setAvanceAgentId] = useState('');
-  const [avanceMontant, setAvanceMontant] = useState('');
-  const [avanceMotif, setAvanceMotif] = useState('');
-  const [recuperationsMois, setRecuperationsMois] = useState([]);
-  const [loadingRecup, setLoadingRecup] = useState(false);
-  const [confirmAvance, setConfirmAvance] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth());
+  const [avanceAgentId, setAvanceAgentId] = useState<string>('');
+  const [avanceMontant, setAvanceMontant] = useState<string>('');
+  const [avanceMotif, setAvanceMotif] = useState<string>('');
+  const [recuperationsMois, setRecuperationsMois] = useState<Recuperation[]>([]);
+  const [loadingRecup, setLoadingRecup] = useState<boolean>(false);
+  const [confirmAvance, setConfirmAvance] = useState<string | null>(null);
 
   const months = useMemo(() => {
     const s = new Set(livraisons.map(l => l.date?.slice(0, 7)).filter(Boolean));
@@ -50,7 +63,8 @@ export const Recap = () => {
     const load = async () => {
       setLoadingRecup(true);
       try {
-        const data = await getRecuperationsByMonth(selectedMonth, currentCompany?.id);
+        if (!currentCompany?.id) return;
+        const data = await getRecuperationsByMonth(selectedMonth, currentCompany.id);
         setRecuperationsMois(data || []);
       } catch (error) {
         console.error('Erreur chargement recuperations:', error);
@@ -61,9 +75,9 @@ export const Recap = () => {
     load();
   }, [selectedMonth, currentCompany?.id]);
 
-  const livsGerant = (arr) => arr.filter(l => shouldCountGerantCommission(l));
+  const livsGerant = (arr: Livraison[]) => arr.filter(l => shouldCountGerantCommission(l));
 
-  const monthStatsByAgent = useMemo(() => agents.map(ag => {
+  const monthStatsByAgent: AgentStats[] = useMemo(() => agents.map(ag => {
     const ls = monthLivs.filter(l => agentMatch(l, ag));
     const av = monthAvances.filter(a => a.agent_id === ag.id);
     const recups = recuperationsMois.filter(r => r.livreur_nom === ag.nom);
@@ -73,27 +87,27 @@ export const Recap = () => {
       nbLivres: ls.filter(l => l.statut === 'livre').length,
       nbRetours: ls.filter(l => l.statut === 'retourne').length,
       nbReportes: ls.filter(l => l.statut === 'reporte').length,
-      totalFrais: ls.reduce((s, l) => s + parseFloat(l.frais || 0), 0),
-      totalAvances: av.reduce((s, a) => s + parseFloat(a.montant || 0), 0),
-      netSalaire: parseFloat(ag.salaire || 0) - av.reduce((s, a) => s + parseFloat(a.montant || 0), 0),
+      totalFrais: ls.reduce((s, l) => s + (Number(l.frais) || 0), 0),
+      totalAvances: av.reduce((s, a) => s + (Number(a.montant) || 0), 0),
+      netSalaire: Number(ag.salaire) || 0 - av.reduce((s, a) => s + (Number(a.montant) || 0), 0),
       avances: av, recuperations: recups, totalRecuperations: totalRecups, nbRecuperations: recups.length,
     };
   }), [agents, monthLivs, monthAvances, recuperationsMois]);
 
-  const monthTotalMontant = monthLivs.filter(l => l.paiement !== 'client').reduce((s, l) => s + parseFloat(l.montant || 0), 0);
-  const monthTotalFrais = monthLivs.reduce((s, l) => s + parseFloat(l.frais || 0), 0);
-  const monthTotalSalaires = monthStatsByAgent.reduce((s, a) => s + parseFloat(a.salaire || 0), 0);
+  const monthTotalMontant = monthLivs.filter(l => l.paiement !== 'client').reduce((s, l) => s + (Number(l.montant) || 0), 0);
+  const monthTotalFrais = monthLivs.reduce((s, l) => s + (Number(l.frais) || 0), 0);
+  const monthTotalSalaires = monthStatsByAgent.reduce((s, a) => s + (Number(a.salaire) || 0), 0);
   const monthGerantGain = livsGerant(monthLivs).length * commissionGerant;
   const monthTotalRecuperations = monthStatsByAgent.reduce((s, a) => s + a.totalRecuperations, 0);
   const monthBenefice = monthTotalFrais - monthTotalSalaires - monthGerantGain - monthTotalRecuperations;
 
   const handleAddAvance = async () => {
     if (!avanceAgentId || !avanceMontant) { showToast('Agent et montant requis', 'error'); return; }
-    const agent = agents.find(a => a.id === parseInt(avanceAgentId));
+    const agent = agents.find(a => a.id === avanceAgentId);
     if (onAddAvance) {
       await onAddAvance({
-        agent_id: parseInt(avanceAgentId), agent_nom: agent?.nom,
-        montant: parseFloat(avanceMontant), motif: avanceMotif,
+        agent_id: avanceAgentId, agent_nom: agent?.nom || '',
+        montant: Number(avanceMontant) || 0, motif: avanceMotif,
         date: new Date().toISOString().split('T')[0], mois: currentMonth(), annule: false,
       });
     }
@@ -196,12 +210,12 @@ export const Recap = () => {
                 <div key={av.id} style={{background:'var(--bg)',borderRadius:7,padding:'8px 10px',marginBottom:4,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
                   <div style={{flex:1}}>
                     <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
-                      <span style={{color:'var(--orange)',fontWeight:700,fontSize:13}}>{formatAr(parseFloat(av.montant || 0))}</span>
+                      <span style={{color:'var(--orange)',fontWeight:700,fontSize:13}}>{formatAr(Number(av.montant) || 0)}</span>
                       {av.motif && <span style={{fontSize:11,color:'var(--subtle)',background:'var(--border)',padding:'2px 10px',borderRadius:15}}>{av.motif}</span>}
                       <span style={{fontSize:10,color:'var(--muted)'}}>{av.date}</span>
                     </div>
                   </div>
-                  <Button variant="danger" size="sm" onClick={() => handleDeleteAvance(av.id)}>Supprimer</Button>
+                  <Button variant="danger" size="sm" onClick={() => setConfirmAvance(av.id)}>Supprimer</Button>
                 </div>
               ))}
             </div>
@@ -248,10 +262,10 @@ export const Recap = () => {
           {avances.filter(a => a.mois === selectedMonth && a.annule).map(av => (
             <div key={av.id} style={{background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,padding:'8px 14px',marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:6,opacity:0.6}}>
               <div>
-                <span style={{color:'var(--muted)',textDecoration:'line-through'}}>{av.agent_nom} - {formatAr(parseFloat(av.montant || 0))}</span>
+                <span style={{color:'var(--muted)',textDecoration:'line-through'}}>{av.agent_nom} - {formatAr(Number(av.montant) || 0)}</span>
                 {av.motif && <span style={{fontSize:11,color:'var(--muted)',marginLeft:8}}>({av.motif})</span>}
               </div>
-              <Button variant="danger" size="sm" onClick={() => handleDeleteAvance(av.id)}>Definitivement</Button>
+              <Button variant="danger" size="sm" onClick={() => setConfirmAvance(av.id)}>Definitivement</Button>
             </div>
           ))}
         </div>

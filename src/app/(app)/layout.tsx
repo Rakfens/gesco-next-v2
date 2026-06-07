@@ -1,11 +1,10 @@
-// @ts-nocheck
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { getSupabase } from '@/lib/supabase';
-import { CompanyProvider, useCompany } from "@/modules/shared/context/CompanyContext";
+import { CompanyProvider, useCompany, type Company } from "@/modules/shared/context/CompanyContext";
 import { ThemeProvider, useTheme } from "@/modules/shared/context/ThemeContext";
 import { AppProvider } from "@/modules/shared/context/AppContext";
 
@@ -65,7 +64,9 @@ const MenuIcon = () => (
   </svg>
 );
 
-const NavIcons = {
+type NavIconKey = 'grid' | 'truck' | 'clock' | 'user' | 'chart' | 'users' | 'refresh' | 'cash' | 'cart' | 'box' | 'list' | 'wallet' | 'document';
+
+const NavIcons: Record<NavIconKey, () => React.ReactNode> = {
   grid: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>),
   truck: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3" /><rect x="9" y="11" width="14" height="10" rx="2" /><circle cx="12" cy="21" r="1" /><circle cx="20" cy="21" r="1" /></svg>),
   clock: () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>),
@@ -82,14 +83,21 @@ const NavIcons = {
 };
 
 // ─── Company Meta ───────────────────────────────────────────────
-const getCompanyMeta = (c) => {
+interface CompanyMeta {
+  label: string;
+  color: string;
+  icon: string;
+  bg: string;
+}
+
+const getCompanyMeta = (c: Company | null): CompanyMeta => {
   if (!c) return { label: "Gestion", color: "var(--accent)", icon: "HT", bg: "var(--accent-dim)" };
   if (c.slug === "pomanay")  return { label: "Boutique", color: "var(--purple)", icon: "PM", bg: "var(--purple-dim)" };
   if (c.slug === "zazatiana") return { label: "Bébé", color: "var(--pink)", icon: "ZT", bg: "rgba(236,72,153,0.08)" };
   return { label: "Livraison", color: "var(--accent)", icon: "AT", bg: "var(--accent-dim)" };
 };
 
-const getLogoSrc = (c) => {
+const getLogoSrc = (c: Company | null): string => {
   if (!c) return "/logos/aterinay/logo.png";
   if (c.slug === "pomanay")  return "/logos/pomanay/logo.png";
   if (c.slug === "zazatiana") return "/logos/zazatiana/logo.png";
@@ -97,7 +105,14 @@ const getLogoSrc = (c) => {
 };
 
 // ─── Company Switcher Sheet ─────────────────────────────────────
-function CompanySheet({ companies, currentCompany, onSelect, onClose }) {
+interface CompanySheetProps {
+  companies: Company[];
+  currentCompany: Company | null;
+  onSelect: (company: Company) => void;
+  onClose: () => void;
+}
+
+function CompanySheet({ companies, currentCompany, onSelect, onClose }: CompanySheetProps) {
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 500, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
       <div onClick={e => e.stopPropagation()} style={{
@@ -152,7 +167,7 @@ function CompanySheet({ companies, currentCompany, onSelect, onClose }) {
 }
 
 // ─── Main Layout ────────────────────────────────────────────────
-function LayoutContent({ children }: { children: React.ReactNode }) {
+function LayoutContent({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { currentCompany, companies, switchCompany } = useCompany();
@@ -183,17 +198,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const meta = getCompanyMeta(currentCompany);
   const logoSrc = getLogoSrc(currentCompany);
 
-  const isActive = (href) => pathname === href || pathname.startsWith(href + "/");
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
   return (
     <div style={{ display: "flex", height: "100vh", background: "var(--bg)", fontFamily: "var(--font)" }}>
-      {/* Mobile overlay */}
       {sidebarOpen && <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
-      {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r bg-card transition-transform duration-200 lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
         style={{ borderColor: "var(--border)" }}>
-        {/* Sidebar header */}
         <div className="flex h-16 items-center justify-between border-b px-4" style={{ borderColor: "var(--border)" }}>
           <div className="flex items-center gap-2 min-w-0">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold" style={{ background: meta.bg, color: meta.color }}>
@@ -211,7 +223,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           )}
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
           {navItems.map(item => (
             <Link key={item.href} href={item.href} onClick={() => setSidebarOpen(false)}
@@ -220,22 +231,19 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 ? { background: "var(--accent)", color: "#fff" }
                 : { color: "var(--text2)" }
               }>
-              {NavIcons[item.icon]?.()}
+              {NavIcons[item.icon as NavIconKey]?.()}
               {item.label}
             </Link>
           ))}
         </nav>
 
-        {/* Sidebar footer */}
         <div className="border-t px-4 py-3 text-[10px] flex items-center gap-1.5" style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
           Données sécurisées · v3.0
         </div>
       </aside>
 
-      {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header */}
         <header style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           height: "var(--header-h)",
@@ -245,7 +253,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           position: "sticky", top: 0, zIndex: 100,
           gap: 12,
         }}>
-          {/* Left: Menu (mobile) + Logo + Company */}
           <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1 }}>
             {isMobile && (
               <button type="button" onClick={() => setSidebarOpen(true)} style={{
@@ -255,8 +262,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 <MenuIcon />
               </button>
             )}
-
-            {/* Logo société */}
             <div style={{
               width: 38, height: 38, borderRadius: 10, overflow: "hidden",
               border: "1px solid var(--border)", background: "var(--card2)",
@@ -268,8 +273,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 : <span style={{ fontSize: 11, fontWeight: 800, color: meta.color }}>{meta.icon}</span>
               }
             </div>
-
-            {/* Nom + badge */}
             <div style={{ minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontWeight: 700, fontSize: 15, color: "var(--text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -291,8 +294,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
               <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 1 }}>Aterinay Services</div>
             </div>
           </div>
-
-          {/* Right: Theme + Logout */}
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
             <button onClick={toggleTheme} title={theme === "dark" ? "Mode clair" : "Mode sombre"} style={{
               width: 36, height: 36, border: "1px solid var(--border)", borderRadius: 8,
@@ -311,7 +312,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Page content */}
         <main className={isMobile ? "mobile-main" : ""} style={{
           flex: 1, overflow: "auto",
           padding: isMobile ? undefined : "24px",
@@ -321,7 +321,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      {/* Company Switcher Sheet */}
       {sheetOpen && (
         <CompanySheet companies={companies} currentCompany={currentCompany} onSelect={switchCompany} onClose={() => setSheetOpen(false)} />
       )}
@@ -329,7 +328,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider>
       <CompanyProvider>

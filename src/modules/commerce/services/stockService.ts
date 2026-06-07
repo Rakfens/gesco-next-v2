@@ -1,11 +1,31 @@
-// @ts-nocheck
-// modules/commerce/services/stockService.js
 import { getSupabase, getCurrentCompany } from '@/lib/supabase';
+import type { Produit, Inventaire } from '@/modules/shared/types';
 
-// ============ MOUVEMENTS DE STOCK ============
+interface MouvementStockData {
+  produit_id: string;
+  type: string;
+  quantite: number;
+  prix_unitaire?: number | null;
+  montant_total?: number | null;
+  reference_type?: string | null;
+  reference_id?: string | null;
+  notes?: string | null;
+  date_mouvement?: string;
+}
 
-// Créer un mouvement de stock (utilisé par ventes et achats)
-export const createMouvementStock = async (mouvementData) => {
+interface MouvementFilters {
+  produit_id?: string;
+  type?: string;
+  dateDebut?: string;
+  dateFin?: string;
+  limit?: number;
+}
+
+interface MouvementWithProduit extends Produit {
+  produit?: { id: string; nom: string; reference: string };
+}
+
+export const createMouvementProduit = async (mouvementData: MouvementStockData): Promise<Produit> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
@@ -28,11 +48,10 @@ export const createMouvementStock = async (mouvementData) => {
     .single();
 
   if (error) throw error;
-  return data;
+  return data as unknown as Produit;
 };
 
-// Récupérer tous les mouvements de stock
-export const fetchMouvementsStock = async (filters = {}) => {
+export const fetchMouvementsProduit = async (filters: MouvementFilters = {}): Promise<MouvementWithProduit[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
@@ -63,15 +82,13 @@ export const fetchMouvementsStock = async (filters = {}) => {
 
   const { data, error } = await query;
   if (error) throw error;
-  return data;
+  return data as MouvementWithProduit[];
 };
 
-// Créer un mouvement de stock manuel
-export const createMouvementStockManuel = async (mouvementData) => {
+export const createMouvementStockManuel = async (mouvementData: MouvementStockData): Promise<Produit> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
-  // Récupérer le produit actuel
   const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock')
@@ -81,7 +98,6 @@ export const createMouvementStockManuel = async (mouvementData) => {
 
   if (produitError) throw produitError;
 
-  // Calculer la nouvelle quantité
   let nouvelleQuantite = produit.quantite_stock;
   if (mouvementData.type === 'entree') {
     nouvelleQuantite += mouvementData.quantite;
@@ -92,13 +108,12 @@ export const createMouvementStockManuel = async (mouvementData) => {
   }
 
   if (nouvelleQuantite < 0) {
-    throw new Error('Stock insuffisant pour cette sortie');
+    throw new Error('Produit insuffisant pour cette sortie');
   }
 
-  // Mettre à jour le produit
   const { error: updateError } = await getSupabase()
     .from('produits')
-    .update({ 
+    .update({
       quantite_stock: nouvelleQuantite,
       updated_at: new Date().toISOString()
     })
@@ -107,7 +122,6 @@ export const createMouvementStockManuel = async (mouvementData) => {
 
   if (updateError) throw updateError;
 
-  // Créer le mouvement
   const { data, error } = await getSupabase()
     .from('mouvements_stock')
     .insert([{
@@ -120,13 +134,10 @@ export const createMouvementStockManuel = async (mouvementData) => {
     .single();
 
   if (error) throw error;
-  return data;
+  return data as unknown as Produit;
 };
 
-// ============ INVENTAIRE ============
-
-// Créer un nouvel inventaire
-export const createInventaire = async (notes = '') => {
+export const createInventaire = async (notes: string = ''): Promise<Inventaire> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
@@ -143,11 +154,10 @@ export const createInventaire = async (notes = '') => {
     .single();
 
   if (error) throw error;
-  return data;
+  return data as Inventaire;
 };
 
-// Récupérer l'inventaire en cours
-export const getInventaireEnCours = async () => {
+export const getInventaireEnCours = async (): Promise<Inventaire | null> => {
   const company = getCurrentCompany();
   if (!company) return null;
 
@@ -161,15 +171,17 @@ export const getInventaireEnCours = async () => {
     .single();
 
   if (error && error.code !== 'PGRST116') throw error;
-  return data;
+  return data as Inventaire | null;
 };
 
-// Enregistrer un comptage d'inventaire
-export const enregistrerComptage = async (inventaireId, produitId, quantiteReelle) => {
+export const enregistrerComptage = async (
+  inventaireId: string,
+  produitId: string,
+  quantiteReelle: number
+): Promise<{ quantiteTheorique: number; quantiteReelle: number; ecart: number }> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
-  // Récupérer la quantité théorique
   const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock')
@@ -182,7 +194,6 @@ export const enregistrerComptage = async (inventaireId, produitId, quantiteReell
   const quantiteTheorique = produit.quantite_stock;
   const ecart = quantiteReelle - quantiteTheorique;
 
-  // Vérifier si le produit a déjà été compté
   const { data: existing, error: existingError } = await getSupabase()
     .from('inventaire_details')
     .select('id')
@@ -191,7 +202,6 @@ export const enregistrerComptage = async (inventaireId, produitId, quantiteReell
     .maybeSingle();
 
   if (existing) {
-    // Mettre à jour
     const { error } = await getSupabase()
       .from('inventaire_details')
       .update({
@@ -204,7 +214,6 @@ export const enregistrerComptage = async (inventaireId, produitId, quantiteReell
 
     if (error) throw error;
   } else {
-    // Créer
     const { error } = await getSupabase()
       .from('inventaire_details')
       .insert([{
@@ -223,12 +232,10 @@ export const enregistrerComptage = async (inventaireId, produitId, quantiteReell
   return { quantiteTheorique, quantiteReelle, ecart };
 };
 
-// Terminer l'inventaire et appliquer les corrections
-export const terminerInventaire = async (inventaireId) => {
+export const terminerInventaire = async (inventaireId: string): Promise<void> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
-  // Récupérer tous les écarts
   const { data: ecarts, error: ecartsError } = await getSupabase()
     .from('inventaire_details')
     .select('*')
@@ -237,21 +244,18 @@ export const terminerInventaire = async (inventaireId) => {
 
   if (ecartsError) throw ecartsError;
 
-  // Appliquer les corrections
-  for (const ecart of ecarts) {
+  for (const ecart of (ecarts || [])) {
     const nouvelleQuantite = ecart.quantite_reelle;
 
-    // Mettre à jour le produit
     await getSupabase()
       .from('produits')
-      .update({ 
+      .update({
         quantite_stock: nouvelleQuantite,
         updated_at: new Date().toISOString()
       })
       .eq('id', ecart.produit_id)
       .eq('company_id', company.id);
 
-    // Créer un mouvement de stock pour justifier l'écart
     await getSupabase()
       .from('mouvements_stock')
       .insert([{
@@ -265,7 +269,6 @@ export const terminerInventaire = async (inventaireId) => {
       }]);
   }
 
-  // Marquer l'inventaire comme terminé
   const { error } = await getSupabase()
     .from('inventaires')
     .update({
@@ -278,8 +281,7 @@ export const terminerInventaire = async (inventaireId) => {
   if (error) throw error;
 };
 
-// Récupérer l'historique des inventaires
-export const getInventaires = async () => {
+export const getInventaires = async (): Promise<Inventaire[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
@@ -290,13 +292,10 @@ export const getInventaires = async () => {
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data;
+  return data as Inventaire[];
 };
 
-// ============ ALERTES ET RAPPORTS ============
-
-// Récupérer les produits en rupture de stock
-export const getRupturesStock = async () => {
+export const getRupturesProduit = async (): Promise<Record<string, unknown>[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
@@ -308,11 +307,10 @@ export const getRupturesStock = async () => {
     .eq('quantite_stock', 0);
 
   if (error) throw error;
-  return data;
+  return data as Record<string, unknown>[];
 };
 
-// Récupérer les produits avec stock bas
-export const getStockBas = async () => {
+export const getStockBas = async (): Promise<Record<string, unknown>[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
@@ -325,16 +323,17 @@ export const getStockBas = async () => {
 
   if (error) throw error;
 
-  // Filtrer côté client car getSupabase().raw() n'est pas supporté côté JS
-  return (data || []).filter(p => p.quantite_stock <= (p.stock_minimum || 0));
+  return (data || []).filter((p: Record<string, unknown>) => (p.quantite_stock as number) <= ((p.stock_minimum as number) || 0));
 };
 
-// Rapport de rotation de stock
-export const getRotationStock = async (produitId, dateDebut, dateFin) => {
+export const getRotationProduit = async (
+  produitId: string,
+  dateDebut?: string,
+  dateFin?: string
+): Promise<{ produitId: string; quantiteVendue: number; stockMoyen: number; rotation: string } | null> => {
   const company = getCurrentCompany();
   if (!company) return null;
 
-  // Récupérer les ventes de la période via jointure explicite
   let query = getSupabase()
     .from('vente_details')
     .select('quantite, ventes!inner(company_id)')
@@ -347,9 +346,8 @@ export const getRotationStock = async (produitId, dateDebut, dateFin) => {
   const { data: ventes, error: ventesError } = await query;
   if (ventesError) throw ventesError;
 
-  const quantiteVendue = (ventes || []).reduce((sum, v) => sum + v.quantite, 0);
+  const quantiteVendue = (ventes || []).reduce((sum: number, v: { quantite: number }) => sum + v.quantite, 0);
 
-  // Récupérer le stock moyen
   const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock')

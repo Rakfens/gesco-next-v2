@@ -1,18 +1,44 @@
-// @ts-nocheck
-// src/modules/commerce/services/venteService.js
 import { getSupabase, getCurrentCompany } from '@/lib/supabase';
-import { createMouvementStock } from './stockService';
+import { createMouvementStockManuel as createMouvementStock } from './stockService';
 import { cache } from '@/modules/shared/utils/cache';
+import type { Vente, Produit } from '@/modules/shared/types';
 
-// ============ CRUD VENTES ============
+interface VenteFilters {
+  dateDebut?: string;
+  dateFin?: string;
+  statut?: string;
+  client_nom?: string;
+}
 
-// Récupérer toutes les ventes (avec cache)
-export const fetchVentes = async (filters = {}) => {
+interface VenteData {
+  date_vente?: string;
+  client_nom?: string;
+  client_telephone?: string;
+  client_email?: string;
+  remise?: number;
+  montant_paye?: number;
+  type_paiement?: string;
+  notes?: string;
+}
+
+interface VenteDetailItem {
+  produit_id: string;
+  quantite: number;
+  prix_unitaire: number;
+  remise_ligne?: number;
+  sous_total?: number;
+}
+
+interface VenteWithDetails extends Vente {
+  details: VenteDetailItem[];
+}
+
+export const fetchVentes = async (filters: VenteFilters = {}): Promise<Vente[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
   const cacheKey = `ventes_${company.id}_${JSON.stringify(filters)}`;
-  
+
   return cache.get(cacheKey, async () => {
     let query = getSupabase()
       .from('ventes')
@@ -36,18 +62,16 @@ export const fetchVentes = async (filters = {}) => {
     const { data, error } = await query;
     if (error) throw error;
     return data || [];
-  }, 60000); // 1 minute de cache
+  }, 60000) as Promise<Vente[]>;
 };
 
-// Récupérer une vente avec ses détails
-export const fetchVenteWithDetails = async (id) => {
+export const fetchVenteWithDetails = async (id: string): Promise<VenteWithDetails | null> => {
   const company = getCurrentCompany();
   if (!company) return null;
 
   const cacheKey = `vente_details_${company.id}_${id}`;
-  
+
   return cache.get(cacheKey, async () => {
-    // Récupérer la vente
     const { data: vente, error: venteError } = await getSupabase()
       .from('ventes')
       .select('*')
@@ -57,7 +81,6 @@ export const fetchVenteWithDetails = async (id) => {
 
     if (venteError) throw venteError;
 
-    // Récupérer les détails
     const { data: details, error: detailsError } = await getSupabase()
       .from('vente_details')
       .select(`
@@ -69,15 +92,13 @@ export const fetchVenteWithDetails = async (id) => {
     if (detailsError) throw detailsError;
 
     return { ...vente, details: details || [] };
-  }, 300000); // 5 minutes de cache
+  }, 300000) as Promise<VenteWithDetails | null>;
 };
 
-// Créer une nouvelle vente
-export const createVente = async (venteData, details) => {
+export const createVente = async (venteData: VenteData, details: VenteDetailItem[]): Promise<Vente> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
-  // Calculer les totaux
   let montantTotal = 0;
   for (const item of details) {
     item.sous_total = item.quantite * item.prix_unitaire;
@@ -88,10 +109,8 @@ export const createVente = async (venteData, details) => {
   const montantFinal = montantTotal - remise;
   const resteAPayer = montantFinal - (venteData.montant_paye || 0);
 
-  // Générer un numéro de facture
   const numeroFacture = await generateNumeroFacture();
 
-  // Créer la vente
   const { data: vente, error: venteError } = await getSupabase()
     .from('ventes')
     .insert([{
@@ -106,7 +125,7 @@ export const createVente = async (venteData, details) => {
       montant_total: montantFinal,
       montant_paye: venteData.montant_paye || 0,
       reste_a_payer: resteAPayer,
-      statut: resteAPayer === 0 ? 'paye' : (venteData.montant_paye > 0 ? 'credit' : 'en_attente'),
+      statut: resteAPayer === 0 ? 'paye' : ((venteData.montant_paye ?? 0) > 0 ? 'credit' : 'en_attente'),
       type_paiement: venteData.type_paiement,
       notes: venteData.notes,
       created_at: new Date().toISOString(),
@@ -117,9 +136,7 @@ export const createVente = async (venteData, details) => {
 
   if (venteError) throw venteError;
 
-  // Créer les détails et mettre à jour le stock
   for (const item of details) {
-    // Ajouter le détail
     const { error: detailError } = await getSupabase()
       .from('vente_details')
       .insert([{
@@ -133,40 +150,33 @@ export const createVente = async (venteData, details) => {
 
     if (detailError) throw detailError;
 
-    // Mettre à jour le stock (diminuer)
     await updateStockAfterSale(item.produit_id, item.quantite, vente.id);
   }
 
-  // Invalider les caches
   cache.invalidate(`ventes_${company.id}`);
   cache.invalidate(`ca_${company.id}`);
-  
-  return vente;
+
+  return vente as Vente;
 };
 
-// Mettre à jour une vente
-export const updateVente = async (id, venteData, details) => {
+export const updateVente = async (id: string, venteData: VenteData, details: VenteDetailItem[]): Promise<boolean> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
-  // Récupérer l'ancienne vente
   const oldVente = await fetchVenteWithDetails(id);
   if (!oldVente) throw new Error('Vente non trouvée');
 
-  // Restaurer l'ancien stock (annuler l'ancienne vente)
   for (const item of oldVente.details) {
     await restoreStockAfterUpdate(item.produit_id, item.quantite, id);
   }
 
-  // Supprimer les anciens détails
   const { error: deleteDetailsError } = await getSupabase()
     .from('vente_details')
     .delete()
     .eq('vente_id', id);
-  
+
   if (deleteDetailsError) throw deleteDetailsError;
 
-  // Calculer les nouveaux totaux
   let montantTotal = 0;
   for (const item of details) {
     item.sous_total = item.quantite * item.prix_unitaire;
@@ -177,7 +187,6 @@ export const updateVente = async (id, venteData, details) => {
   const montantFinal = montantTotal - remise;
   const resteAPayer = montantFinal - (venteData.montant_paye || 0);
 
-  // Mettre à jour la vente
   const { error: venteError } = await getSupabase()
     .from('ventes')
     .update({
@@ -190,7 +199,7 @@ export const updateVente = async (id, venteData, details) => {
       montant_total: montantFinal,
       montant_paye: venteData.montant_paye || 0,
       reste_a_payer: resteAPayer,
-      statut: resteAPayer === 0 ? 'paye' : (venteData.montant_paye > 0 ? 'credit' : 'en_attente'),
+      statut: resteAPayer === 0 ? 'paye' : ((venteData.montant_paye ?? 0) > 0 ? 'credit' : 'en_attente'),
       type_paiement: venteData.type_paiement,
       notes: venteData.notes,
       updated_at: new Date().toISOString()
@@ -200,7 +209,6 @@ export const updateVente = async (id, venteData, details) => {
 
   if (venteError) throw venteError;
 
-  // Créer les nouveaux détails et mettre à jour le stock
   for (const item of details) {
     const { error: detailError } = await getSupabase()
       .from('vente_details')
@@ -218,7 +226,6 @@ export const updateVente = async (id, venteData, details) => {
     await updateStockAfterSale(item.produit_id, item.quantite, id);
   }
 
-  // Invalider les caches
   cache.invalidate(`ventes_${company.id}`);
   cache.invalidate(`vente_details_${company.id}_${id}`);
   cache.invalidate(`ca_${company.id}`);
@@ -226,29 +233,24 @@ export const updateVente = async (id, venteData, details) => {
   return true;
 };
 
-// Supprimer une vente
-export const deleteVente = async (id) => {
+export const deleteVente = async (id: string): Promise<void> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
-  // Récupérer la vente avec ses détails
   const vente = await fetchVenteWithDetails(id);
   if (!vente) throw new Error('Vente non trouvée');
 
-  // Restaurer le stock (annuler la vente)
   for (const item of vente.details) {
     await restoreStockAfterUpdate(item.produit_id, item.quantite, id);
   }
 
-  // Supprimer les détails
   const { error: deleteDetailsError } = await getSupabase()
     .from('vente_details')
     .delete()
     .eq('vente_id', id);
-  
+
   if (deleteDetailsError) throw deleteDetailsError;
 
-  // Supprimer la vente
   const { error } = await getSupabase()
     .from('ventes')
     .delete()
@@ -257,22 +259,18 @@ export const deleteVente = async (id) => {
 
   if (error) throw error;
 
-  // Invalider les caches
   cache.invalidate(`ventes_${company.id}`);
   cache.invalidate(`ca_${company.id}`);
 };
 
-// ============ FONCTIONS STOCK ============
-
-// Mettre à jour le stock après une vente
-const updateStockAfterSale = async (produitId, quantite, venteId) => {
+const updateStockAfterSale = async (produitId: string, quantite: number, venteId: string): Promise<void> => {
   const company = getCurrentCompany();
-  
+
   const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock')
     .eq('id', produitId)
-    .eq('company_id', company.id)
+    .eq('company_id', company!.id)
     .single();
 
   if (produitError) throw produitError;
@@ -285,12 +283,12 @@ const updateStockAfterSale = async (produitId, quantite, venteId) => {
 
   await getSupabase()
     .from('produits')
-    .update({ 
+    .update({
       quantite_stock: nouvelleQuantite,
       updated_at: new Date().toISOString()
     })
     .eq('id', produitId)
-    .eq('company_id', company.id);
+    .eq('company_id', company!.id);
 
   await createMouvementStock({
     produit_id: produitId,
@@ -303,15 +301,14 @@ const updateStockAfterSale = async (produitId, quantite, venteId) => {
   });
 };
 
-// Restaurer le stock après modification/suppression
-const restoreStockAfterUpdate = async (produitId, quantite, venteId) => {
+const restoreStockAfterUpdate = async (produitId: string, quantite: number, venteId: string): Promise<void> => {
   const company = getCurrentCompany();
-  
+
   const { data: produit, error: produitError } = await getSupabase()
     .from('produits')
     .select('quantite_stock')
     .eq('id', produitId)
-    .eq('company_id', company.id)
+    .eq('company_id', company!.id)
     .single();
 
   if (produitError) throw produitError;
@@ -320,12 +317,12 @@ const restoreStockAfterUpdate = async (produitId, quantite, venteId) => {
 
   await getSupabase()
     .from('produits')
-    .update({ 
+    .update({
       quantite_stock: nouvelleQuantite,
       updated_at: new Date().toISOString()
     })
     .eq('id', produitId)
-    .eq('company_id', company.id);
+    .eq('company_id', company!.id);
 
   await createMouvementStock({
     produit_id: produitId,
@@ -338,15 +335,12 @@ const restoreStockAfterUpdate = async (produitId, quantite, venteId) => {
   });
 };
 
-// ============ UTILITAIRES ============
-
-// Générer un numéro de facture unique
-const generateNumeroFacture = async () => {
+const generateNumeroFacture = async (): Promise<string> => {
   const company = getCurrentCompany();
   const { data, error } = await getSupabase()
     .from('ventes')
     .select('numero_facture')
-    .eq('company_id', company.id)
+    .eq('company_id', company!.id)
     .order('created_at', { ascending: false })
     .limit(1);
 
@@ -362,20 +356,17 @@ const generateNumeroFacture = async () => {
     const year = new Date().getFullYear().toString().slice(-2);
     return `FACT-${year}-${newNum}`;
   }
-  
+
   const year = new Date().getFullYear().toString().slice(-2);
   return `FACT-${year}-0001`;
 };
 
-// ============ STATISTIQUES ============
-
-// Chiffre d'affaires par période (avec cache)
-export const getCA = async (dateDebut, dateFin) => {
+export const getCA = async (dateDebut?: string, dateFin?: string): Promise<number> => {
   const company = getCurrentCompany();
   if (!company) return 0;
 
   const cacheKey = `ca_${company.id}_${dateDebut}_${dateFin}`;
-  
+
   return cache.get(cacheKey, async () => {
     let query = getSupabase()
       .from('ventes')
@@ -389,22 +380,21 @@ export const getCA = async (dateDebut, dateFin) => {
     const { data, error } = await query;
     if (error) throw error;
 
-    return data.reduce((sum, v) => sum + (v.montant_total || 0), 0);
-  }, 300000); // 5 minutes
+    return (data || []).reduce((sum: number, v: { montant_total: number }) => sum + (v.montant_total || 0), 0);
+  }, 300000) as Promise<number>;
 };
 
-// Top produits vendus (version avec fonction SQL)
-export const getTopProduits = async (limit = 10, dateDebut, dateFin) => {
+export const getTopProduits = async (limit: number = 10, dateDebut?: string, dateFin?: string): Promise<Record<string, unknown>[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
   const cacheKey = `top_produits_${company.id}_${dateDebut}_${dateFin}_${limit}`;
-  
+
   return cache.get(cacheKey, async () => {
     try {
       const today = new Date().toISOString().split('T')[0];
       const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-      
+
       const startDate = dateDebut || firstDayOfMonth;
       const endDate = dateFin || today;
 
@@ -422,16 +412,15 @@ export const getTopProduits = async (limit = 10, dateDebut, dateFin) => {
       console.error('Erreur getTopProduits:', error);
       return [];
     }
-  }, 300000); // 5 minutes
+  }, 300000) as Promise<Record<string, unknown>[]>;
 };
 
-// Ventes par jour
-export const getVentesByDay = async (date) => {
+export const getVentesByDay = async (date: string): Promise<Vente[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
   const cacheKey = `ventes_day_${company.id}_${date}`;
-  
+
   return cache.get(cacheKey, async () => {
     const { data, error } = await getSupabase()
       .from('ventes')
@@ -442,16 +431,15 @@ export const getVentesByDay = async (date) => {
 
     if (error) throw error;
     return data || [];
-  }, 60000); // 1 minute
+  }, 60000) as Promise<Vente[]>;
 };
 
-// Ventes par mois
-export const getVentesByMonth = async (annee, mois) => {
+export const getVentesByMonth = async (annee: number, mois: number): Promise<Vente[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
   const cacheKey = `ventes_month_${company.id}_${annee}_${mois}`;
-  
+
   return cache.get(cacheKey, async () => {
     const dateDebut = `${annee}-${String(mois).padStart(2, '0')}-01`;
     const dateFin = `${annee}-${String(mois).padStart(2, '0')}-31`;
@@ -466,16 +454,15 @@ export const getVentesByMonth = async (annee, mois) => {
 
     if (error) throw error;
     return data || [];
-  }, 300000); // 5 minutes
+  }, 300000) as Promise<Vente[]>;
 };
 
-// Nombre de ventes par statut
-export const getVentesStats = async () => {
+export const getVentesStats = async (): Promise<{ paye: number; credit: number; en_attente: number; annule: number }> => {
   const company = getCurrentCompany();
   if (!company) return { paye: 0, credit: 0, en_attente: 0, annule: 0 };
 
   const cacheKey = `ventes_stats_${company.id}`;
-  
+
   return cache.get(cacheKey, async () => {
     const { data, error } = await getSupabase()
       .from('ventes')
@@ -491,10 +478,10 @@ export const getVentesStats = async () => {
       annule: 0
     };
 
-    (data || []).forEach(v => {
-      if (stats[v.statut] !== undefined) stats[v.statut]++;
+    (data || []).forEach((v: { statut: string }) => {
+      if (stats[v.statut as keyof typeof stats] !== undefined) stats[v.statut as keyof typeof stats]++;
     });
 
     return stats;
-  }, 300000); // 5 minutes
+  }, 300000) as Promise<{ paye: number; credit: number; en_attente: number; annule: number }>;
 };

@@ -1,4 +1,3 @@
-// @ts-nocheck
 // templates/printStyles.ts — Styles communs pour l'impression
 import { formatAr } from "@/modules/shared/utils/constants";
 

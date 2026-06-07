@@ -1,31 +1,34 @@
-// @ts-nocheck
 // Inventaire.tsx — Refactorisé avec design system professionnel
 import { useState, useEffect } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
+import { Produit, type Inventaire } from '@/modules/shared/types';
 import { useApp } from '@/modules/shared/context/AppContext';
 import { fetchProduits } from '../services/produitService';
 import { getCurrentInventory, startInventory, recordCount, finishInventory, getInventoryHistory, getInventoryDetails, getCountedProducts, getUncountedProducts } from '../services/inventaireService';
-import { Card, CardHeader, CardTitle, StatCard, Button, Input, Modal, ModalHeader, ModalBody, ModalFooter, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, Badge } from '@/modules/shared/components/ui';
+import { Card, CardHeader, CardTitle, Button, Input, Modal, ModalHeader, ModalBody, ModalFooter, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, Badge } from '@/modules/shared/components/ui';
 import { formatAr } from '@/modules/shared/utils/constants';
 
 export default function Inventaire() {
   const { currentCompany } = useCompany();
   const { success: showSuccess, error: showError, warn: showWarn } = useApp();
 
-  const [currentInventory, setCurrentInventory] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [countedProducts, setCountedProducts] = useState([]);
-  const [uncountedProducts, setUncountedProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showCountModal, setShowCountModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [countValue, setCountValue] = useState('');
-  const [history, setHistory] = useState([]);
-  const [selectedInventory, setSelectedInventory] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [inventoryDetails, setInventoryDetails] = useState(null);
-  const [detailsLoading, setDetailsLoading] = useState(false);
-  const [confirmFinaliser, setConfirmFinaliser] = useState(false);
+  const [currentInventory, setCurrentInventory] = useState<Inventaire | null>(null);
+  const [products, setProducts] = useState<Produit[]>([]);
+  const [countedProducts, setCountedProducts] = useState<Produit[]>([]);
+  const [uncountedProducts, setUncountedProducts] = useState<Produit[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [showCountModal, setShowCountModal] = useState<boolean>(false);
+  const [selectedProduct, setSelectedProduct] = useState<Produit | null>(null);
+  const [countValue, setCountValue] = useState<string>('');
+  const [history, setHistory] = useState<Inventaire[]>([]);
+  const [selectedInventory, setSelectedInventory] = useState<Inventaire | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState<boolean>(false);
+  const [inventoryDetails, setInventoryDetails] = useState<{
+    stats: { total_products: number; products_with_difference: number; accuracy_rate: number };
+    details: Array<{ id?: string; produit?: { nom?: string; unite?: string }; quantite_theorique?: number; quantite_reelle?: number; ecart?: number }>;
+  } | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState<boolean>(false);
+  const [confirmFinaliser, setConfirmFinaliser] = useState<boolean>(false);
 
   useEffect(() => { loadData(); }, [currentCompany]);
 
@@ -38,11 +41,11 @@ export default function Inventaire() {
       setProducts(allProducts || []);
       const historyData = await getInventoryHistory();
       setHistory(historyData || []);
-      if (inventory) {
-        const counted = await getCountedProducts(inventory.id);
-        setCountedProducts(counted || []);
-        const uncounted = await getUncountedProducts(inventory.id);
-        setUncountedProducts(uncounted || []);
+      if (currentInventory && currentInventory.id) {
+        const counted = await getCountedProducts(currentInventory.id);
+        setCountedProducts(counted as unknown as Produit[]);
+        const uncounted = await getUncountedProducts(currentInventory.id);
+        setUncountedProducts(uncounted as unknown as Produit[]);
       }
     } catch (_) { showError('Erreur chargement'); }
     finally { setLoading(false); }
@@ -50,11 +53,11 @@ export default function Inventaire() {
 
   const handleStartInventory = async () => {
     try { await startInventory(); await loadData(); }
-    catch (e) { showError(e.message); }
+    catch (e: unknown) { showError(e instanceof Error ? e.message : 'Erreur'); }
   };
 
   const handleRecordCount = async () => {
-    if (!selectedProduct || !countValue) { showWarn('Veuillez saisir une quantité'); return; }
+    if (!selectedProduct || !countValue || !currentInventory?.id) { showWarn('Veuillez saisir une quantité'); return; }
     try {
       await recordCount(currentInventory.id, selectedProduct.id, parseFloat(countValue));
       setShowCountModal(false); setSelectedProduct(null); setCountValue('');
@@ -64,13 +67,14 @@ export default function Inventaire() {
 
   const executeFinishInventory = async () => {
     setConfirmFinaliser(false);
+    if (!currentInventory?.id) return;
     try { await finishInventory(currentInventory.id); await loadData(); showSuccess('Inventaire terminé'); }
     catch (_) { showError('Erreur finalisation'); }
   };
 
-  const handleViewDetails = async (inventory) => {
+  const handleViewDetails = async (inventory: Inventaire) => {
     setSelectedInventory(inventory); setDetailsLoading(true); setShowDetailsModal(true);
-    try { setInventoryDetails(await getInventoryDetails(inventory.id)); }
+    try { setInventoryDetails(await getInventoryDetails(inventory.id) as typeof inventoryDetails); }
     catch (_) { setInventoryDetails(null); }
     finally { setDetailsLoading(false); }
   };
@@ -96,15 +100,15 @@ export default function Inventaire() {
         <ModalBody>
           <div style={{ background: 'var(--bg)', padding: 14, borderRadius: 10, marginBottom: 16, textAlign: 'center' }}>
             <div style={{ fontSize: 12, color: 'var(--muted)' }}>Stock theorique</div>
-            <div style={{ fontSize: 28, fontWeight: 800 }}>{selectedProduct?.quantite_stock} <span style={{ fontSize: 14 }}>{selectedProduct?.unite}</span></div>
+            <div style={{ fontSize: 28, fontWeight: 800 }}>{selectedProduct?.quantite_stock ?? 0} <span style={{ fontSize: 14 }}>{selectedProduct?.unite}</span></div>
           </div>
           <Input type="number" label="Quantite reelle" value={countValue} onChange={e => setCountValue(e.target.value)} placeholder={"Quantite en " + (selectedProduct?.unite || '')} />
           {countValue && (
             <div style={{ background: 'var(--bg)', padding: 12, borderRadius: 10, marginTop: 12, display: 'flex', justifyContent: 'space-between' }}>
               <span>Ecart:</span>
-              <span style={{ fontWeight: 700, color: parseFloat(countValue) !== selectedProduct?.quantite_stock ? 'var(--orange)' : 'var(--green)' }}>
-                {parseFloat(countValue) > selectedProduct?.quantite_stock ? '+' : ''}
-                {(parseFloat(countValue) || 0) - (selectedProduct?.quantite_stock || 0)} {selectedProduct?.unite}
+              <span style={{ fontWeight: 700, color: parseFloat(countValue) !== (selectedProduct?.quantite_stock ?? 0) ? 'var(--orange)' : 'var(--green)' }}>
+                {parseFloat(countValue) > (selectedProduct?.quantite_stock ?? 0) ? '+' : ''}
+                {(parseFloat(countValue) || 0) - (selectedProduct?.quantite_stock ?? 0)} {selectedProduct?.unite}
               </span>
             </div>
           )}
@@ -131,7 +135,7 @@ export default function Inventaire() {
 
       {/* Details Modal */}
       <Modal open={showDetailsModal} onClose={() => setShowDetailsModal(false)}>
-        <ModalHeader title={"Details - Inventaire du " + (selectedInventory?.date_debut ? new Date(selectedInventory.date_debut).toLocaleDateString() : '')} onClose={() => setShowDetailsModal(false)} />
+        <ModalHeader title={"Details - Inventaire du " + (selectedInventory?.date_debut ? new Date(selectedInventory.date_debut ?? '').toLocaleDateString() : '')} onClose={() => setShowDetailsModal(false)} />
         <ModalBody>
           {detailsLoading ? (
             <div style={{ textAlign: 'center', padding: 40 }}>Chargement...</div>
@@ -168,11 +172,11 @@ export default function Inventaire() {
                         <TableCell style={{ fontWeight: 600 }}>{detail.produit?.nom || 'Produit'}</TableCell>
                         <TableCell align="right">{detail.quantite_theorique} {detail.produit?.unite}</TableCell>
                         <TableCell align="right">{detail.quantite_reelle} {detail.produit?.unite}</TableCell>
-                        <TableCell align="right" style={{ color: detail.ecart > 0 ? 'var(--red)' : detail.ecart < 0 ? 'var(--orange)' : 'var(--green)', fontWeight: detail.ecart !== 0 ? 600 : 400 }}>
-                          {detail.ecart > 0 ? '+' : ''}{detail.ecart}
+                        <TableCell align="right" style={{ color: (detail.ecart ?? 0) > 0 ? 'var(--red)' : (detail.ecart ?? 0) < 0 ? 'var(--orange)' : 'var(--green)', fontWeight: (detail.ecart ?? 0) !== 0 ? 600 : 400 }}>
+                          {(detail.ecart ?? 0) > 0 ? '+' : ''}{detail.ecart ?? 0}
                         </TableCell>
                         <TableCell align="center">
-                          <Badge variant={detail.ecart === 0 ? 'success' : 'warning'}>{detail.ecart === 0 ? 'OK' : 'Ecart'}</Badge>
+                          <Badge variant={(detail.ecart ?? 0) === 0 ? 'success' : 'warning'}>{(detail.ecart ?? 0) === 0 ? 'OK' : 'Ecart'}</Badge>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -196,7 +200,7 @@ export default function Inventaire() {
         <Card style={{ marginBottom: 20 }}>
           <CardHeader>
             <CardTitle>Inventaire en cours</CardTitle>
-            <span style={{ fontSize: 12, color: 'var(--muted)' }}>Demarre le {new Date(currentInventory.date_debut).toLocaleString()}</span>
+            <span style={{ fontSize: 12, color: 'var(--muted)' }}>Demarre le {new Date(currentInventory.date_debut ?? '').toLocaleString()}</span>
           </CardHeader>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16, padding: '0 18px' }}>
             <div style={{ textAlign: 'center', background: 'var(--bg)', borderRadius: 10, padding: 12 }}>
@@ -268,7 +272,7 @@ export default function Inventaire() {
           {history.map(inv => (
             <div key={inv.id} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
               <div>
-                <div style={{ fontWeight: 600 }}>Inventaire du {new Date(inv.date_debut).toLocaleDateString()}</div>
+                <div style={{ fontWeight: 600 }}>Inventaire du {new Date(inv.date_debut ?? '').toLocaleDateString()}</div>
                 <div style={{ fontSize: 12, color: 'var(--muted)' }}>Termine le {inv.date_fin ? new Date(inv.date_fin).toLocaleString() : '—'}</div>
               </div>
               <Button variant="secondary" size="sm" onClick={() => handleViewDetails(inv)}>Voir details</Button>

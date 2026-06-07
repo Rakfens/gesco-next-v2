@@ -1,13 +1,15 @@
-// @ts-nocheck
-// cache.js — FIX #3 : invalidation propre par Realtime, sans console.log
-class CacheService {
-  constructor() {
-    this.cache = new Map();
-    this.defaultTTL = 300000; // 5 min pour les produits (changent rarement)
-  }
+// cache.ts — Cache service with Realtime invalidation
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
 
-  async get(key, fetchFn, ttl = this.defaultTTL) {
-    const cached = this.cache.get(key);
+class CacheService {
+  private cache = new Map<string, CacheEntry<unknown>>();
+  private defaultTTL = 300000; // 5 min
+
+  async get<T>(key: string, fetchFn: () => Promise<T>, ttl: number = this.defaultTTL): Promise<T> {
+    const cached = this.cache.get(key) as CacheEntry<T> | undefined;
     if (cached && Date.now() - cached.timestamp < ttl) {
       return cached.data;
     }
@@ -16,7 +18,7 @@ class CacheService {
     return data;
   }
 
-  invalidate(keyPattern) {
+  invalidate(keyPattern: string): void {
     for (const key of this.cache.keys()) {
       if (key.includes(keyPattern)) {
         this.cache.delete(key);
@@ -24,18 +26,20 @@ class CacheService {
     }
   }
 
-  clear() {
+  clear(): void {
     this.cache.clear();
   }
 }
 
 export const cache = new CacheService();
 
-// FIX #3 : écouter le Realtime et invalider le cache immédiatement
-// → quand un autre appareil modifie des ventes/achats, le cache local se vide
-window.addEventListener('supabase_realtime', (e) => {
-  const { table } = e.detail || {};
-  if (table) {
-    cache.invalidate(table); // ex: invalide toutes les clés contenant "ventes"
-  }
-});
+// Listen to Realtime events and invalidate cache
+if (typeof window !== 'undefined') {
+  window.addEventListener('supabase_realtime', (e: Event) => {
+    const detail = (e as CustomEvent<{ table?: string }>).detail;
+    const { table } = detail || {};
+    if (table) {
+      cache.invalidate(table);
+    }
+  });
+}

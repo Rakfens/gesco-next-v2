@@ -1,4 +1,3 @@
-// @ts-nocheck
 // Loader.tsx — Professional Design
 import { useState, useEffect } from 'react';
 import { getSupabase, clearCurrentCompany } from '@/lib/supabase';

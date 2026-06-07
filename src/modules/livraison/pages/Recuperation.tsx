@@ -1,20 +1,28 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
 import { formatAr, TODAY } from '@/modules/shared/utils/constants';
 import { fetchRecuperations, addRecuperation, updateRecuperation, deleteRecuperation, getRecuperationsByDate } from '../services/recuperationService';
+import type { Recuperation as RecupType, Agent } from '@/modules/shared/types';
+import { useApp } from '@/modules/shared/context/AppContext';
 import {
   Button, Input, Select, Badge, Card, Modal, ModalHeader, ModalBody, ModalFooter,
 } from '@/modules/shared/components/ui';
 
+interface RecupParLivreur {
+  livreur: string;
+  recuperations: RecupType[];
+  totalGain: number;
+}
+
 export const Recuperation = () => {
   const { agents, showToast } = useApp();
-  const [recuperations, setRecuperations] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(TODAY());
-  const [form, setForm] = useState({ livreur_id: '', livreur_nom: '', client_donneur: '', frais_recuperation: 1000 });
-  const [editId, setEditId] = useState(null);
-  const [editData, setEditData] = useState({});
-  const [confirmDelete, setConfirmDelete] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const agentsList: Agent[] = agents as unknown as Agent[];
+  const [recuperations, setRecuperations] = useState<RecupType[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string>(TODAY());
+  const [form, setForm] = useState<{ livreur_id: string; livreur_nom: string; client_donneur: string; frais_recuperation: number }>({ livreur_id: '', livreur_nom: '', client_donneur: '', frais_recuperation: 1000 });
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editData, setEditData] = useState<{ client_donneur: string; frais_recuperation: number }>({ client_donneur: '', frais_recuperation: 0 });
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => { loadRecuperations(); }, [selectedDate]);
 
@@ -32,11 +40,11 @@ export const Recuperation = () => {
 
   const handleAdd = async () => {
     if (!form.livreur_id || !form.client_donneur) { showToast('Livreur et client donneur requis', 'error'); return; }
-    const agent = agents.find(a => a.id === parseInt(form.livreur_id));
+    const agent = agentsList.find(a => a.id === form.livreur_id);
     await addRecuperation({
-      date: selectedDate, livreur_id: parseInt(form.livreur_id),
-      livreur_nom: agent?.nom, client_donneur: form.client_donneur,
-      frais_recuperation: parseInt(form.frais_recuperation) || 0,
+      date: selectedDate, livreur_id: form.livreur_id,
+      livreur_nom: agent?.nom || '', client_donneur: form.client_donneur,
+      frais_recuperation: parseInt(String(form.frais_recuperation)) || 0,
     });
     setForm({ livreur_id: '', livreur_nom: '', client_donneur: '', frais_recuperation: 1000 });
     loadRecuperations();
@@ -44,7 +52,7 @@ export const Recuperation = () => {
   };
 
   const handleUpdate = async () => {
-    await updateRecuperation(editId, { frais_recuperation: parseInt(editData.frais_recuperation) || 0 });
+    await updateRecuperation(editId!, { frais_recuperation: parseInt(String(editData.frais_recuperation)) || 0 });
     setEditId(null);
     loadRecuperations();
     showToast('Récupération modifiée');
@@ -62,15 +70,15 @@ export const Recuperation = () => {
   const totalGains = recuperations.reduce((s, r) => s + (r.frais_recuperation || 0), 0);
   const totalRecuperations = recuperations.length;
 
-  const recuperationsParLivreur = recuperations.reduce((acc, r) => {
+  const recuperationsParLivreur: Record<string, RecupParLivreur> = recuperations.reduce((acc, r) => {
     const nom = r.livreur_nom;
     if (!acc[nom]) acc[nom] = { livreur: nom, recuperations: [], totalGain: 0 };
     acc[nom].recuperations.push(r);
     acc[nom].totalGain += (r.frais_recuperation || 0);
     return acc;
-  }, {});
+  }, {} as Record<string, RecupParLivreur>);
 
-  const agentOptions = agents.map(a => ({ value: a.id, label: a.nom }));
+  const agentOptions = agentsList.map(a => ({ value: a.id, label: a.nom }));
 
   return (
     <div>
@@ -124,11 +132,11 @@ export const Recuperation = () => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, alignItems: 'end' }}>
           <Select label="Livreur" value={form.livreur_id} onChange={e => {
             const id = e.target.value;
-            const agent = agents.find(a => a.id === parseInt(id));
+            const agent = agentsList.find(a => a.id === id);
             setForm({ ...form, livreur_id: id, livreur_nom: agent?.nom || '' });
           }} options={[{ value: '', label: '-- Choisir --' }, ...agentOptions]} />
           <Input label="Client donneur" placeholder="Ex: SARL TECH" value={form.client_donneur} onChange={e => setForm({ ...form, client_donneur: e.target.value })} />
-          <Input type="number" label="Frais de récupération (Ar)" placeholder="1000" value={form.frais_recuperation} onChange={e => setForm({ ...form, frais_recuperation: e.target.value })} />
+          <Input type="number" label="Frais de récupération (Ar)" placeholder="1000" value={String(form.frais_recuperation)} onChange={e => setForm({ ...form, frais_recuperation: Number(e.target.value) })} />
         </div>
         <Button variant="success" fullWidth onClick={handleAdd} style={{ marginTop: 12 }}>Ajouter la récupération</Button>
       </Card>
@@ -158,7 +166,7 @@ export const Recuperation = () => {
                     {editId === r.id ? (
                       <div style={{ display: 'flex', gap: 8, flex: 1, flexWrap: 'wrap', alignItems: 'center' }}>
                         <span style={{ minWidth: 150, fontWeight: 600 }}>{editData.client_donneur}</span>
-                        <Input type="number" placeholder="Frais" value={editData.frais_recuperation} onChange={e => setEditData({ ...editData, frais_recuperation: e.target.value })} style={{ width: 150 }} />
+                        <Input type="number" placeholder="Frais" value={String(editData.frais_recuperation)} onChange={e => setEditData({ ...editData, frais_recuperation: Number(e.target.value) })} style={{ width: 150 }} />
                         <Button variant="success" size="sm" onClick={handleUpdate}>OK</Button>
                         <Button variant="secondary" size="sm" onClick={() => setEditId(null)}>Annuler</Button>
                       </div>
@@ -169,7 +177,7 @@ export const Recuperation = () => {
                           <div style={{ fontSize: 11, color: 'var(--muted)' }}>{formatAr(r.frais_recuperation)}</div>
                         </div>
                         <div style={{ display: 'flex', gap: 6 }}>
-                          <Button variant="ghost" size="sm" onClick={() => { setEditId(r.id); setEditData({ client_donneur: r.client_donneur, frais_recuperation: r.frais_recuperation }); }}>Modifier</Button>
+                          <Button variant="ghost" size="sm" onClick={() => { setEditId(r.id); setEditData({ client_donneur: r.client_donneur, frais_recuperation: r.frais_recuperation ?? 0 }); }}>Modifier</Button>
                           <Button variant="danger" size="sm" onClick={() => setConfirmDelete(r.id)}>Supprimer</Button>
                         </div>
                       </>

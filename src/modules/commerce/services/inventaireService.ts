@@ -1,9 +1,52 @@
-// @ts-nocheck
-// src/modules/commerce/services/inventaireService.js
 import { getSupabase, getCurrentCompany } from '@/lib/supabase';
+import type { Inventaire } from '@/modules/shared/types';
 
-// Récupérer l'inventaire en cours
-export const getCurrentInventory = async () => {
+interface InventoryProduct {
+  id: string;
+  nom: string;
+  reference: string;
+  categorie?: string;
+  quantite_stock: number;
+  stock_minimum?: number;
+  unite?: string;
+}
+
+interface InventoryDetail {
+  id?: string;
+  inventaire_id: string;
+  produit_id: string;
+  quantite_theorique: number;
+  quantite_reelle: number;
+  ecart: number;
+  statut: string;
+  notes?: string;
+  produit?: InventoryProduct;
+}
+
+interface RecordCountResult extends InventoryDetail {
+  product_name: string;
+  product_reference: string;
+  theoretical_quantity: number;
+}
+
+interface FinishResult {
+  success: boolean;
+  corrections_appliquees: number;
+}
+
+interface InventoryStats {
+  total_products: number;
+  products_with_difference: number;
+  total_difference: number;
+  accuracy_rate: string;
+}
+
+interface InventoryWithDetails extends Inventaire {
+  details: InventoryDetail[];
+  stats: InventoryStats;
+}
+
+export const getCurrentInventory = async (): Promise<Inventaire | null> => {
   const company = getCurrentCompany();
   if (!company) return null;
 
@@ -15,21 +58,18 @@ export const getCurrentInventory = async () => {
     .order('created_at', { ascending: false })
     .limit(1);
 
-  // Gérer le cas où aucune donnée n'existe (code 406/PGRST116)
   if (error && (error.code === 'PGRST116' || error.message?.includes('JSON object requested'))) {
     return null;
   }
   if (error) throw error;
-  
-  return data && data.length > 0 ? data[0] : null;
+
+  return (data && data.length > 0 ? data[0] : null) as Inventaire | null;
 };
 
-// Démarrer un nouvel inventaire
-export const startInventory = async (notes = '') => {
+export const startInventory = async (notes: string = ''): Promise<Inventaire> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
-  // Vérifier s'il y a déjà un inventaire en cours
   const current = await getCurrentInventory();
   if (current) {
     throw new Error('Un inventaire est déjà en cours. Terminez-le avant d\'en commencer un nouveau.');
@@ -48,11 +88,10 @@ export const startInventory = async (notes = '') => {
     .single();
 
   if (error) throw error;
-  return data;
+  return data as Inventaire;
 };
 
-// Récupérer tous les produits pour l'inventaire
-export const getProductsForInventory = async (categorie = null) => {
+export const getProductsForInventory = async (categorie: string | null = null): Promise<InventoryProduct[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
@@ -69,11 +108,10 @@ export const getProductsForInventory = async (categorie = null) => {
 
   const { data, error } = await query;
   if (error) throw error;
-  return data || [];
+  return (data || []) as InventoryProduct[];
 };
 
-// Récupérer les produits déjà comptés
-export const getCountedProducts = async (inventoryId) => {
+export const getCountedProducts = async (inventoryId: string): Promise<InventoryDetail[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
@@ -86,15 +124,13 @@ export const getCountedProducts = async (inventoryId) => {
     .eq('inventaire_id', inventoryId);
 
   if (error) throw error;
-  return data || [];
+  return (data || []) as InventoryDetail[];
 };
 
-// Récupérer les produits non encore comptés
-export const getUncountedProducts = async (inventoryId, categorie = null) => {
+export const getUncountedProducts = async (inventoryId: string, categorie: string | null = null): Promise<InventoryProduct[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
-  // Récupérer les IDs des produits déjà comptés
   const { data: counted, error: countedError } = await getSupabase()
     .from('inventaire_details')
     .select('produit_id')
@@ -102,9 +138,8 @@ export const getUncountedProducts = async (inventoryId, categorie = null) => {
 
   if (countedError) throw countedError;
 
-  const countedIds = counted?.map(c => c.produit_id) || [];
+  const countedIds = (counted || []).map((c: { produit_id: string }) => c.produit_id);
 
-  // Récupérer tous les produits actifs
   let query = getSupabase()
     .from('produits')
     .select('*')
@@ -119,17 +154,19 @@ export const getUncountedProducts = async (inventoryId, categorie = null) => {
   const { data, error } = await query;
   if (error) throw error;
 
-  // Filtrer les produits non comptés
-  const uncounted = (data || []).filter(p => !countedIds.includes(p.id));
+  const uncounted = (data || []).filter((p: InventoryProduct) => !countedIds.includes(p.id));
   return uncounted;
 };
 
-// Enregistrer le comptage d'un produit
-export const recordCount = async (inventoryId, productId, actualQuantity, notes = '') => {
+export const recordCount = async (
+  inventoryId: string,
+  productId: string,
+  actualQuantity: number,
+  notes: string = ''
+): Promise<RecordCountResult> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
-  // Récupérer la quantité théorique
   const { data: product, error: productError } = await getSupabase()
     .from('produits')
     .select('quantite_stock, nom, reference')
@@ -142,7 +179,6 @@ export const recordCount = async (inventoryId, productId, actualQuantity, notes 
   const theoreticalQuantity = product.quantite_stock;
   const difference = actualQuantity - theoreticalQuantity;
 
-  // Vérifier si déjà compté
   const { data: existing, error: existingError } = await getSupabase()
     .from('inventaire_details')
     .select('id')
@@ -150,10 +186,9 @@ export const recordCount = async (inventoryId, productId, actualQuantity, notes 
     .eq('produit_id', productId)
     .maybeSingle();
 
-  let result;
+  let result: InventoryDetail;
 
   if (existing) {
-    // Mettre à jour
     const { data, error } = await getSupabase()
       .from('inventaire_details')
       .update({
@@ -167,9 +202,8 @@ export const recordCount = async (inventoryId, productId, actualQuantity, notes 
       .single();
 
     if (error) throw error;
-    result = data;
+    result = data as InventoryDetail;
   } else {
-    // Créer
     const { data, error } = await getSupabase()
       .from('inventaire_details')
       .insert([{
@@ -185,7 +219,7 @@ export const recordCount = async (inventoryId, productId, actualQuantity, notes 
       .single();
 
     if (error) throw error;
-    result = data;
+    result = data as InventoryDetail;
   }
 
   return {
@@ -196,12 +230,10 @@ export const recordCount = async (inventoryId, productId, actualQuantity, notes 
   };
 };
 
-// Terminer l'inventaire et appliquer les corrections
-export const finishInventory = async (inventoryId) => {
+export const finishInventory = async (inventoryId: string): Promise<FinishResult> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
-  // Récupérer tous les écarts
   const { data: differences, error: diffError } = await getSupabase()
     .from('inventaire_details')
     .select('*')
@@ -210,19 +242,16 @@ export const finishInventory = async (inventoryId) => {
 
   if (diffError) throw diffError;
 
-  // Appliquer les corrections
-  for (const diff of differences) {
-    // Mettre à jour le stock du produit
+  for (const diff of (differences || [])) {
     await getSupabase()
       .from('produits')
-      .update({ 
+      .update({
         quantite_stock: diff.quantite_reelle,
         updated_at: new Date().toISOString()
       })
       .eq('id', diff.produit_id)
       .eq('company_id', company.id);
 
-    // Créer un mouvement de stock
     await getSupabase()
       .from('mouvements_stock')
       .insert([{
@@ -236,7 +265,6 @@ export const finishInventory = async (inventoryId) => {
       }]);
   }
 
-  // Terminer l'inventaire
   const { error } = await getSupabase()
     .from('inventaires')
     .update({
@@ -254,8 +282,7 @@ export const finishInventory = async (inventoryId) => {
   };
 };
 
-// Annuler l'inventaire en cours
-export const cancelInventory = async (inventoryId) => {
+export const cancelInventory = async (inventoryId: string): Promise<void> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
@@ -271,8 +298,7 @@ export const cancelInventory = async (inventoryId) => {
   if (error) throw error;
 };
 
-// Récupérer l'historique des inventaires
-export const getInventoryHistory = async (limit = 50) => {
+export const getInventoryHistory = async (limit: number = 50): Promise<Inventaire[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
@@ -284,11 +310,10 @@ export const getInventoryHistory = async (limit = 50) => {
     .limit(limit);
 
   if (error) throw error;
-  return data || [];
+  return (data || []) as Inventaire[];
 };
 
-// Récupérer les détails d'un inventaire terminé
-export const getInventoryDetails = async (inventoryId) => {
+export const getInventoryDetails = async (inventoryId: string): Promise<InventoryWithDetails | null> => {
   const company = getCurrentCompany();
   if (!company) return null;
 
@@ -312,10 +337,9 @@ export const getInventoryDetails = async (inventoryId) => {
 
   if (detailsError) throw detailsError;
 
-  // Calculer les statistiques
   const totalProducts = details?.length || 0;
-  const productsWithDifference = details?.filter(d => d.ecart !== 0).length || 0;
-  const totalDifference = details?.reduce((sum, d) => sum + Math.abs(d.ecart), 0) || 0;
+  const productsWithDifference = (details || []).filter((d: InventoryDetail) => d.ecart !== 0).length;
+  const totalDifference = (details || []).reduce((sum: number, d: InventoryDetail) => sum + Math.abs(d.ecart), 0);
 
   return {
     ...inventory,
@@ -324,7 +348,7 @@ export const getInventoryDetails = async (inventoryId) => {
       total_products: totalProducts,
       products_with_difference: productsWithDifference,
       total_difference: totalDifference,
-      accuracy_rate: totalProducts > 0 ? ((totalProducts - productsWithDifference) / totalProducts * 100).toFixed(2) : 100
+      accuracy_rate: totalProducts > 0 ? ((totalProducts - productsWithDifference) / totalProducts * 100).toFixed(2) : '100'
     }
-  };
+  } as InventoryWithDetails;
 };

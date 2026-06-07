@@ -1,13 +1,23 @@
-// @ts-nocheck
 // ui/Modal.tsx — Modal professionnel
 import React from 'react';
 
-export const Modal = ({ open, onClose, onOpenChange, className, children }) => {
+interface ModalProps {
+  open: boolean;
+  onClose?: () => void;
+  onOpenChange?: (open: boolean) => void;
+  className?: string;
+  children: React.ReactNode;
+}
+
+export const Modal: React.FC<ModalProps> = ({ open, onClose, onOpenChange, className, children }) => {
   if (!open) return null;
-  const handleClose = onClose || onOpenChange;
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClose) { onClose(); return; }
+    if (onOpenChange) { onOpenChange(false); return; }
+  };
   return (
     <div
-      onClick={handleClose}
+      onClick={handleClick}
       className={className}
       style={{
         position: 'fixed', inset: 0,
@@ -21,7 +31,7 @@ export const Modal = ({ open, onClose, onOpenChange, className, children }) => {
       }}
     >
       <div
-        onClick={e => e.stopPropagation()}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
         style={{
           background: 'var(--card)',
           border: '1px solid var(--border)',
@@ -41,11 +51,22 @@ export const Modal = ({ open, onClose, onOpenChange, className, children }) => {
   );
 };
 
-export const ModalTitle = ({ children }) => (
+interface ModalTitleProps {
+  children: React.ReactNode;
+}
+
+export const ModalTitle: React.FC<ModalTitleProps> = ({ children }) => (
   <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)' }}>{children}</div>
 );
 
-export const ModalHeader = ({ title, onClose, subtitle, children }) => (
+interface ModalHeaderProps {
+  title: string;
+  onClose?: () => void;
+  subtitle?: string;
+  children?: React.ReactNode;
+}
+
+export const ModalHeader: React.FC<ModalHeaderProps> = ({ title, onClose, subtitle, children }) => (
   <div style={{
     padding: '0 20px 14px',
     flexShrink: 0,
@@ -74,10 +95,15 @@ export const ModalHeader = ({ title, onClose, subtitle, children }) => (
         </svg>
       </button>
     )}
+    {children}
   </div>
 );
 
-export const ModalBody = ({ children }) => (
+interface ModalBodyProps {
+  children: React.ReactNode;
+}
+
+export const ModalBody: React.FC<ModalBodyProps> = ({ children }) => (
   <div style={{
     flex: 1, overflowY: 'auto', overflowX: 'hidden',
     padding: '0 20px', WebkitOverflowScrolling: 'touch',
@@ -86,7 +112,11 @@ export const ModalBody = ({ children }) => (
   </div>
 );
 
-export const ModalFooter = ({ children }) => (
+interface ModalFooterProps {
+  children: React.ReactNode;
+}
+
+export const ModalFooter: React.FC<ModalFooterProps> = ({ children }) => (
   <div style={{
     flexShrink: 0,
     padding: '14px 20px',

@@ -1,7 +1,7 @@
-// @ts-nocheck
 // Ventes.jsx — FIX #1 (alert/confirm→toast/modal) + FIX #2 (console.log) + FIX #5 (ticket branché)
 import { useState, useEffect } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
+import { Produit, Vente } from '@/modules/shared/types';
 import { fetchProduits } from '../services/produitService';
 import { fetchVentes, fetchVenteWithDetails, createVente, updateVente, deleteVente } from '../services/venteService';
 import { printTicketVente } from '../services/impressionService';
@@ -10,18 +10,18 @@ import { btn, inp, lbl, modalStyles } from '@/modules/shared/utils/helpers';
 
 // ─── Toast inline ────────────────────────────────────────────────────
 function useLocalToast() {
-  const [toasts, setToasts] = useState([]);
-  const show = (msg, type = 'success') => {
+  const [toasts, setToasts] = useState<Array<{ id: number; msg: string; type: string }>>([]);
+  const show = (msg: string, type = 'success') => {
     const id = Date.now();
     setToasts(t => [...t, { id, msg, type }]);
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3500);
   };
-  return { toasts, success: m => show(m, 'success'), error: m => show(m, 'error'), warn: m => show(m, 'warn') };
+  return { toasts, success: (m: string) => show(m, 'success'), error: (m: string) => show(m, 'error'), warn: (m: string) => show(m, 'warn') };
 }
 
-function ToastStack({ toasts }) {
-  const colors = { success: 'var(--green)', error: 'var(--red)', warn: 'var(--yellow)' };
-  const bgs = { success: 'var(--green-dim)', error: 'var(--red-dim)', warn: 'var(--yellow-dim)' };
+function ToastStack({ toasts }: { toasts: Array<{ id: number; msg: string; type: string }> }) {
+  const colors: Record<string, string> = { success: 'var(--green)', error: 'var(--red)', warn: 'var(--yellow)' };
+  const bgs: Record<string, string> = { success: 'var(--green-dim)', error: 'var(--red-dim)', warn: 'var(--yellow-dim)' };
   if (!toasts.length) return null;
   return (
     <div style={{ position: 'fixed', bottom: 80, right: 16, zIndex: 999, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -38,7 +38,9 @@ function ToastStack({ toasts }) {
 }
 
 // ─── FIX #1 : Modal de confirmation (remplace confirm()) ──────────────
-function ConfirmModal({ open, title, message, onConfirm, onCancel, danger = true }) {
+function ConfirmModal({ open, title, message, onConfirm, onCancel, danger = true }: {
+  open: boolean; title: string; message: string; onConfirm: () => void; onCancel: () => void; danger?: boolean;
+}) {
   if (!open) return null;
   return (
     <div style={{ ...modalStyles.overlay, zIndex: 300 }}>
@@ -57,7 +59,7 @@ function ConfirmModal({ open, title, message, onConfirm, onCancel, danger = true
 }
 
 // ─── FIX #5 : Modal de confirmation impression ────────────────────────
-function PrintModal({ open, onConfirm, onCancel }) {
+function PrintModal({ open, onConfirm, onCancel }: { open: boolean; onConfirm: () => void; onCancel: () => void }) {
   if (!open) return null;
   return (
     <div style={{ ...modalStyles.overlay, zIndex: 300 }}>
@@ -77,8 +79,8 @@ function PrintModal({ open, onConfirm, onCancel }) {
   );
 }
 
-const StatusBadge = ({ status }) => {
-  const config = {
+const StatusBadge = ({ status }: { status: string }) => {
+  const config: Record<string, { bg: string; color: string; label: string }> = {
     paye:       { bg: 'var(--green-dim)', color: 'var(--green)',  label: 'Payé' },
     credit:     { bg: 'var(--yellow-dim)', color: 'var(--yellow)', label: 'Crédit' },
     en_attente: { bg: 'var(--blue-dim)',  color: 'var(--blue)',   label: 'En attente' },
@@ -91,20 +93,20 @@ export default function Ventes() {
   const { currentCompany } = useCompany();
   const toast = useLocalToast();
 
-  const [ventes, setVentes] = useState([]);
-  const [produits, setProduits] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [selectedVente, setSelectedVente] = useState(null);
-  const [panier, setPanier] = useState([]);
-  const [searchProduit, setSearchProduit] = useState('');
+  const [ventes, setVentes] = useState<Vente[]>([]);
+  const [produits, setProduits] = useState<Produit[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [editMode, setEditMode] = useState<boolean>(false);
+  const [selectedVente, setSelectedVente] = useState<Vente | null>(null);
+  const [panier, setPanier] = useState<Array<{ produit_id: string; nom: string; quantite: number; prix_unitaire: number; sous_total: number; stock_max?: number }>>([]);
+  const [searchProduit, setSearchProduit] = useState<string>('');
 
   // FIX #1 : état pour les modaux (plus de confirm())
-  const [confirmDelete, setConfirmDelete] = useState(null);
-  const [printPending,  setPrintPending]  = useState(null);
-  const [isMobile,      setIsMobile]      = useState(window.innerWidth <= 768);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string } | null>(null);
+  const [printPending,  setPrintPending]  = useState<{ venteId: string } | null>(null);
+  const [isMobile,      setIsMobile]      = useState<boolean>(window.innerWidth <= 768);
 
   useEffect(() => {
     const fn = () => setIsMobile(window.innerWidth <= 768);
@@ -112,7 +114,14 @@ export default function Ventes() {
     return () => window.removeEventListener('resize', fn);
   }, []);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    client_nom: string;
+    client_telephone: string;
+    type_paiement: string;
+    remise: number;
+    montant_paye: number;
+    date_vente: string;
+  }>({
     client_nom: '',
     client_telephone: '',
     type_paiement: 'especes',
@@ -125,8 +134,8 @@ export default function Ventes() {
 
   // Realtime
   useEffect(() => {
-    const handler = (e) => {
-      if (['ventes', 'vente_details'].includes(e.detail?.table)) loadData();
+    const handler = (e: Event) => {
+      if (['ventes', 'vente_details'].includes((e as CustomEvent)?.detail?.table)) loadData();
     };
     window.addEventListener('supabase_realtime', handler);
     return () => window.removeEventListener('supabase_realtime', handler);
@@ -150,12 +159,12 @@ export default function Ventes() {
     }
   };
 
-  const addToCart = (produit) => {
-    if (produit.quantite_stock <= 0) { toast.warn(`"${produit.nom}" est en rupture de stock`); return; }
+  const addToCart = (produit: Produit) => {
+    if ((produit.quantite_stock ?? 0) <= 0) { toast.warn(`"${produit.nom}" est en rupture de stock`); return; }
     const existing = panier.find(p => p.produit_id === produit.id);
     if (existing) {
-      if (existing.quantite >= produit.quantite_stock && !editMode) {
-        toast.warn(`Stock insuffisant (${produit.quantite_stock} disponibles)`);
+      if (existing.quantite >= (produit.quantite_stock ?? 0) && !editMode) {
+        toast.warn(`Stock insuffisant (${produit.quantite_stock ?? 0} disponibles)`);
         return;
       }
       setPanier(panier.map(p => p.produit_id === produit.id
@@ -173,13 +182,13 @@ export default function Ventes() {
     }
   };
 
-  const updateCartQty = (produitId, quantite) => {
+  const updateCartQty = (produitId: string, quantite: number) => {
     if (quantite <= 0) { setPanier(panier.filter(p => p.produit_id !== produitId)); return; }
     setPanier(panier.map(p => p.produit_id === produitId
       ? { ...p, quantite, sous_total: quantite * p.prix_unitaire } : p));
   };
 
-  const updateCartPrice = (produitId, newPrice) => {
+  const updateCartPrice = (produitId: string, newPrice: number) => {
     setPanier(panier.map(p => p.produit_id === produitId
       ? { ...p, prix_unitaire: newPrice, sous_total: p.quantite * newPrice } : p));
   };
@@ -193,7 +202,7 @@ export default function Ventes() {
   const handleSubmitVente = async () => {
     if (panier.length === 0) { toast.warn('Ajoutez au moins un produit au panier'); return; }
     const total = panier.reduce((s, p) => s + p.sous_total, 0);
-    const venteData = { ...form, montant_paye: parseFloat(form.montant_paye) || 0, remise: parseFloat(form.remise) || 0 };
+    const venteData = { ...form, montant_paye: Number(form.montant_paye) || 0, remise: Number(form.remise) || 0 };
     const details = panier.map(p => ({ produit_id: p.produit_id, quantite: p.quantite, prix_unitaire: p.prix_unitaire, sous_total: p.sous_total }));
 
     setSaving(true);
@@ -213,14 +222,14 @@ export default function Ventes() {
         // FIX #5 : modal d'impression (plus de confirm() bloquant)
         if (newVente?.id) setPrintPending({ venteId: newVente.id });
       }
-    } catch (err) {
-      toast.error(`Erreur : ${err.message || 'Impossible d\'enregistrer la vente'}`);
+    } catch (err: unknown) {
+      toast.error(`Erreur : ${err instanceof Error ? err.message : 'Impossible d\'enregistrer la vente'}`);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleEditVente = async (vente) => {
+  const handleEditVente = async (vente: Vente) => {
     setEditMode(true); setSelectedVente(vente);
     setForm({
       client_nom: vente.client_nom || '',
@@ -232,17 +241,21 @@ export default function Ventes() {
     });
     try {
       const v = await fetchVenteWithDetails(vente.id);
-      if (v?.details) setPanier(v.details.map(d => ({
-        produit_id: d.produit_id, nom: d.produit?.nom || 'Produit',
-        quantite: d.quantite, prix_unitaire: d.prix_unitaire, sous_total: d.sous_total,
+      if (v?.details) setPanier(v.details.map((d) => ({
+        produit_id: String(d.produit_id ?? ''),
+        nom: String(((d as unknown as Record<string, unknown>).produit as Record<string, unknown>)?.nom || 'Produit'),
+        quantite: Number(d.quantite ?? 0),
+        prix_unitaire: Number(d.prix_unitaire ?? 0),
+        sous_total: Number(d.sous_total ?? 0),
       })));
     } catch (_) { toast.warn('Impossible de charger les détails'); }
     setShowModal(true);
   };
 
   // FIX #1 : confirm() → modal
-  const handleDeleteVente = (id) => { setConfirmDelete({ id }); };
+  const handleDeleteVente = (id: string) => { setConfirmDelete({ id }); };
   const executeDelete = async () => {
+    if (!confirmDelete) return;
     const { id } = confirmDelete;
     setConfirmDelete(null);
     try {
@@ -255,10 +268,10 @@ export default function Ventes() {
   };
 
   // FIX #5 : impression depuis la liste + modal confirmation
-  const handlePrintTicket = async (venteId) => {
+  const handlePrintTicket = async (venteId: string) => {
     try {
       const v = await fetchVenteWithDetails(venteId);
-      if (v) { printTicketVente(v, v.details, currentCompany); }
+      if (v) { printTicketVente(v as any, v.details as any, currentCompany as any); }
       else toast.warn('Détails de la vente introuvables');
     } catch (err) {
       toast.error('Erreur lors de l\'impression');
@@ -273,8 +286,8 @@ export default function Ventes() {
   };
 
   const totalPanier = panier.reduce((s, p) => s + p.sous_total, 0);
-  const totalFinal = totalPanier - (parseFloat(form.remise) || 0);
-  const resteAPayer = totalFinal - (parseFloat(form.montant_paye) || 0);
+  const totalFinal = totalPanier - (Number(form.remise) || 0);
+  const resteAPayer = totalFinal - (Number(form.montant_paye) || 0);
 
   const produitsFiltres = produits.filter(p =>
     !searchProduit || p.nom.toLowerCase().includes(searchProduit.toLowerCase()) || (p.reference || '').toLowerCase().includes(searchProduit.toLowerCase())
@@ -333,10 +346,10 @@ export default function Ventes() {
                     <div>
                       <div style={{ fontWeight:700, fontSize:14, color:'var(--text)' }}>{v.numero_facture}</div>
                       <div style={{ fontSize:12, color:'var(--muted)', marginTop:2 }}>
-                        {v.client_nom || '—'} · {new Date(v.date_vente).toLocaleDateString('fr-FR')}
+                        {v.client_nom || '—'} · {new Date(v.date_vente ?? '').toLocaleDateString('fr-FR')}
                       </div>
                     </div>
-                    <StatusBadge status={v.statut} />
+                    <StatusBadge status={v.statut ?? 'en_attente'} />
                   </div>
                   {/* Ligne 2 : montants */}
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:12 }}>
@@ -401,11 +414,11 @@ export default function Ventes() {
                       <tr key={v.id} style={{ borderBottom:'1px solid var(--border)' }}>
                         <td style={{ padding:'10px 12px', fontWeight:600, fontSize:13 }}>{v.numero_facture}</td>
                         <td style={{ padding:'10px 12px' }}>{v.client_nom || <span style={{ color:'var(--muted)' }}>—</span>}</td>
-                        <td style={{ padding:'10px 12px', fontSize:13 }}>{new Date(v.date_vente).toLocaleDateString('fr-FR')}</td>
+                        <td style={{ padding:'10px 12px', fontSize:13 }}>{new Date(v.date_vente ?? '').toLocaleDateString('fr-FR')}</td>
                         <td style={{ padding:'10px 12px', textAlign:'right', fontWeight:600 }}>{formatAr(v.montant_total)}</td>
                         <td style={{ padding:'10px 12px', textAlign:'right' }}>{formatAr(v.montant_paye)}</td>
                         <td style={{ padding:'10px 12px', textAlign:'right', fontWeight:700, color:solde>0?'var(--orange)':'var(--green)' }}>{solde>0?formatAr(solde):'✓'}</td>
-                        <td style={{ padding:'10px 12px', textAlign:'center' }}><StatusBadge status={v.statut} /></td>
+                        <td style={{ padding:'10px 12px', textAlign:'center' }}><StatusBadge status={v.statut ?? 'en_attente'} /></td>
                         <td style={{ padding:'10px 12px', textAlign:'center' }}>
                           <div style={{ display:'flex', gap:5, justifyContent:'center' }}>
                             <button onClick={()=>handlePrintTicket(v.id)} style={{ ...btn('var(--card2)','var(--card2)'), padding:'5px 9px', fontSize:13, border:'1px solid var(--border2)', color:'var(--muted)' }}>Imp.</button>
@@ -456,15 +469,15 @@ export default function Ventes() {
                   {produitsFiltres.length === 0
                     ? <div style={{ padding: 20, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Aucun produit</div>
                     : produitsFiltres.map(p => (
-                      <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', borderRadius: 8, marginBottom: 4, background: p.quantite_stock <= 0 ? 'var(--red-dim)' : 'transparent' }}>
+                      <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', borderRadius: 8, marginBottom: 4, background: (p.quantite_stock ?? 0) <= 0 ? 'var(--red-dim)' : 'transparent' }}>
                         <div>
                           <div style={{ fontWeight: 600, fontSize: 13 }}>{p.nom}</div>
-                          <div style={{ fontSize: 11, color: p.quantite_stock <= 0 ? 'var(--red)' : 'var(--muted)' }}>
-                            Stock: {p.quantite_stock} · {formatAr(p.prix_vente)}
+                          <div style={{ fontSize: 11, color: (p.quantite_stock ?? 0) <= 0 ? 'var(--red)' : 'var(--muted)' }}>
+                            Stock: {p.quantite_stock ?? '—'} · {formatAr(p.prix_vente)}
                           </div>
                         </div>
                         <button style={{ ...btn('var(--blue)', 'var(--blue2)'), padding: '5px 11px', fontSize: 12 }}
-                          onClick={() => addToCart(p)} disabled={p.quantite_stock <= 0}>
+                          onClick={() => addToCart(p)} disabled={(p.quantite_stock ?? 0) <= 0}>
                           +
                         </button>
                       </div>

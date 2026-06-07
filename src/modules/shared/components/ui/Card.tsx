@@ -1,14 +1,15 @@
-// @ts-nocheck
-// ui/Card.tsx — Carte professionnelle
+// ui/Card.tsx — Carte professionnelle avec sous-composants
 import React from 'react';
 
-export const Card = ({
-  children,
-  padding = 18,
-  style = {},
-  onClick,
-  className,
-}) => (
+interface CardProps {
+  children: React.ReactNode;
+  padding?: number;
+  style?: React.CSSProperties;
+  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  className?: string;
+}
+
+export const Card: React.FC<CardProps> = ({ children, padding = 18, style = {}, onClick, className }) => (
   <div
     onClick={onClick}
     className={className}
@@ -22,97 +23,33 @@ export const Card = ({
       cursor: onClick ? 'pointer' : 'default',
       ...style,
     }}
-    onMouseEnter={onClick ? e => e.currentTarget.style.boxShadow = 'var(--shadow)' : undefined}
-    onMouseLeave={onClick ? e => e.currentTarget.style.boxShadow = 'var(--shadow-sm)' : undefined}
+    onMouseEnter={onClick ? (e: React.MouseEvent<HTMLDivElement>) => { e.currentTarget.style.boxShadow = 'var(--shadow)'; } : undefined}
+    onMouseLeave={onClick ? (e: React.MouseEvent<HTMLDivElement>) => { e.currentTarget.style.boxShadow = 'var(--shadow-sm)'; } : undefined}
   >
     {children}
   </div>
 );
 
-export const CardHeader = ({ children, style = {} }) => (
-  <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-    paddingBottom: 12,
-    borderBottom: '1px solid var(--border)',
-    ...style,
-  }}>
-    {children}
-  </div>
+export interface CardSubComponentProps {
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+export const CardHeader: React.FC<CardSubComponentProps> = ({ children, className, style }) => (
+  <div className={className} style={{ marginBottom: 12, ...style }}>{children}</div>
 );
 
-export const CardTitle = ({ children, style = {} }) => (
-  <div style={{
-    fontSize: 15,
-    fontWeight: 700,
-    color: 'var(--text)',
-    ...style,
-  }}>
-    {children}
-  </div>
+export const CardTitle: React.FC<CardSubComponentProps> = ({ children, className, style }) => (
+  <div className={className} style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', ...style }}>{children}</div>
 );
 
-export const CardDescription = ({ children, style = {} }) => (
-  <div style={{
-    fontSize: 13,
-    color: 'var(--muted)',
-    marginTop: 4,
-    ...style,
-  }}>
-    {children}
-  </div>
+export const CardContent: React.FC<CardSubComponentProps> = ({ children, className, style }) => (
+  <div className={className} style={style}>{children}</div>
 );
 
-export const CardContent = ({ children, style = {} }) => (
-  <div style={{ ...style }}>
-    {children}
-  </div>
-);
-
-export const CardFooter = ({ children, style = {} }) => (
-  <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 8,
-    marginTop: 14,
-    paddingTop: 14,
-    borderTop: '1px solid var(--border)',
-    ...style,
-  }}>
-    {children}
-  </div>
-);
-
-export const StatCard = ({ label, value, icon, color, sub, style = {} }) => (
-  <div className="stat-card" style={{ borderLeft: `3px solid ${color || 'var(--accent)'}`, padding: 20, ...style }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-      <div>
-        <div style={{
-          fontSize: 11, fontWeight: 600, color: 'var(--muted)',
-          textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6,
-        }}>
-          {label}
-        </div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em' }}>
-          {value}
-        </div>
-        {sub && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>{sub}</div>}
-      </div>
-      {icon && (
-        <div style={{
-          width: 40, height: 40, borderRadius: 10,
-          background: `${color || 'var(--accent)'}15`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: color || 'var(--accent)', fontSize: 18,
-        }}>
-          {icon}
-        </div>
-      )}
-    </div>
-  </div>
+export const CardFooter: React.FC<CardSubComponentProps> = ({ children, className, style }) => (
+  <div className={className} style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)', ...style }}>{children}</div>
 );
 
 export default Card;

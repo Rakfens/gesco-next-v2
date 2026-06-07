@@ -1,7 +1,7 @@
-// @ts-nocheck
 // Achats.jsx — Refactored with design system UI components
 import { useState, useEffect } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
+import { Achat, Produit } from '@/modules/shared/types';
 import { useApp } from '@/modules/shared/context/AppContext';
 import { fetchProduits } from '../services/produitService';
 import { fetchAchats, createAchat, updateAchat, deleteAchat } from '../services/achatService';
@@ -16,22 +16,28 @@ export default function Achats() {
   const { currentCompany } = useCompany();
   const { success: toastSuccess, error: toastError, warn: toastWarn } = useApp();
 
-  const [achats, setAchats] = useState([]);
-  const [produits, setProduits] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [selectedAchat, setSelectedAchat] = useState(null);
-  const [panier, setPanier] = useState([]);
-  const [searchProduit, setSearchProduit] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [achats, setAchats] = useState<Achat[]>([]);
+  const [produits, setProduits] = useState<Produit[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [editMode, setEditMode] = useState<boolean>(false);
+  const [selectedAchat, setSelectedAchat] = useState<Achat | null>(null);
+  const [panier, setPanier] = useState<Array<{ produit_id: string; nom: string; quantite: number; prix_unitaire: number; sous_total: number }>>([]);
+  const [searchProduit, setSearchProduit] = useState<string>('');
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string } | null>(null);
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 768);
 
   // Fournisseurs connus pour autocomplete
-  const [fournisseursConnus, setFournisseursConnus] = useState([]);
+  const [fournisseursConnus, setFournisseursConnus] = useState<string[]>([]);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    fournisseur_nom: string;
+    fournisseur_contact: string;
+    tva: number;
+    montant_paye: number;
+    date_achat: string;
+  }>({
     fournisseur_nom: '',
     fournisseur_contact: '',
     tva: 0,
@@ -48,8 +54,8 @@ export default function Achats() {
   useEffect(() => { loadData(); }, [currentCompany]);
 
   useEffect(() => {
-    const handler = (e) => {
-      if (['achats', 'achat_details'].includes(e.detail?.table)) loadData();
+    const handler = (e: Event) => {
+      if (['achats', 'achat_details'].includes((e as CustomEvent).detail?.table)) loadData();
     };
     window.addEventListener('supabase_realtime', handler);
     return () => window.removeEventListener('supabase_realtime', handler);
@@ -62,7 +68,7 @@ export default function Achats() {
       const [achatsData, produitsData] = await Promise.all([fetchAchats(), fetchProduits()]);
       setAchats(achatsData);
       setProduits(produitsData);
-      const fournisseurs = [...new Set(achatsData.map(a => a.fournisseur_nom).filter(Boolean))];
+      const fournisseurs = [...new Set(achatsData.map(a => a.fournisseur_nom).filter(Boolean) as string[])];
       setFournisseursConnus(fournisseurs);
     } catch (err) {
       toastError('Erreur lors du chargement');
@@ -71,7 +77,7 @@ export default function Achats() {
     }
   };
 
-  const addToCart = (produit) => {
+  const addToCart = (produit: Produit) => {
     const existing = panier.find(p => p.produit_id === produit.id);
     if (existing) {
       setPanier(panier.map(p => p.produit_id === produit.id
@@ -81,12 +87,12 @@ export default function Achats() {
     }
   };
 
-  const updateCartQty = (produitId, quantite) => {
+  const updateCartQty = (produitId: string, quantite: number) => {
     if (quantite <= 0) { setPanier(panier.filter(p => p.produit_id !== produitId)); return; }
     setPanier(panier.map(p => p.produit_id === produitId ? { ...p, quantite, sous_total: quantite * p.prix_unitaire } : p));
   };
 
-  const updateCartPrice = (produitId, newPrice) => {
+  const updateCartPrice = (produitId: string, newPrice: number) => {
     setPanier(panier.map(p => p.produit_id === produitId ? { ...p, prix_unitaire: newPrice, sous_total: p.quantite * newPrice } : p));
   };
 
@@ -99,7 +105,7 @@ export default function Achats() {
     if (panier.length === 0) { toastWarn('Ajoutez au moins un produit'); return; }
     if (!form.fournisseur_nom.trim()) { toastWarn('Le nom du fournisseur est requis'); return; }
     const details = panier.map(p => ({ produit_id: p.produit_id, quantite: p.quantite, prix_unitaire: p.prix_unitaire, sous_total: p.sous_total }));
-    const achatData = { fournisseur_nom: form.fournisseur_nom, fournisseur_contact: form.fournisseur_contact, tva: parseFloat(form.tva) || 0, montant_paye: parseFloat(form.montant_paye) || 0, date_achat: form.date_achat };
+    const achatData = { fournisseur_nom: form.fournisseur_nom, fournisseur_contact: form.fournisseur_contact, tva: Number(form.tva) || 0, montant_paye: Number(form.montant_paye) || 0, date_achat: form.date_achat };
 
     setSaving(true);
     try {
@@ -113,35 +119,36 @@ export default function Achats() {
       setShowModal(false);
       resetForm();
       loadData();
-    } catch (err) {
-      toastError(`Erreur : ${err.message || 'Impossible d\'enregistrer'}`);
+    } catch (err: unknown) {
+      toastError(`Erreur : ${err instanceof Error ? err.message : 'Impossible d\'enregistrer'}`);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleEditAchat = (achat) => {
+  const handleEditAchat = (achat: Achat) => {
     setEditMode(true); setSelectedAchat(achat);
     setForm({ fournisseur_nom: achat.fournisseur_nom || '', fournisseur_contact: achat.fournisseur_contact || '', tva: achat.tva || 0, montant_paye: achat.montant_paye || 0, date_achat: achat.date_achat?.split('T')[0] || new Date().toISOString().split('T')[0] });
-    if (achat.details) setPanier(achat.details.map(d => ({ produit_id: d.produit_id, nom: d.produit?.nom || 'Produit', quantite: d.quantite, prix_unitaire: d.prix_unitaire, sous_total: d.sous_total })));
+    if (achat.details) setPanier(achat.details.map((d) => ({ produit_id: d.produit_id ?? '', nom: d.produit?.nom ?? 'Produit', quantite: d.quantite ?? 0, prix_unitaire: d.prix_unitaire ?? 0, sous_total: d.sous_total ?? 0 })));
     setShowModal(true);
   };
 
-  const handleDeleteAchat = (id) => { setConfirmDelete({ id }); };
+  const handleDeleteAchat = (id: string) => { setConfirmDelete({ id }); };
   const executeDelete = async () => {
+    if (!confirmDelete) return;
     const { id } = confirmDelete;
     setConfirmDelete(null);
     try {
       await deleteAchat(id);
       toastSuccess('Achat supprimé, stock ajusté');
       loadData();
-    } catch (err) {
+    } catch (err: unknown) {
       toastError('Erreur lors de la suppression');
     }
   };
 
   const totalPanier = panier.reduce((s, p) => s + p.sous_total, 0);
-  const totalAvecTVA = totalPanier + (parseFloat(form.tva) || 0);
+  const totalAvecTVA = totalPanier + (Number(form.tva) || 0);
 
   const produitsFiltres = produits.filter(p =>
     !searchProduit || p.nom.toLowerCase().includes(searchProduit.toLowerCase()) || (p.reference || '').toLowerCase().includes(searchProduit.toLowerCase())
@@ -177,7 +184,7 @@ export default function Achats() {
             {currentCompany?.name} · {achats.length} commande(s)
           </p>
         </div>
-        <Button variant="info" size="md" onClick={() => { resetForm(); setShowModal(true); }}>
+        <Button variant="primary" size="md" onClick={() => { resetForm(); setShowModal(true); }}>
           + Nouvel achat
         </Button>
       </CardHeader>
@@ -195,7 +202,7 @@ export default function Achats() {
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 14 }}>{a.numero_commande}</div>
                       <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
-                        {a.fournisseur_nom} · {new Date(a.date_achat).toLocaleDateString('fr-FR')}
+                        {a.fournisseur_nom} · {new Date(a.date_achat ?? '').toLocaleDateString('fr-FR')}
                       </div>
                     </div>
                     <Badge variant={solde > 0 ? 'warning' : 'success'} size="sm">
@@ -256,7 +263,7 @@ export default function Achats() {
                   <TableRow key={a.id}>
                     <TableCell style={{ fontWeight: 600 }}>{a.numero_commande}</TableCell>
                     <TableCell>{a.fournisseur_nom}</TableCell>
-                    <TableCell>{new Date(a.date_achat).toLocaleDateString('fr-FR')}</TableCell>
+                    <TableCell>{new Date(a.date_achat ?? '').toLocaleDateString('fr-FR')}</TableCell>
                     <TableCell align="right" style={{ fontWeight: 600 }}>{formatAr(a.montant_total)}</TableCell>
                     <TableCell align="right">{formatAr(a.montant_paye)}</TableCell>
                     <TableCell align="right" style={{ fontWeight: 700, color: solde > 0 ? 'var(--orange)' : 'var(--green)' }}>
@@ -274,11 +281,11 @@ export default function Achats() {
           </TableBody>
           {achats.length > 0 && (
             <TableFooter>
-              <TableCell colSpan={3} style={{ fontWeight: 700 }}>TOTAL</TableCell>
+              <td colSpan={3} style={{ padding: '10px 12px', fontWeight: 700 }}>TOTAL</td>
               <TableCell align="right" style={{ fontWeight: 800, color: 'var(--orange)' }}>{formatAr(achats.reduce((s, a) => s + (a.montant_total || 0), 0))}</TableCell>
               <TableCell align="right" style={{ fontWeight: 700 }}>{formatAr(achats.reduce((s, a) => s + (a.montant_paye || 0), 0))}</TableCell>
               <TableCell align="right" style={{ fontWeight: 700, color: 'var(--orange)' }}>{formatAr(achats.reduce((s, a) => s + Math.max(0, (a.montant_total || 0) - (a.montant_paye || 0)), 0))}</TableCell>
-              <TableCell />
+              <td />
             </TableFooter>
           )}
         </Table>
@@ -305,7 +312,7 @@ export default function Achats() {
                       <div style={{ fontWeight: 600, fontSize: 13 }}>{p.nom}</div>
                       <div style={{ fontSize: 11, color: 'var(--muted)' }}>Stock: {p.quantite_stock} · Prix achat: {formatAr(p.prix_achat)}</div>
                     </div>
-                    <Button variant="info" size="sm" onClick={() => addToCart(p)}>+</Button>
+                    <Button variant="primary" size="sm" onClick={() => addToCart(p)}>+</Button>
                   </div>
                 ))}
               </div>
@@ -367,12 +374,12 @@ export default function Achats() {
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)', display: 'block', marginBottom: 6 }}>TVA (Ar)</label>
                   <input type="number" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--card)', color: 'var(--text)', fontSize: 14, fontFamily: 'var(--font)', outline: 'none', boxSizing: 'border-box' }}
-                    value={form.tva} onChange={e => setForm({ ...form, tva: parseFloat(e.target.value) || 0 })} />
+                    value={String(form.tva)} onChange={e => setForm({ ...form, tva: parseFloat(e.target.value) || 0 })} />
                 </div>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)', display: 'block', marginBottom: 6 }}>Montant payé</label>
                   <input type="number" style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--card)', color: 'var(--text)', fontSize: 14, fontFamily: 'var(--font)', outline: 'none', boxSizing: 'border-box' }}
-                    value={form.montant_paye} onChange={e => setForm({ ...form, montant_paye: parseFloat(e.target.value) || 0 })} />
+                    value={String(form.montant_paye)} onChange={e => setForm({ ...form, montant_paye: parseFloat(e.target.value) || 0 })} />
                 </div>
               </div>
 
@@ -380,7 +387,7 @@ export default function Achats() {
               <div style={{ background: 'var(--bg)', padding: 14, borderRadius: 12, marginBottom: 14 }}>
                 {[
                   { label: 'Sous-total', value: formatAr(totalPanier) },
-                  { label: 'TVA', value: formatAr(form.tva) },
+                  { label: 'TVA', value: formatAr(Number(form.tva) || 0) },
                   { label: 'Total', value: formatAr(totalAvecTVA), bold: true, big: true },
                   { label: 'Payé', value: formatAr(form.montant_paye) },
                 ].map(r => (
@@ -389,10 +396,10 @@ export default function Achats() {
                     <span style={{ fontWeight: r.bold ? 800 : 600, fontSize: r.big ? 16 : 13 }}>{r.value}</span>
                   </div>
                 ))}
-                {(totalAvecTVA - (parseFloat(form.montant_paye) || 0)) > 0 && (
+                {(totalAvecTVA - (Number(form.montant_paye) || 0)) > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTop: '1px dashed var(--border2)' }}>
                     <span style={{ color: 'var(--orange)', fontWeight: 700 }}>Reste à payer</span>
-                    <span style={{ color: 'var(--orange)', fontWeight: 800, fontSize: 15 }}>{formatAr(totalAvecTVA - (parseFloat(form.montant_paye) || 0))}</span>
+                    <span style={{ color: 'var(--orange)', fontWeight: 800, fontSize: 15 }}>{formatAr(totalAvecTVA - (Number(form.montant_paye) || 0))}</span>
                   </div>
                 )}
               </div>

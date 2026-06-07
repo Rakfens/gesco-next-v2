@@ -1,11 +1,11 @@
-// @ts-nocheck
 // Depenses.tsx — Refactorisé avec design system professionnel
 import { useState, useEffect, useCallback } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
+import { Depense } from '@/modules/shared/types';
 import { useApp } from '@/modules/shared/context/AppContext';
 import { getSupabase } from '@/lib/supabase';
 import { formatAr } from '@/modules/shared/utils/constants';
-import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, StatCard, Modal, ModalHeader, ModalBody, ModalFooter, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty, TableFooter } from '@/modules/shared/components/ui';
+import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalBody, ModalFooter, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty, TableFooter } from '@/modules/shared/components/ui';
 
 const CATEGORIES_DEFAULT = ['Électricité','Eau','Transport','Fournitures','Communication','Loyer','Marketing','Salaires','Entretien','Impressions','Autres'];
 
@@ -13,17 +13,27 @@ export default function Depenses() {
   const { currentCompany } = useCompany();
   const { success: showSuccess, error: showError, warn: showWarn } = useApp();
 
-  const [depenses, setDepenses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(null);
-  const [filterCat, setFilterCat] = useState('');
-  const [filterDebut, setFilterDebut] = useState('');
-  const [filterFin, setFilterFin] = useState('');
-  const [stats, setStats] = useState({ totalJour: 0, totalSemaine: 0, totalMois: 0, totalAnnee: 0 });
+  const [depenses, setDepenses] = useState<Depense[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [confirmDelete, setConfirmDelete] = useState<Depense | null>(null);
+  const [filterCat, setFilterCat] = useState<string>('');
+  const [filterDebut, setFilterDebut] = useState<string>('');
+  const [filterFin, setFilterFin] = useState<string>('');
+  const [stats, setStats] = useState<{
+    totalJour: number;
+    totalSemaine: number;
+    totalMois: number;
+    totalAnnee: number;
+  }>({ totalJour: 0, totalSemaine: 0, totalMois: 0, totalAnnee: 0 });
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    categorie: string;
+    description: string;
+    montant: number;
+    date_depense: string;
+  }>({
     categorie: '', description: '', montant: 0,
     date_depense: new Date().toISOString().split('T')[0],
   });
@@ -49,7 +59,7 @@ export default function Depenses() {
 
   useEffect(() => { loadDepenses(); }, [loadDepenses]);
 
-  const calcStats = (list) => {
+  const calcStats = (list: Depense[]) => {
     const t = new Date().toISOString().split('T')[0];
     const dow = new Date().getDay();
     const diff = dow === 0 ? 6 : dow - 1;
@@ -59,13 +69,13 @@ export default function Depenses() {
     const smStr = sm.toISOString().split('T')[0];
     const sy = new Date(); sy.setMonth(0); sy.setDate(1);
     const syStr = sy.toISOString().split('T')[0];
-    const sum = (arr) => arr.reduce((s, d) => s + (d.montant || 0), 0);
-    const d = (date) => (date || '').split('T')[0];
+    const sum = (arr: Depense[]) => arr.reduce((s: number, d: Depense) => s + (d.montant || 0), 0);
+    const d = (date: string) => (date || '').split('T')[0];
     setStats({
-      totalJour: sum(list.filter(x => d(x.date_depense) === t)),
-      totalSemaine: sum(list.filter(x => d(x.date_depense) >= swStr)),
-      totalMois: sum(list.filter(x => d(x.date_depense) >= smStr)),
-      totalAnnee: sum(list.filter(x => d(x.date_depense) >= syStr)),
+      totalJour: sum(list.filter((x: Depense) => d(x.date_depense || x.date || '') === t)),
+      totalSemaine: sum(list.filter((x: Depense) => d(x.date_depense || x.date || '') >= swStr)),
+      totalMois: sum(list.filter((x: Depense) => d(x.date_depense || x.date || '') >= smStr)),
+      totalAnnee: sum(list.filter((x: Depense) => d(x.date_depense || x.date || '') >= syStr)),
     });
   };
 
@@ -76,7 +86,7 @@ export default function Depenses() {
     setSaving(true);
     try {
       const { error } = await getSupabase().from('depenses').insert([{
-        company_id: currentCompany.id, categorie: form.categorie,
+        company_id: currentCompany!.id, categorie: form.categorie,
         description: form.description, montant: form.montant,
         date_depense: form.date_depense, created_at: new Date().toISOString(),
       }]);
@@ -95,7 +105,7 @@ export default function Depenses() {
     const id = confirmDelete.id;
     setConfirmDelete(null);
     try {
-      const { error } = await getSupabase().from('depenses').delete().eq('id', id).eq('company_id', currentCompany.id);
+      const { error } = await getSupabase().from('depenses').delete().eq('id', id).eq('company_id', currentCompany!.id);
       if (error) throw error;
       showSuccess('Dépense supprimée');
       loadDepenses();
@@ -103,7 +113,7 @@ export default function Depenses() {
     } catch (_) { showError('Erreur suppression'); }
   };
 
-  const formatDate = (dateStr) => {
+  const formatDate = (dateStr: string) => {
     if (!dateStr) return '—';
     const d = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00');
     return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('fr-FR');
@@ -111,9 +121,9 @@ export default function Depenses() {
 
   const categories = [...new Set(depenses.map(d => d.categorie).filter(Boolean))];
   const totalDepenses = depenses.reduce((s, d) => s + (d.montant || 0), 0);
-  const byCategorie = depenses.reduce((acc, d) => { acc[d.categorie] = (acc[d.categorie] || 0) + d.montant; return acc; }, {});
+  const byCategorie = depenses.reduce((acc: Record<string, number>, d) => { const k = d.categorie || 'Autre'; acc[k] = (acc[k] || 0) + d.montant; return acc; }, {});
 
-  const handleChange = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+  const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [field]: e.target.value });
 
   return (
     <div style={{ padding: '0 0 24px' }}>
@@ -139,7 +149,7 @@ export default function Depenses() {
             <Input label="Catégorie *" value={form.categorie} onChange={handleChange('categorie')} placeholder="Ex: Électricité, Transport..." />
             <Input label="Description *" value={form.description} onChange={handleChange('description')} placeholder="Description détaillée..." />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <Input label="Montant (Ar) *" type="number" value={form.montant || ''} onChange={e => setForm({ ...form, montant: parseFloat(e.target.value) || 0 })} />
+              <Input label="Montant (Ar) *" type="number" value={String(form.montant || '')} onChange={e => setForm({ ...form, montant: parseFloat(e.target.value) || 0 })} />
               <Input label="Date" type="date" value={form.date_depense} onChange={handleChange('date_depense')} />
             </div>
           </div>
@@ -170,7 +180,10 @@ export default function Depenses() {
           { label: 'Année', value: stats.totalAnnee, color: 'var(--purple)' },
           { label: 'Total', value: totalDepenses, color: 'var(--pink)' },
         ].map(s => (
-          <StatCard key={s.label} label={s.label} value={formatAr(s.value)} color={s.color} />
+          <div key={s.label} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px' }}>
+            <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 4 }}>{s.label}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: s.color }}>{formatAr(s.value)}</div>
+          </div>
         ))}
       </div>
 
@@ -178,13 +191,13 @@ export default function Depenses() {
       {Object.keys(byCategorie).length > 0 && (
         <Card style={{ marginBottom: 20 }}>
           <CardHeader><CardTitle>Répartition par catégorie</CardTitle></CardHeader>
-          {Object.entries(byCategorie).sort(([, a], [, b]) => b - a).map(([cat, total]) => {
-            const pct = totalDepenses > 0 ? (total / totalDepenses * 100).toFixed(1) : 0;
+          {Object.entries(byCategorie).sort(([, a], [, b]) => (b as number) - (a as number)).map(([cat, total]) => {
+            const pct = totalDepenses > 0 ? ((total as number) / totalDepenses * 100).toFixed(1) : 0;
             return (
               <div key={cat} style={{ marginBottom: 12, padding: '0 18px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
                   <span style={{ fontWeight: 600 }}>{cat}</span>
-                  <span style={{ color: 'var(--muted)' }}>{formatAr(total)} · {pct}%</span>
+                  <span style={{ color: 'var(--muted)' }}>{formatAr(total as number)} · {pct}%</span>
                 </div>
                 <div style={{ background: 'var(--bg)', height: 6, borderRadius: 3, overflow: 'hidden' }}>
                   <div style={{ width: `${pct}%`, background: 'var(--red)', height: '100%', borderRadius: 3 }} />
@@ -197,13 +210,13 @@ export default function Depenses() {
 
       {/* Filtres */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        <select style={{ ...inp(), minWidth: 150 }} value={filterCat} onChange={e => setFilterCat(e.target.value)}>
+        <select style={{ ...inp(), minWidth: 150 } as React.CSSProperties} value={filterCat} onChange={e => setFilterCat(e.target.value)}>
           <option value="">Toutes catégories</option>
           {categories.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
-        <input type="date" style={inp()} value={filterDebut} onChange={e => setFilterDebut(e.target.value)} />
+        <input type="date" style={inp() as React.CSSProperties} value={filterDebut} onChange={e => setFilterDebut(e.target.value)} />
         <span style={{ alignSelf: 'center', color: 'var(--muted)', fontSize: 13 }}>→</span>
-        <input type="date" style={inp()} value={filterFin} onChange={e => setFilterFin(e.target.value)} />
+        <input type="date" style={inp() as React.CSSProperties} value={filterFin} onChange={e => setFilterFin(e.target.value)} />
         {(filterCat || filterDebut || filterFin) && (
           <Button variant="secondary" size="sm" onClick={() => { setFilterCat(''); setFilterDebut(''); setFilterFin(''); }}>Réinitialiser</Button>
         )}
@@ -225,7 +238,7 @@ export default function Depenses() {
             {depenses.length === 0 && <TableEmpty colSpan={5} message="Aucune dépense enregistrée" />}
             {depenses.map(d => (
               <TableRow key={d.id}>
-                <TableCell>{formatDate(d.date_depense)}</TableCell>
+                <TableCell>{formatDate(d.date_depense || d.date || '')}</TableCell>
                 <TableCell><Badge variant="info">{d.categorie}</Badge></TableCell>
                 <TableCell>{d.description}</TableCell>
                 <TableCell align="right" style={{ fontWeight: 700, color: 'var(--orange)' }}>{formatAr(d.montant)}</TableCell>
@@ -237,9 +250,9 @@ export default function Depenses() {
           </TableBody>
           {depenses.length > 0 && (
             <TableFooter>
-              <TableCell colSpan={3}>TOTAL</TableCell>
+              <td colSpan={3} style={{ padding: '10px 12px', fontWeight: 700 }}>TOTAL</td>
               <TableCell align="right" style={{ color: 'var(--red)' }}>{formatAr(totalDepenses)}</TableCell>
-              <TableCell />
+              <td />
             </TableFooter>
           )}
         </Table>

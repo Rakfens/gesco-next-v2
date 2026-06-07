@@ -4,20 +4,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchAvances, addAvance, annulerAvance, deleteAvance } from '../../livraison/services/avanceService';
 import { useCompany } from '../context/CompanyContext';
-
-interface Avance {
-  id: number;
-  statut: string;
-  [key: string]: unknown;
-}
+import type { Avance } from '@/modules/shared/types';
 
 interface UseAvancesReturn {
   avances: Avance[];
   loading: boolean;
   error: string | null;
   addAvance: (avance: Record<string, unknown>) => Promise<Avance>;
-  annulerAvance: (id: number) => Promise<void>;
-  deleteAvance: (id: number) => Promise<void>;
+  annulerAvance: (id: string) => Promise<void>;
+  deleteAvance: (id: string) => Promise<void>;
   reloadAvances: () => Promise<void>;
 }
 
@@ -59,7 +54,7 @@ export const useAvances = (): UseAvancesReturn => {
     } catch (err) { setError((err as Error).message); throw err; }
   };
 
-  const handleAnnulerAvance = async (id: number) => {
+  const handleAnnulerAvance = async (id: string) => {
     try {
       setError(null);
       await annulerAvance(id);
@@ -67,7 +62,7 @@ export const useAvances = (): UseAvancesReturn => {
     } catch (err) { setError((err as Error).message); throw err; }
   };
 
-  const handleDeleteAvance = async (id: number) => {
+  const handleDeleteAvance = async (id: string) => {
     try {
       setError(null);
       await deleteAvance(id);

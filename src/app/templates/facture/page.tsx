@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,12 +6,14 @@ import { formatAr } from "@/modules/shared/utils/constants";
 import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
 import { THERMAL_CSS, getCompanyConfig, openPrintWindow } from "../printStyles";
 
+import type { Company, Vente } from '@/modules/shared/types';
+
 export default function FactureTemplatePage() {
-  const [currentCompany, setCurrentCompany] = useState(null);
-  const [ventes, setVentes] = useState([]);
+  const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
+  const [ventes, setVentes] = useState<Vente[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedVente, setSelectedVente] = useState(null);
-  const [details, setDetails] = useState([]);
+  const [selectedVente, setSelectedVente] = useState<Vente | null>(null);
+  const [details, setDetails] = useState<Record<string, unknown>[]>([]);
   const [filters, setFilters] = useState({ dateDebut: "", dateFin: "", statut: "", search: "" });
 
   useEffect(() => {
@@ -33,31 +34,31 @@ export default function FactureTemplatePage() {
     setLoading(false);
   };
 
-  const loadDetails = async (venteId) => {
+  const loadDetails = async (venteId: string) => {
     const { data } = await getSupabase().from("vente_details").select("*, produit:produits(nom,reference,prix_vente)").eq("vente_id", venteId);
     return data || [];
   };
 
-  const handlePreview = async (vente) => {
+  const handlePreview = async (vente: Vente) => {
     setSelectedVente(vente);
     const d = await loadDetails(vente.id);
     setDetails(d);
   };
 
-  const handlePrint = async (vente) => {
+  const handlePrint = async (vente: Vente) => {
     const d = await loadDetails(vente.id);
     printFacture(vente, d, currentCompany);
   };
 
-  const printFacture = (vente, details, company) => {
-    const config = getCompanyConfig(company?.slug);
-    const date = new Date(vente.date_vente).toLocaleDateString("fr-FR");
-    const rows = details.map(d => `
+  const printFacture = (vente: Vente, details: Record<string, unknown>[], company: Company | null) => {
+    const config = getCompanyConfig(company?.slug ?? '');
+    const date = new Date(vente.date_vente ?? '').toLocaleDateString("fr-FR");
+    const rows = details.map((d: Record<string, unknown>) => `
       <tr>
-        <td>${d.produit?.nom || "Produit"}</td>
-        <td class="text-right">${d.quantite}</td>
-        <td class="text-right">${formatAr(d.prix_unitaire)}</td>
-        <td class="text-right">${formatAr(d.sous_total)}</td>
+        <td>${(d.produit as Record<string, unknown>)?.nom || "Produit"}</td>
+        <td class="text-right">${String(d.quantite)}</td>
+        <td class="text-right">${formatAr(Number(d.prix_unitaire) || 0)}</td>
+        <td class="text-right">${formatAr(Number(d.sous_total) || 0)}</td>
       </tr>`).join("");
 
     const html = `
@@ -83,7 +84,7 @@ ${vente.client_telephone ? `<div class="row"><span class="label">Tél :</span><s
 <div class="total-section">
   <div class="row"><span class="label">Total HT :</span><span class="val">${formatAr(vente.montant_ht)}</span></div>
   ${(vente.remise || 0) > 0 ? `<div class="row"><span class="label">Remise :</span><span class="val">-${formatAr(vente.remise)}</span></div>` : ""}
-  <div class="row total-grand"><span class="label">TOTAL :</span><span class="val">${formatAr(vente.montant_total)}</span></div>
+  <div class="row total-grand"><span class="label">TOTAL :</span><span class="val">${formatAr(vente.montant_total ?? 0)}</span></div>
   <div class="row"><span class="label">Payé :</span><span class="val">${formatAr(vente.montant_paye)}</span></div>
   ${(vente.reste_a_payer || 0) > 0 ? `<div class="row"><span class="label">Reste :</span><span class="val">${formatAr(vente.reste_a_payer)}</span></div>` : ""}
   <div class="row"><span class="label">Paiement :</span><span class="val">${vente.type_paiement === "especes" ? "Espèces" : vente.type_paiement === "mobile_money" ? "Mobile Money" : "Carte"}</span></div>
@@ -106,12 +107,13 @@ ${vente.client_telephone ? `<div class="row"><span class="label">Tél :</span><s
             <div className="flex flex-wrap gap-3">
               <Input type="date" value={filters.dateDebut} onChange={e => setFilters(f => ({ ...f, dateDebut: e.target.value }))} className="w-32" />
               <Input type="date" value={filters.dateFin} onChange={e => setFilters(f => ({ ...f, dateFin: e.target.value }))} className="w-32" />
-              <Select value={filters.statut} onChange={e => setFilters(f => ({ ...f, statut: e.target.value }))} className="w-36">
-                <option value="">Tous statuts</option>
-                <option value="paye">Payé</option>
-                <option value="credit">Crédit</option>
-                <option value="en_attente">En attente</option>
-              </Select>
+              <Select value={filters.statut} onChange={e => setFilters(f => ({ ...f, statut: e.target.value }))} className="w-36"
+                options={[
+                  {value: "", label: "Tous statuts"},
+                  {value: "paye", label: "Payé"},
+                  {value: "credit", label: "Crédit"},
+                  {value: "en_attente", label: "En attente"}
+                ]} />
               <Input type="text" placeholder="Client ou facture..." value={filters.search} onChange={e => setFilters(f => ({ ...f, search: e.target.value }))} className="w-44" />
               <Button onClick={loadVentes}>Filtrer</Button>
             </div>
@@ -140,11 +142,11 @@ ${vente.client_telephone ? `<div class="row"><span class="label">Tél :</span><s
               {ventes.map(v => (
                 <TableRow key={v.id}>
                   <TableCell className="font-semibold">{v.numero_facture}</TableCell>
-                  <TableCell>{new Date(v.date_vente).toLocaleDateString("fr-FR")}</TableCell>
+                  <TableCell>{new Date((v as any).date_vente).toLocaleDateString("fr-FR")}</TableCell>
                   <TableCell>{v.client_nom || "—"}</TableCell>
                   <TableCell className="text-right font-medium">{formatAr(v.montant_total)}</TableCell>
                   <TableCell>
-                    <Badge variant={v.statut === "paye" ? "success" : v.statut === "credit" ? "secondary" : "default"}>
+                    <Badge variant={v.statut === "paye" ? "success" : v.statut === "credit" ? "warning" : "default"}>
                       {v.statut === "paye" ? "Payé" : v.statut === "credit" ? "Crédit" : "En attente"}
                     </Badge>
                   </TableCell>
@@ -169,7 +171,7 @@ ${vente.client_telephone ? `<div class="row"><span class="label">Tél :</span><s
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div><span className="text-muted-foreground">Client:</span> <span className="font-medium">{selectedVente.client_nom || "—"}</span></div>
-                <div><span className="text-muted-foreground">Date:</span> <span className="font-medium">{new Date(selectedVente.date_vente).toLocaleDateString("fr-FR")}</span></div>
+                <div><span className="text-muted-foreground">Date:</span> <span className="font-medium">{new Date(selectedVente!.date_vente as string).toLocaleDateString("fr-FR")}</span></div>
                 <div><span className="text-muted-foreground">Tél:</span> <span className="font-medium">{selectedVente.client_telephone || "—"}</span></div>
                 <div><span className="text-muted-foreground">Paiement:</span> <span className="font-medium">{selectedVente.type_paiement}</span></div>
               </div>
@@ -185,10 +187,10 @@ ${vente.client_telephone ? `<div class="row"><span class="label">Tél :</span><s
                 <TableBody>
                   {details.map((d, i) => (
                     <TableRow key={i}>
-                      <TableCell>{d.produit?.nom || "Produit"}</TableCell>
-                      <TableCell className="text-right">{d.quantite}</TableCell>
-                      <TableCell className="text-right">{formatAr(d.prix_unitaire)}</TableCell>
-                      <TableCell className="text-right font-medium">{formatAr(d.sous_total)}</TableCell>
+                      <TableCell>{(d as any).produit?.nom || "Produit"}</TableCell>
+                      <TableCell className="text-right">{String(d.quantite)}</TableCell>
+                      <TableCell className="text-right">{formatAr(Number(d.prix_unitaire) || 0)}</TableCell>
+                      <TableCell className="text-right font-medium">{formatAr(Number(d.sous_total) || 0)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

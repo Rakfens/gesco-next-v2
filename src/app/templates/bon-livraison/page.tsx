@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,17 +6,23 @@ import { formatAr, TODAY } from "@/modules/shared/utils/constants";
 import { Button, Input, Select, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, Modal, ModalHeader, ModalBody, ModalFooter, Badge } from "@/modules/shared/components/ui";
 import { THERMAL_CSS, getCompanyConfig, openPrintWindow } from "../printStyles";
 
+import type { Company, Livraison, Agent } from '@/modules/shared/types';
+
 export default function BonLivraisonPage() {
-  const [currentCompany, setCurrentCompany] = useState(null);
-  const [livraisons, setLivraisons] = useState([]);
-  const [agents, setAgents] = useState([]);
+  const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
+  const [livraisons, setLivraisons] = useState<Livraison[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [selectedLivraison, setSelectedLivraison] = useState(null);
-  const [filters, setFilters] = useState({ date: TODAY(), agent_id: "", statut: "" });
+  const [selectedLivraison, setSelectedLivraison] = useState<Livraison | null>(null);
+  const [filters, setFilters] = useState<{ date: string; agent_id: string; statut: string }>({ date: TODAY(), agent_id: "", statut: "" });
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    colis: string; client_donneur: string; destinataire: string; destinataire_telephone: string;
+    destinataire_lieu: string; agent_id: string; montant: number; frais: number; paiement: string;
+    date: string; statut: string; remarque: string;
+  }>({
     colis: "", client_donneur: "", destinataire: "", destinataire_telephone: "",
     destinataire_lieu: "", agent_id: "", montant: 0, frais: 0, paiement: "espece",
     date: TODAY(), statut: "en_cours", remarque: "",
@@ -56,26 +61,26 @@ export default function BonLivraisonPage() {
     if (!form.colis || !form.destinataire) return;
     setSaving(true);
     try {
-      const agentNom = agents.find(a => a.id === parseInt(form.agent_id))?.nom || "";
+      const agentNom = agents.find(a => a.id === form.agent_id)?.nom || "";
       const { error } = await getSupabase().from("livraisons").insert({
-        company_id: currentCompany.id, colis: form.colis, client_donneur: form.client_donneur,
+        company_id: currentCompany?.id, colis: form.colis, client_donneur: form.client_donneur,
         destinataire: form.destinataire, destinataire_telephone: form.destinataire_telephone,
         destinataire_lieu: form.destinataire_lieu, agent_id: form.agent_id ? parseInt(form.agent_id) : null,
-        agent_nom: agentNom, montant: parseFloat(form.montant) || 0, frais: parseFloat(form.frais) || 0,
+        agent_nom: agentNom, montant: form.montant || 0, frais: form.frais || 0,
         paiement: form.paiement, date: form.date, statut: form.statut, remarque: form.remarque,
       });
       if (error) throw error;
       resetForm();
       loadData();
-    } catch (err) {
-      alert("Erreur: " + err.message);
+    } catch (err: unknown) {
+      alert("Erreur: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setSaving(false);
     }
   };
 
-  const printBon = (livraison) => {
-    const config = getCompanyConfig(currentCompany?.slug);
+  const printBon = (livraison: Livraison) => {
+    const config = getCompanyConfig(currentCompany?.slug ?? '');
     const date = new Date(livraison.date).toLocaleDateString("fr-FR");
     const montantTxt = livraison.paiement === "client" ? "CLIENT" : formatAr(livraison.montant);
 
@@ -123,22 +128,22 @@ ${livraison.remarque ? `<div style="margin-top:6px; padding:5px; border:1px soli
     openPrintWindow(html, `Bon ${livraison.colis}`);
   };
 
-  const printAgentList = async (agentId) => {
-    const agent = agents.find(a => a.id === parseInt(agentId));
+  const printAgentList = async (agentId: string) => {
+    const agent = agents.find(a => a.id === agentId);
     if (!agent) return;
     const dayLivraisons = livraisons.filter(l => l.agent_id === agent.id);
     if (dayLivraisons.length === 0) return;
 
-    const config = getCompanyConfig(currentCompany?.slug);
+    const config = getCompanyConfig(currentCompany?.slug ?? '');
     const date = new Date(filters.date).toLocaleDateString("fr-FR");
 
     // Group by destinataire
-    const destsMap: Record<string, any> = {};
+    const destsMap: Record<string, { destinataire: string; telephone: string; lieu: string; items: Livraison[]; totalMontant: number; totalFrais: number }> = {};
     let grandMontant = 0, grandFrais = 0;
     for (const l of dayLivraisons) {
       const dest = l.destinataire || "—";
-      const montant = l.paiement === "client" ? 0 : parseFloat(l.montant || 0);
-      const frais = parseFloat(l.frais || 0);
+      const montant = l.paiement === "client" ? 0 : Number(l.montant) || 0;
+      const frais = Number(l.frais) || 0;
       grandMontant += montant;
       grandFrais += frais;
       if (!destsMap[dest]) destsMap[dest] = { destinataire: dest, telephone: l.destinataire_telephone || "", lieu: l.destinataire_lieu || "", items: [], totalMontant: 0, totalFrais: 0 };
@@ -154,8 +159,8 @@ ${livraison.remarque ? `<div style="margin-top:6px; padding:5px; border:1px soli
       const totalDest = d.totalMontant + d.totalFrais;
       let itemsHtml = "";
       d.items.forEach((l, i) => {
-        const montant = l.paiement === "client" ? 0 : parseFloat(l.montant || 0);
-        const frais = parseFloat(l.frais || 0);
+        const montant = l.paiement === "client" ? 0 : Number(l.montant) || 0;
+        const frais = Number(l.frais) || 0;
         itemsHtml += `<div style="margin:4px 0; padding:4px 0; border-bottom:1px dashed #000;">
           <div class="bold" style="font-size:12px;">${i + 1}. ${l.colis || "—"}</div>
           <div class="row"><span class="label">Donneur :</span><span class="val">${l.client_donneur || "—"}</span></div>
@@ -217,16 +222,8 @@ ${corpsHtml}
             <CardTitle className="text-xl font-bold">Bons de Livraison</CardTitle>
             <div className="flex flex-wrap gap-3">
               <Input type="date" value={filters.date} onChange={e => setFilters(f => ({ ...f, date: e.target.value }))} className="w-32" />
-              <Select value={filters.agent_id} onChange={e => setFilters(f => ({ ...f, agent_id: e.target.value }))} className="w-36">
-                <option value="">Tous agents</option>
-                {agents.map(a => <option key={a.id} value={a.id}>{a.nom}</option>)}
-              </Select>
-              <Select value={filters.statut} onChange={e => setFilters(f => ({ ...f, statut: e.target.value }))} className="w-32">
-                <option value="">Tous statuts</option>
-                <option value="en_cours">En cours</option>
-                <option value="livre">Livré</option>
-                <option value="retourne">Retourné</option>
-              </Select>
+              <Select value={filters.agent_id} onChange={e => setFilters(f => ({ ...f, agent_id: e.target.value }))} className="w-36" options={[{ value: "", label: "Tous agents" }, ...agents.map(a => ({ value: a.id, label: a.nom }))]} />
+              <Select value={filters.statut} onChange={e => setFilters(f => ({ ...f, statut: e.target.value }))} className="w-32" options={[{ value: "", label: "Tous statuts" }, { value: "en_cours", label: "En cours" }, { value: "livre", label: "Livré" }, { value: "retourne", label: "Retourné" }]} />
               <Button onClick={loadData}>Filtrer</Button>
               <Button onClick={() => { resetForm(); setShowForm(true); }}>+ Nouveau</Button>
             </div>
@@ -270,10 +267,10 @@ ${corpsHtml}
                   <TableCell className="font-semibold">{l.colis}</TableCell>
                   <TableCell>{l.client_donneur || "—"}</TableCell>
                   <TableCell>{l.destinataire}</TableCell>
-                  <TableCell>{l.agents?.nom || l.agent_nom || "—"}</TableCell>
+                  <TableCell>{l.agent_nom || "—"}</TableCell>
                   <TableCell className="text-right">{l.paiement === "client" ? "CLIENT" : formatAr(l.montant)}</TableCell>
                   <TableCell>
-                    <Badge variant={l.statut === "livre" ? "success" : l.statut === "retourne" ? "destructive" : "secondary"}>
+                    <Badge variant={l.statut === "livre" ? "success" : l.statut === "retourne" ? "danger" : "default"}>
                       {l.statut}
                     </Badge>
                   </TableCell>
@@ -318,25 +315,19 @@ ${corpsHtml}
               </div>
               <div>
                 <label className="text-xs font-medium">Agent</label>
-                <Select value={form.agent_id} onChange={e => setForm(f => ({ ...f, agent_id: e.target.value }))}>
-                  <option value="">—</option>
-                  {agents.map(a => <option key={a.id} value={a.id}>{a.nom}</option>)}
-                </Select>
+                <Select value={form.agent_id} onChange={e => setForm(f => ({ ...f, agent_id: e.target.value }))} options={[{ value: "", label: "—" }, ...agents.map(a => ({ value: a.id, label: a.nom }))]} />
               </div>
               <div>
                 <label className="text-xs font-medium">Montant</label>
-                <Input type="number" value={form.montant} onChange={e => setForm(f => ({ ...f, montant: e.target.value }))} />
+                <Input type="number" value={String(form.montant)} onChange={e => setForm(f => ({ ...f, montant: Number(e.target.value) || 0 }))} />
               </div>
               <div>
                 <label className="text-xs font-medium">Frais</label>
-                <Input type="number" value={form.frais} onChange={e => setForm(f => ({ ...f, frais: e.target.value }))} />
+                <Input type="number" value={String(form.frais)} onChange={e => setForm(f => ({ ...f, frais: Number(e.target.value) || 0 }))} />
               </div>
               <div>
                 <label className="text-xs font-medium">Paiement</label>
-                <Select value={form.paiement} onChange={e => setForm(f => ({ ...f, paiement: e.target.value }))}>
-                  <option value="espece">Espèces</option>
-                  <option value="client">Client</option>
-                </Select>
+                <Select value={form.paiement} onChange={e => setForm(f => ({ ...f, paiement: e.target.value }))} options={[{ value: "espece", label: "Espèces" }, { value: "client", label: "Client" }]} />
               </div>
               <div>
                 <label className="text-xs font-medium">Date</label>
@@ -344,11 +335,7 @@ ${corpsHtml}
               </div>
               <div>
                 <label className="text-xs font-medium">Statut</label>
-                <Select value={form.statut} onChange={e => setForm(f => ({ ...f, statut: e.target.value }))}>
-                  <option value="en_cours">En cours</option>
-                  <option value="livre">Livré</option>
-                  <option value="retourne">Retourné</option>
-                </Select>
+                <Select value={form.statut} onChange={e => setForm(f => ({ ...f, statut: e.target.value }))} options={[{ value: "en_cours", label: "En cours" }, { value: "livre", label: "Livré" }, { value: "retourne", label: "Retourné" }]} />
               </div>
               <div className="sm:col-span-2">
                 <label className="text-xs font-medium">Remarque</label>
@@ -376,9 +363,9 @@ ${corpsHtml}
               <div><span className="text-muted-foreground">Destinataire:</span> <span className="font-medium">{selectedLivraison.destinataire}</span></div>
               <div><span className="text-muted-foreground">Tél:</span> <span className="font-medium">{selectedLivraison.destinataire_telephone || "—"}</span></div>
               <div><span className="text-muted-foreground">Lieu:</span> <span className="font-medium">{selectedLivraison.destinataire_lieu || "—"}</span></div>
-              <div><span className="text-muted-foreground">Agent:</span> <span className="font-medium">{selectedLivraison.agents?.nom || selectedLivraison.agent_nom || "—"}</span></div>
+              <div><span className="text-muted-foreground">Agent:</span> <span className="font-medium">{selectedLivraison.agent_nom || "—"}</span></div>
               <div><span className="text-muted-foreground">Montant:</span> <span className="font-medium">{selectedLivraison.paiement === "client" ? "CLIENT" : formatAr(selectedLivraison.montant)}</span></div>
-              <div><span className="text-muted-foreground">Statut:</span> <Badge variant={selectedLivraison.statut === "livre" ? "success" : "secondary"}>{selectedLivraison.statut}</Badge></div>
+              <div><span className="text-muted-foreground">Statut:</span> <Badge variant={selectedLivraison.statut === "livre" ? "success" : "default"}>{selectedLivraison.statut}</Badge></div>
             </div>
             {selectedLivraison.remarque && <div className="mt-3 p-2 bg-gray-50 rounded text-sm"><span className="font-medium">Remarque:</span> {selectedLivraison.remarque}</div>}
           </ModalBody>

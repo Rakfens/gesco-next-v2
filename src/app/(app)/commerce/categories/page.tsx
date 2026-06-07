@@ -1,16 +1,22 @@
-// @ts-nocheck
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getSupabase } from '@/lib/supabase';
-import { getCurrentCompany } from '@/lib/supabase';
-import { Button, Input, Badge, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty } from "@/modules/shared/components/ui";
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
+import { type Company } from '@/modules/shared/types';
+import { Button, Input, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalTitle, ModalBody, Table, TableHead, TableBody, TableRow, TableCell } from "@/modules/shared/components/ui";
+
+interface Category {
+  id: string;
+  nom: string;
+  description?: string;
+  company_id: string;
+}
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentCompany, setCurrentCompany] = useState<any>(null);
+  const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -36,8 +42,8 @@ export default function CategoriesPage() {
         .order('nom');
       if (error) throw error;
       setCategories(data || []);
-    } catch (err: any) {
-      setError(err.message || "Erreur lors du chargement des catégories");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur lors du chargement des catégories");
       setCategories([]);
     } finally {
       setLoading(false);
@@ -65,12 +71,12 @@ export default function CategoriesPage() {
       resetForm();
       setShowModal(false);
       fetchCategories();
-    } catch (err: any) {
-      setError(err.message || "Erreur lors de l'enregistrement");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur lors de l'enregistrement");
     }
   };
 
-  const handleEdit = (cat: any) => {
+  const handleEdit = (cat: Category) => {
     setFormData({ nom: cat.nom || "", description: cat.description || "" });
     setIsEditing(true);
     setEditingId(cat.id);
@@ -83,8 +89,8 @@ export default function CategoriesPage() {
       const { error } = await getSupabase().from('categories').delete().eq('id', id).eq('company_id', currentCompany?.id);
       if (error) throw error;
       fetchCategories();
-    } catch (err: any) {
-      setError(err.message || "Erreur lors de la suppression");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur lors de la suppression");
     }
   };
 
@@ -103,9 +109,7 @@ export default function CategoriesPage() {
       </div>
 
       <Modal open={showModal} onOpenChange={setShowModal}>
-        <ModalHeader>
-          <ModalTitle>{isEditing ? "Modifier la catégorie" : "Nouvelle Catégorie"}</ModalTitle>
-        </ModalHeader>
+        <ModalHeader title={isEditing ? "Modifier la catégorie" : "Nouvelle Catégorie"} />
         <ModalBody>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

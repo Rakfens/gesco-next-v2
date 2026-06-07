@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -51,7 +50,7 @@ export default function LoginPage() {
           .from('user_companies')
           .select('company:companies(*)')
           .eq('user_id', userId);
-        const list = (uc || []).map(r => r.company).filter(Boolean);
+        const list: Array<{ type?: string }> = (uc || []).map((r: { company: { type?: string }[] | { type?: string } }) => Array.isArray(r.company) ? r.company[0] : r.company).filter(Boolean) as Array<{ type?: string }>;
         const first = list[0];
         if (first?.type === 'service') {
           router.replace("/livraison/dashboard");
@@ -81,7 +80,7 @@ export default function LoginPage() {
           .from('user_companies')
           .select('company:companies(*)')
           .eq('user_id', userId);
-        const list = (uc || []).map(r => r.company).filter(Boolean);
+        const list: Array<{ type?: string }> = (uc || []).map((r: { company: { type?: string }[] | { type?: string } }) => Array.isArray(r.company) ? r.company[0] : r.company).filter(Boolean) as Array<{ type?: string }>;
         const first = list[0];
         if (first?.type === 'service') {
           router.replace("/livraison/dashboard");
@@ -91,8 +90,8 @@ export default function LoginPage() {
       } else {
         router.replace("/commerce/dashboard");
       }
-    } catch (err) {
-      setError(err.message || "Identifiants incorrects");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Identifiants incorrects");
     } finally {
       setLoading(false);
     }

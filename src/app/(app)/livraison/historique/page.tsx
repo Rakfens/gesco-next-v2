@@ -1,9 +1,8 @@
-// @ts-nocheck
 "use client";
 
 import dynamic from "next/dynamic";
 
-const PageComponent = dynamic(() => import("@/modules/livraison/pages/Historique"), {
+const PageComponent = dynamic(() => import("@/modules/livraison/pages/Historique") as any, {
   ssr: false,
   loading: () => (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>

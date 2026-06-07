@@ -4,15 +4,9 @@ import React, { createContext, useState, useEffect, useContext, useRef, useCallb
 import { getSupabase, setCurrentCompany, clearCurrentCompany, getCurrentCompany as getStoredCompany } from '@/lib/supabase';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { loadSavedCompanyId, clearAppState } from '../hooks/useAppState';
+import type { Company } from '@/modules/shared/types';
 
-// ── Types ──────────────────────────────────────────────────────────────
-export interface Company {
-  id: string;
-  name?: string;
-  slug?: string;
-  type?: string;
-  [key: string]: unknown;
-}
+export type { Company };
 
 export interface CompanyContextValue {
   currentCompany: Company | null;

@@ -1,4 +1,3 @@
-// @ts-nocheck
 // ServiceDashboard.tsx — Professional Design
 import { useState, useEffect } from 'react';
 import { CardSkeleton } from '@/modules/shared/components/common/Loader';
@@ -6,15 +5,18 @@ import { useCompany } from '@/modules/shared/context/CompanyContext';
 import { formatAr, TODAY, currentMonth, monthLabel, shouldCountGerantCommission, EXCLUDED_CLIENTS } from '@/modules/shared/utils/constants';
 import { badge as badgeStyle, inpSm } from '@/modules/shared/utils/helpers';
 import { getRecuperationsByDate } from '../services/recuperationService';
+import type { Recuperation, Livraison, Agent } from '@/modules/shared/types';
+import { useApp } from '@/modules/shared/context/AppContext';
+import { COMMISSION_DEFAUT } from '@/modules/shared/utils/constants';
 
-const agentMatch = (livraison, agent) => {
+const agentMatch = (livraison: Livraison, agent: Agent): boolean => {
   if (livraison.agent_id != null && agent.id != null) {
     return Number(livraison.agent_id) === Number(agent.id);
   }
   return livraison.agent_nom === agent.nom;
 };
 
-const StatCard = ({ label, value, color, sub }) => (
+const StatCard = ({ label, value, color, sub }: { label: string; value: string | number; color: string; sub?: string }) => (
   <div className="stat-card" style={{ borderLeft: `3px solid ${color}`, textAlign: 'center' }}>
     <div style={{ fontSize: 26, fontWeight: 800, color }}>{value}</div>
     <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, fontWeight: 500 }}>{label}</div>
@@ -22,23 +24,27 @@ const StatCard = ({ label, value, color, sub }) => (
   </div>
 );
 
-import { useApp } from '@/modules/shared/context/AppContext';
-import { COMMISSION_DEFAUT } from '@/modules/shared/utils/constants';
+interface RecupParLivreur {
+  livreur: string;
+  total: number;
+  nb: number;
+  details: { client: string; frais: number }[];
+}
 
 export const Dashboard = () => {
   const { agents, livraisons } = useApp();
   const { currentCompany } = useCompany();
   const commissionGerant = COMMISSION_DEFAUT;
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [selectedDate, setSelectedDate] = useState(TODAY());
-  const [recuperationsJour, setRecuperationsJour] = useState([]);
-  const [loadingRecup, setLoadingRecup] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 768);
+  const [selectedDate, setSelectedDate] = useState<string>(TODAY());
+  const [recuperationsJour, setRecuperationsJour] = useState<Recuperation[]>([]);
+  const [loadingRecup, setLoadingRecup] = useState<boolean>(false);
 
   const enCours = livraisons?.filter(l => l.statut === 'en_cours').length || 0;
   const todayLivs = livraisons?.filter(l => l.date === TODAY()) || [];
   const livsGerant = todayLivs.filter(l => shouldCountGerantCommission(l));
   const gerantGain = livsGerant.length * commissionGerant;
-  const excludedToday = todayLivs.filter(l => EXCLUDED_CLIENTS.includes(l.client_donneur?.toUpperCase() || '') && parseFloat(l.frais || 0) > 0);
+  const excludedToday = todayLivs.filter(l => EXCLUDED_CLIENTS.includes(l.client_donneur?.toUpperCase() || '') && (Number(l.frais) || 0) > 0);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -63,14 +69,14 @@ export const Dashboard = () => {
   const totalRecuperationsJour = recuperationsJour.reduce((s, r) => s + (r.frais_recuperation || 0), 0);
   const nbRecuperationsJour = recuperationsJour.length;
 
-  const recuperationsParLivreur = recuperationsJour.reduce((acc, r) => {
+  const recuperationsParLivreur: Record<string, RecupParLivreur> = recuperationsJour.reduce((acc, r) => {
     const nom = r.livreur_nom;
     if (!acc[nom]) acc[nom] = { livreur: nom, total: 0, nb: 0, details: [] };
-    acc[nom].total += (r.frais_recuperation || 0);
+    acc[nom].total += (r.frais_recuperation ?? 0);
     acc[nom].nb += 1;
-    acc[nom].details.push({ client: r.client_donneur, frais: r.frais_recuperation });
+    acc[nom].details.push({ client: r.client_donneur, frais: r.frais_recuperation ?? 0 });
     return acc;
-  }, {});
+  }, {} as Record<string, RecupParLivreur>);
 
   return (
     <div>
@@ -161,7 +167,7 @@ export const Dashboard = () => {
             )}
           </div>
           <button
-            onClick={() => onNavigate('gerant')}
+            onClick={() => {}}
             style={{
               padding: '10px 18px', background: 'var(--purple)', color: '#fff',
               border: 'none', borderRadius: 8, fontWeight: 600, fontSize: 13,
@@ -183,7 +189,7 @@ export const Dashboard = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {agents?.map(a => {
             const ls = livraisons?.filter(l => agentMatch(l, a)) || [];
-            const totalFrais = ls.reduce((s, l) => s + parseFloat(l.frais || 0), 0);
+            const totalFrais = ls.reduce((s, l) => s + (Number(l.frais) || 0), 0);
             const livres = ls.filter(l => l.statut === 'livre').length;
             const retournes = ls.filter(l => l.statut === 'retourne').length;
             const reportes = ls.filter(l => l.statut === 'reporte').length;
@@ -246,7 +252,7 @@ export const Dashboard = () => {
             <tbody>
               {agents?.map(a => {
                 const ls = livraisons?.filter(l => agentMatch(l, a)) || [];
-                const totalFrais = ls.reduce((s, l) => s + parseFloat(l.frais || 0), 0);
+                const totalFrais = ls.reduce((s, l) => s + (Number(l.frais) || 0), 0);
                 const livres = ls.filter(l => l.statut === 'livre').length;
                 const retournes = ls.filter(l => l.statut === 'retourne').length;
                 const reportes = ls.filter(l => l.statut === 'reporte').length;

@@ -1,20 +1,28 @@
-// @ts-nocheck
 // Rapports.tsx — Refactorisé avec design system professionnel
 import { useState, useEffect } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
+import { Produit, Vente, Depense } from '@/modules/shared/types';
 import { fetchVentes, getCA, getTopProduits } from '../services/venteService';
 import { getTotalAchats } from '../services/achatService';
 import { fetchProduits, getAlertesStockBas } from '../services/produitService';
 import { getSupabase } from '@/lib/supabase';
 import { formatAr } from '@/modules/shared/utils/constants';
-import { Card, CardHeader, CardTitle, StatCard, Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/modules/shared/components/ui';
+import { Card, CardHeader, CardTitle, Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/modules/shared/components/ui';
 
-const BarChart = ({ data, color = 'var(--blue)' }) => {
+const StatCard = ({ label, value, color, sub }: { label: string; value: string | number; color: string; sub?: string }) => (
+  <div style={{ background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)', padding: '14px 16px', borderLeft: `3px solid ${color}` }}>
+    <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>{label}</div>
+    <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', lineHeight: 1.2 }}>{value}</div>
+    {sub && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4 }}>{sub}</div>}
+  </div>
+);
+
+const BarChart = ({ data, color = 'var(--blue)' }: { data: Array<{ date: string; total: number }>; color?: string }) => {
   if (!data.length) return null;
-  const maxVal = Math.max(...data.map(d => d.total), 1);
+  const maxVal = Math.max(...data.map((d: { date: string; total: number }) => d.total), 1);
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 120, overflowX: 'auto', padding: '0 4px 4px' }}>
-      {data.map(item => {
+      {data.map((item: { date: string; total: number }) => {
         const h = Math.max((item.total / maxVal) * 100, 2);
         return (
           <div key={item.date} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 44, flex: '0 0 auto' }}>
@@ -44,14 +52,23 @@ const PERIOD_OPTIONS = [
 
 export default function Rapports() {
   const { currentCompany } = useCompany();
-  const [period, setPeriod] = useState('mois');
-  const [dateDebut, setDateDebut] = useState(PERIOD_OPTIONS[2].getDates().debut);
-  const [dateFin, setDateFin] = useState(new Date().toISOString().split('T')[0]);
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ ca: 0, totalVentes: 0, totalAchats: 0, marge: 0, txMarge: 0, nbProduits: 0, alertesStock: 0, totalDepenses: 0 });
-  const [ventesParJour, setVentesParJour] = useState([]);
-  const [topProduits, setTopProduits] = useState([]);
-  const [depenses, setDepenses] = useState([]);
+  const [period, setPeriod] = useState<string>('mois');
+  const [dateDebut, setDateDebut] = useState<string>(PERIOD_OPTIONS[2].getDates().debut);
+  const [dateFin, setDateFin] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [stats, setStats] = useState<{
+    ca: number;
+    totalVentes: number;
+    totalAchats: number;
+    marge: number;
+    txMarge: number | string;
+    nbProduits: number;
+    alertesStock: number;
+    totalDepenses: number;
+  }>({ ca: 0, totalVentes: 0, totalAchats: 0, marge: 0, txMarge: 0, nbProduits: 0, alertesStock: 0, totalDepenses: 0 });
+  const [ventesParJour, setVentesParJour] = useState<Array<{ date: string; total: number }>>([]);
+  const [topProduits, setTopProduits] = useState<Array<{ produit_nom?: string; produit?: { nom?: string }; quantite?: number; chiffre?: number }>>([]);
+  const [depenses, setDepenses] = useState<Depense[]>([]);
 
   useEffect(() => { if (currentCompany) loadReports(); }, [currentCompany, dateDebut, dateFin]);
 
@@ -73,15 +90,19 @@ export default function Rapports() {
         setDepenses(dep || []);
         totalDepenses = (dep || []).reduce((s, d) => s + (d.montant || 0), 0);
       }
-      const marge = ca - achatsTotal;
-      setStats({ ca, totalVentes: ventes.length, totalAchats: achatsTotal, marge, txMarge: ca > 0 ? ((marge / ca) * 100).toFixed(1) : 0, nbProduits: produits.length, alertesStock: alertes.length, totalDepenses });
+      const achatsNum = Number(achatsTotal) || 0;
+      const caNum = Number(ca) || 0;
+      const marge = caNum - achatsNum;
+      setStats({ ca: caNum, totalVentes: ventes.length, totalAchats: achatsNum, marge, txMarge: caNum > 0 ? ((marge / caNum) * 100).toFixed(1) : 0, nbProduits: produits.length, alertesStock: alertes.length, totalDepenses });
     } catch (_) {}
     finally { setLoading(false); }
   };
 
-  const handlePeriodChange = (value) => {
+  const handlePeriodChange = (value: string) => {
     setPeriod(value);
-    const dates = PERIOD_OPTIONS.find(o => o.value === value).getDates();
+    const opt = PERIOD_OPTIONS.find(o => o.value === value);
+    if (!opt) return;
+    const dates = opt.getDates();
     setDateDebut(dates.debut); setDateFin(dates.fin);
   };
 
@@ -162,9 +183,9 @@ export default function Rapports() {
         <Card>
           <CardHeader><CardTitle>Dépenses par catégorie</CardTitle></CardHeader>
           <div style={{ padding: '0 18px 18px' }}>
-            {Object.entries(depenses.reduce((acc, d) => { acc[d.categorie || 'Autre'] = (acc[d.categorie || 'Autre'] || 0) + d.montant; return acc; }, {})).sort(([, a], [, b]) => b - a).map(([cat, total]) => {
-              const totalDep = depenses.reduce((s, d) => s + d.montant, 0);
-              const pct = totalDep > 0 ? (total / totalDep) * 100 : 0;
+            {Object.entries(depenses.reduce((acc: Record<string, number>, d: Depense) => { acc[d.categorie || 'Autre'] = (acc[d.categorie || 'Autre'] || 0) + (d.montant || 0); return acc; }, {})).sort(([, a], [, b]) => (b as number) - (a as number)).map(([cat, total]) => {
+              const totalDep = depenses.reduce((s: number, d: Depense) => s + (d.montant || 0), 0);
+              const pct = totalDep > 0 ? ((total as number) / totalDep) * 100 : 0;
               return (
                 <div key={cat} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>

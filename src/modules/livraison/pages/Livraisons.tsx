@@ -1,4 +1,3 @@
-// @ts-nocheck
 // modules/livraison/pages/Livraisons.tsx — Refactorisé avec design system professionnel
 import { useState, useEffect } from 'react';
 import { LivraisonForm } from '../components/LivraisonForm';
@@ -13,7 +12,11 @@ export default function LivraisonsPage() {
   const { livraisons, addLivraison } = useLivraisons();
   const { agents } = useAgents();
   const { showToast } = useToast();
-  const [suggestions, setSuggestions] = useState({
+  const [suggestions, setSuggestions] = useState<{
+    colisList: string[];
+    clients: string[];
+    lieux: string[];
+  }>({
     colisList: [],
     clients: [],
     lieux: []
@@ -22,9 +25,9 @@ export default function LivraisonsPage() {
   useEffect(() => {
     if (livraisons && livraisons.length > 0) {
       setSuggestions({
-        colisList: [...new Set(livraisons.map(l => l.colis).filter(Boolean))],
-        clients: [...new Set(livraisons.map(l => l.client_donneur).filter(Boolean))],
-        lieux: [...new Set(livraisons.map(l => l.destinataire_lieu).filter(Boolean))]
+        colisList: [...new Set(livraisons.map(l => l.colis).filter((c): c is string => !!c))],
+        clients: [...new Set(livraisons.map(l => l.client_donneur).filter((c): c is string => !!c))],
+        lieux: [...new Set(livraisons.map(l => l.destinataire_lieu).filter((l): l is string => !!l))]
       });
     }
   }, [livraisons]);
@@ -48,8 +51,8 @@ export default function LivraisonsPage() {
 
       <LivraisonForm
         agents={agents}
-        onAddLivraison={addLivraison}
-        showToast={showToast}
+        onAddLivraison={addLivraison as any}
+        showToast={showToast as any}
         suggestions={suggestions}
       />
     </div>

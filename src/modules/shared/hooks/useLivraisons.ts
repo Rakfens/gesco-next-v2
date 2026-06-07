@@ -4,32 +4,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchLivraisons, addLivraison, updateLivraison, deleteLivraison } from '../../livraison/services/livraisonService';
 import { useCompany } from '../context/CompanyContext';
-
-interface Livraison {
-  id: number;
-  colis: string;
-  client_donneur: string;
-  destinataire: string;
-  destinataire_telephone: string;
-  destinataire_lieu: string;
-  agent_id: number | null;
-  agent_nom: string;
-  montant: number;
-  frais: number;
-  paiement: string;
-  date: string;
-  statut: string;
-  remarque: string | null;
-  [key: string]: unknown;
-}
+import type { Livraison } from '@/modules/shared/types';
 
 interface UseLivraisonsReturn {
   livraisons: Livraison[];
   loading: boolean;
   error: string | null;
   addLivraison: (livraison: Record<string, unknown>) => Promise<Livraison>;
-  updateLivraison: (id: number, updates: Partial<Livraison>) => Promise<void>;
-  deleteLivraison: (id: number) => Promise<void>;
+  updateLivraison: (id: string, updates: Partial<Livraison>) => Promise<void>;
+  deleteLivraison: (id: string) => Promise<void>;
   reloadLivraisons: () => Promise<void>;
 }
 
@@ -63,33 +46,37 @@ export const useLivraisons = (): UseLivraisonsReturn => {
   const handleAddLivraison = async (livraison: Record<string, unknown>) => {
     if (!currentCompany?.id) throw new Error('Société non sélectionnée');
     const montant = livraison.paiement === 'client' ? 0 : parseFloat(livraison.montant as string) || 0;
-    const newLiv = {
-      colis:                  livraison.colis,
-      client_donneur:         livraison.client_donneur || livraison.client,
-      destinataire:           livraison.destinataire,
-      destinataire_telephone: livraison.destinataire_telephone || livraison.telephone || '',
-      destinataire_lieu:      livraison.destinataire_lieu || livraison.lieu || '',
-      agent_id:               Number(livraison.agentId || livraison.agent_id) || null,
-      agent_nom:              livraison.agentNom || livraison.agent_nom || '—',
+    const newLiv: Partial<Livraison> = {
+      colis:                  livraison.colis as string,
+      client_donneur:         (livraison.client_donneur || livraison.client) as string,
+      destinataire:           livraison.destinataire as string,
+      destinataire_telephone: (livraison.destinataire_telephone || livraison.telephone || '') as string,
+      destinataire_lieu:      (livraison.destinataire_lieu || livraison.lieu || '') as string,
+      agent_id:               String(livraison.agentId || livraison.agent_id || ''),
+      agent_nom:              (livraison.agentNom || livraison.agent_nom || '—') as string,
       montant,
       frais:                  parseFloat(livraison.frais as string) || 0,
-      paiement:               livraison.paiement,
-      date:                   livraison.date,
-      statut:                 livraison.statut || 'en_cours',
-      remarque:               livraison.remarque || null,
+      paiement:               livraison.paiement as string,
+      date:                   livraison.date as string,
+      statut:                 (livraison.statut || 'en_cours') as string,
+      remarque:               (livraison.remarque || undefined) as string | undefined,
     };
     const data = await addLivraison(newLiv, currentCompany.id);
     setLivraisons(prev => [data, ...prev]);
     return data;
   };
 
-  const handleUpdateLivraison = async (id: number, updates: Partial<Livraison>) => {
-    await updateLivraison(id, updates, currentCompany?.id);
-    setLivraisons(prev => prev.map(l => l.id === id ? { ...l, ...updates } : l));
+  const handleUpdateLivraison = async (id: string, updates: Partial<Livraison>) => {
+    const companyId = currentCompany?.id;
+    if (!companyId) throw new Error('Société non sélectionnée');
+    await updateLivraison(id, updates, companyId);
+    setLivraisons(prev => prev.map(l => l.id === id ? { ...l, ...updates } as Livraison : l));
   };
 
-  const handleDeleteLivraison = async (id: number) => {
-    await deleteLivraison(id, currentCompany?.id);
+  const handleDeleteLivraison = async (id: string) => {
+    const companyId = currentCompany?.id;
+    if (!companyId) throw new Error('Société non sélectionnée');
+    await deleteLivraison(id, companyId);
     setLivraisons(prev => prev.filter(l => l.id !== id));
   };
 

@@ -1,11 +1,22 @@
-// @ts-nocheck
-// src/modules/commerce/services/produitService.js
 import { getSupabase, getCurrentCompany } from '@/lib/supabase';
+import type { Produit, MouvementStock } from '@/modules/shared/types';
 
-// ============ CRUD PRODUITS ============
+interface ProduitFilters {
+  categorie?: string;
+  isActive?: boolean;
+  search?: string;
+  stockBas?: boolean;
+}
 
-// Récupérer tous les produits de la société actuelle
-export const fetchProduits = async (filters = {}) => {
+interface MouvementData {
+  produit_id: string;
+  type: string;
+  quantite: number;
+  notes?: string;
+  date_mouvement?: string;
+}
+
+export const fetchProduits = async (filters: ProduitFilters = {}): Promise<Produit[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
@@ -26,16 +37,15 @@ export const fetchProduits = async (filters = {}) => {
   }
   if (filters.stockBas) {
     const { data: allProducts } = await query;
-    return allProducts.filter(p => p.quantite_stock <= p.stock_minimum);
+    return (allProducts || []).filter((p: Produit) => (p.quantite_stock ?? 0) <= (p.stock_minimum ?? 0)) as Produit[];
   }
 
   const { data, error } = await query;
   if (error) throw error;
-  return data;
+  return data as Produit[];
 };
 
-// Récupérer un produit par son ID
-export const fetchProduitById = async (id) => {
+export const fetchProduitById = async (id: string): Promise<Produit | null> => {
   const company = getCurrentCompany();
   if (!company) return null;
 
@@ -47,11 +57,10 @@ export const fetchProduitById = async (id) => {
     .single();
 
   if (error) throw error;
-  return data;
+  return data as Produit;
 };
 
-// Récupérer un produit par sa référence
-export const fetchProduitByReference = async (reference) => {
+export const fetchProduitByReference = async (reference: string): Promise<Produit | null> => {
   const company = getCurrentCompany();
   if (!company) return null;
 
@@ -63,11 +72,10 @@ export const fetchProduitByReference = async (reference) => {
     .single();
 
   if (error && error.code !== 'PGRST116') throw error;
-  return data;
+  return data as Produit | null;
 };
 
-// Créer un nouveau produit
-export const createProduit = async (produitData) => {
+export const createProduit = async (produitData: Record<string, unknown>): Promise<Produit> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
@@ -83,11 +91,10 @@ export const createProduit = async (produitData) => {
     .single();
 
   if (error) throw error;
-  return data;
+  return data as Produit;
 };
 
-// Mettre à jour un produit
-export const updateProduit = async (id, updates) => {
+export const updateProduit = async (id: string, updates: Record<string, unknown>): Promise<Produit> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
@@ -103,11 +110,10 @@ export const updateProduit = async (id, updates) => {
     .single();
 
   if (error) throw error;
-  return data;
+  return data as Produit;
 };
 
-// Supprimer un produit (soft delete)
-export const deleteProduit = async (id) => {
+export const deleteProduit = async (id: string): Promise<void> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
@@ -120,8 +126,7 @@ export const deleteProduit = async (id) => {
   if (error) throw error;
 };
 
-// Supprimer définitivement un produit
-export const deleteProduitPermanent = async (id) => {
+export const deleteProduitPermanent = async (id: string): Promise<void> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
@@ -134,21 +139,18 @@ export const deleteProduitPermanent = async (id) => {
   if (error) throw error;
 };
 
-// ============ STOCK PRODUITS ============
-
-// Mettre à jour le stock manuellement
-export const updateStock = async (id, nouvelleQuantite, raison = 'ajustement') => {
+export const updateStock = async (id: string, nouvelleQuantite: number, raison: string = 'ajustement'): Promise<void> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
   const produit = await fetchProduitById(id);
   if (!produit) throw new Error('Produit non trouvé');
 
-  const difference = nouvelleQuantite - produit.quantite_stock;
+  const difference = nouvelleQuantite - (produit.quantite_stock ?? 0);
 
   const { error: updateError } = await getSupabase()
     .from('produits')
-    .update({ 
+    .update({
       quantite_stock: nouvelleQuantite,
       updated_at: new Date().toISOString()
     })
@@ -168,8 +170,7 @@ export const updateStock = async (id, nouvelleQuantite, raison = 'ajustement') =
   }
 };
 
-// Vérifier les stocks bas
-export const getAlertesStockBas = async () => {
+export const getAlertesStockBas = async (): Promise<Produit[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
@@ -181,13 +182,10 @@ export const getAlertesStockBas = async () => {
 
   if (error) throw error;
 
-  return data.filter(produit => produit.quantite_stock <= produit.stock_minimum);
+  return (data || []).filter((produit: Produit) => (produit.quantite_stock ?? 0) <= (produit.stock_minimum ?? 0)) as Produit[];
 };
 
-// ============ CATÉGORIES ============
-
-// Récupérer toutes les catégories
-export const fetchCategories = async () => {
+export const fetchCategories = async (): Promise<string[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
@@ -198,15 +196,12 @@ export const fetchCategories = async () => {
     .not('categorie', 'is', null);
 
   if (error) throw error;
-  
-  const categories = [...new Set(data.map(p => p.categorie).filter(Boolean))];
+
+  const categories = [...new Set((data || []).map((p: { categorie: string }) => p.categorie).filter(Boolean))];
   return categories.sort();
 };
 
-// ============ STATISTIQUES ============
-
-// Compter les produits par catégorie
-export const countProduitsByCategorie = async () => {
+export const countProduitsByCategorie = async (): Promise<Record<string, number>> => {
   const company = getCurrentCompany();
   if (!company) return {};
 
@@ -218,16 +213,15 @@ export const countProduitsByCategorie = async () => {
 
   if (error) throw error;
 
-  const counts = {};
-  data.forEach(p => {
+  const counts: Record<string, number> = {};
+  (data || []).forEach((p: { categorie: string | null }) => {
     const cat = p.categorie || 'Sans catégorie';
     counts[cat] = (counts[cat] || 0) + 1;
   });
   return counts;
 };
 
-// Valeur totale du stock
-export const getValeurTotaleStock = async () => {
+export const getValeurTotaleStock = async (): Promise<number> => {
   const company = getCurrentCompany();
   if (!company) return 0;
 
@@ -239,14 +233,11 @@ export const getValeurTotaleStock = async () => {
 
   if (error) throw error;
 
-  const total = data.reduce((sum, p) => sum + ((p.quantite_stock || 0) * (p.prix_achat || 0)), 0);
+  const total = (data || []).reduce((sum: number, p: { quantite_stock: number; prix_achat: number }) => sum + ((p.quantite_stock || 0) * (p.prix_achat || 0)), 0);
   return total;
 };
 
-// ============ MOUVEMENTS DE STOCK ============
-
-// Créer un mouvement de stock
-export const createMouvementStock = async (mouvementData) => {
+export const createMouvementStock = async (mouvementData: MouvementData): Promise<MouvementStock> => {
   const company = getCurrentCompany();
   if (!company) throw new Error('Aucune société sélectionnée');
 
@@ -261,11 +252,10 @@ export const createMouvementStock = async (mouvementData) => {
     .single();
 
   if (error) throw error;
-  return data;
+  return data as MouvementStock;
 };
 
-// Récupérer l'historique des mouvements d'un produit
-export const getMouvementsByProduit = async (produitId, limit = 50) => {
+export const getMouvementsByProduit = async (produitId: string, limit: number = 50): Promise<MouvementStock[]> => {
   const company = getCurrentCompany();
   if (!company) return [];
 
@@ -278,5 +268,5 @@ export const getMouvementsByProduit = async (produitId, limit = 50) => {
     .limit(limit);
 
   if (error) throw error;
-  return data;
+  return data as MouvementStock[];
 };

@@ -1,15 +1,22 @@
-// @ts-nocheck
 import { useState } from 'react';
 
-export const useAuth = () => {
-  const [session, setSession] = useState({ user: { email: 'admin@aterinay.com' } });
-  const [loading, setLoading] = useState(false);
+interface SessionUser {
+  email: string;
+}
 
-  const login = async (email, password) => {
+interface Session {
+  user: SessionUser;
+}
+
+export const useAuth = () => {
+  const [session, setSession] = useState<Session | null>({ user: { email: 'admin@aterinay.com' } });
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const login = async (email: string, password: string): Promise<void> => {
     setSession({ user: { email: email || 'admin@aterinay.com' } });
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     setSession(null);
   };
 

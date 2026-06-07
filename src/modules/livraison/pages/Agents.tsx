@@ -1,13 +1,25 @@
-// @ts-nocheck
 // Agents.tsx — Design system professionnel
 import { useState, useEffect, useCallback } from 'react';
 import { formatAr, currentMonth, monthLabel } from '@/modules/shared/utils/constants';
 import { getRecuperationsByLivreurNom, getTotalRecuperationsByLivreurNom } from '../services/recuperationService';
 import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalBody, ModalFooter, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty } from '@/modules/shared/components/ui';
+import type { Recuperation, Agent } from '@/modules/shared/types';
+import { useApp } from '@/modules/shared/context/AppContext';
+
+interface RecupMois {
+  total: number;
+  count: number;
+  details: Recuperation[];
+}
+
+interface RecupCumul {
+  total: number;
+  count: number;
+}
 
 export const Agents = () => {
   const { agents, addAgent: onAddAgent, updateAgent: onUpdateAgent, deleteAgent: onDeleteAgent, showToast } = useApp();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
 
   useEffect(() => {
     const fn = () => setIsMobile(window.innerWidth < 768);
@@ -15,15 +27,15 @@ export const Agents = () => {
     return () => window.removeEventListener('resize', fn);
   }, []);
 
-  const [newNom, setNewNom] = useState('');
-  const [newSalaire, setNewSalaire] = useState('');
-  const [editId, setEditId] = useState(null);
-  const [editData, setEditData] = useState({});
-  const [month, setMonth] = useState(currentMonth());
-  const [recupsMois, setRecupsMois] = useState({});
-  const [recupsCumul, setRecupsCumul] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [confirmDel, setConfirmDel] = useState(null);
+  const [newNom, setNewNom] = useState<string>('');
+  const [newSalaire, setNewSalaire] = useState<string>('');
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editData, setEditData] = useState<{ nom: string; salaire: string }>({ nom: '', salaire: '' });
+  const [month, setMonth] = useState<string>(currentMonth());
+  const [recupsMois, setRecupsMois] = useState<Record<string, RecupMois>>({});
+  const [recupsCumul, setRecupsCumul] = useState<Record<string, RecupCumul>>({});
+  const [loading, setLoading] = useState<boolean>(false);
+  const [confirmDel, setConfirmDel] = useState<{ id: string; name: string } | null>(null);
 
   const uniqueMonths = [...new Set([currentMonth()])].sort().reverse();
 
@@ -32,21 +44,21 @@ export const Agents = () => {
     setLoading(true);
     try {
       const results = await Promise.all(
-        agents.map(async (agent) => {
+        agents.map(async (agent: Agent) => {
           const [dataMois, { total: totalCumul, count: countCumul }] = await Promise.all([
             getRecuperationsByLivreurNom(agent.nom, month),
             getTotalRecuperationsByLivreurNom(agent.nom),
           ]);
           return {
             id: agent.id,
-            mois: { total: dataMois.reduce((s, r) => s + (parseFloat(r.frais_recuperation) || 0), 0), count: dataMois.length, details: dataMois },
+            mois: { total: dataMois.reduce((s: number, r: Recuperation) => s + (r.frais_recuperation || 0), 0), count: dataMois.length, details: dataMois },
             cumul: { total: totalCumul, count: countCumul },
           };
         })
       );
-      const moisMap = {};
-      const cumulMap = {};
-      results.forEach(r => { moisMap[r.id] = r.mois; cumulMap[r.id] = r.cumul; });
+      const moisMap: Record<string, RecupMois> = {};
+      const cumulMap: Record<string, RecupCumul> = {};
+      results.forEach((r: { id: string; mois: RecupMois; cumul: RecupCumul }) => { moisMap[r.id] = r.mois; cumulMap[r.id] = r.cumul; });
       setRecupsMois(moisMap);
       setRecupsCumul(cumulMap);
     } catch (_) {}
@@ -64,12 +76,12 @@ export const Agents = () => {
 
   const handleUpdate = async () => {
     if (!editData.nom || !editData.salaire) return;
-    await onUpdateAgent(editId, { nom: editData.nom, salaire: parseFloat(editData.salaire) });
+    await onUpdateAgent(editId!, { nom: editData.nom, salaire: parseFloat(editData.salaire) });
     setEditId(null);
     showToast('Agent modifié');
   };
 
-  const handleDelete = (agent) => { setConfirmDel({ id: agent.id, name: agent.nom }); };
+  const handleDelete = (agent: Agent) => { setConfirmDel({ id: agent.id, name: agent.nom }); };
   const executeDelete = async () => {
     if (!confirmDel) return;
     const { id } = confirmDel;
@@ -185,10 +197,10 @@ export const Agents = () => {
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, color: 'var(--text)', fontSize: 15 }}>{a.nom}</div>
-                    <div style={{ fontSize: 12, color: 'var(--green)', fontWeight: 600 }}>{formatAr(parseFloat(a.salaire || 0))} / mois</div>
+                    <div style={{ fontSize: 12, color: 'var(--green)', fontWeight: 600 }}>{formatAr(Number(a.salaire) || 0)} / mois</div>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <Button variant="ghost" size="sm" onClick={() => { setEditId(a.id); setEditData({ nom: a.nom, salaire: a.salaire }); }} data-testid={`btn-edit-${a.id}`}>
+                    <Button variant="ghost" size="sm" onClick={() => { setEditId(a.id); setEditData({ nom: a.nom, salaire: String(a.salaire ?? 0) }); }} data-testid={`btn-edit-${a.id}`}>
                       Modifier
                     </Button>
                     <Button variant="danger" size="sm" onClick={() => handleDelete(a)} data-testid={`btn-delete-${a.id}`}>

@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,26 +6,34 @@ import { formatAr, TODAY } from "@/modules/shared/utils/constants";
 import { Button, Input, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
 import { THERMAL_CSS, getCompanyConfig, openPrintWindow } from "../printStyles";
 
+import type { Company, Produit } from '@/modules/shared/types';
+
+interface DevisItem {
+  produit_id: string; nom: string; reference: string;
+  quantite: number; prix_unitaire: number; sous_total: number;
+}
+
+interface DevisRecord {
+  id: string; company_id: string; client_nom: string; client_telephone: string;
+  date_devis: string; validite_jours: number; notes: string; total: number;
+  items: DevisItem[]; created_at: string;
+  numero_devis?: string; montant_total?: number; statut?: string;
+}
+
 export default function DevisTemplatePage() {
-  const [currentCompany, setCurrentCompany] = useState(null);
-  const [produits, setProduits] = useState([]);
+  const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
+  const [produits, setProduits] = useState<Produit[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Devis en cours de création
-  const [devisItems, setDevisItems] = useState([]);
+  const [devisItems, setDevisItems] = useState<DevisItem[]>([]);
   const [searchProduit, setSearchProduit] = useState("");
   const [devisInfo, setDevisInfo] = useState({
-    client_nom: "",
-    client_telephone: "",
-    date_devis: TODAY(),
-    validite_jours: 30,
-    notes: "",
+    client_nom: "", client_telephone: "", date_devis: TODAY(), validite_jours: 30, notes: "",
   });
 
-  // Historique devis
-  const [devisList, setDevisList] = useState([]);
+  const [devisList, setDevisList] = useState<DevisRecord[]>([]);
   const [showHistory, setShowHistory] = useState(true);
 
   useEffect(() => {
@@ -41,36 +48,36 @@ export default function DevisTemplatePage() {
     if (!currentCompany) return;
     setLoading(true);
     const [produitsRes, devisRes] = await Promise.all([
-      getSupabase().from("produits").select("*").eq("company_id", currentCompany.id).eq("is_active", true).order("nom"),
-      getSupabase().from("devis").select("*").eq("company_id", currentCompany.id).order("date_devis", { ascending: false }).limit(50),
+      getSupabase().from("produits").select("*").eq("company_id", currentCompany!.id).eq("is_active", true).order("nom"),
+      getSupabase().from("devis").select("*").eq("company_id", currentCompany!.id).order("date_devis", { ascending: false }).limit(50),
     ]);
     if (!produitsRes.error) setProduits(produitsRes.data || []);
     if (!devisRes.error) setDevisList(devisRes.data || []);
     setLoading(false);
   };
 
-  const addToDevis = (produit) => {
+  const addToDevis = (produit: Produit) => {
     const existing = devisItems.find(d => d.produit_id === produit.id);
     if (existing) {
       setDevisItems(devisItems.map(d => d.produit_id === produit.id ? { ...d, quantite: d.quantite + 1, sous_total: (d.quantite + 1) * d.prix_unitaire } : d));
     } else {
       setDevisItems([...devisItems, {
-        produit_id: produit.id, nom: produit.nom, reference: produit.reference,
+        produit_id: produit.id, nom: produit.nom, reference: produit.reference ?? '',
         quantite: 1, prix_unitaire: produit.prix_vente || 0, sous_total: produit.prix_vente || 0,
       }]);
     }
   };
 
-  const updateQty = (produitId, qty) => {
+  const updateQty = (produitId: string, qty: number) => {
     if (qty <= 0) { setDevisItems(devisItems.filter(d => d.produit_id !== produitId)); return; }
     setDevisItems(devisItems.map(d => d.produit_id === produitId ? { ...d, quantite: qty, sous_total: qty * d.prix_unitaire } : d));
   };
 
-  const updatePrice = (produitId, price) => {
+  const updatePrice = (produitId: string, price: number) => {
     setDevisItems(devisItems.map(d => d.produit_id === produitId ? { ...d, prix_unitaire: price, sous_total: d.quantite * price } : d));
   };
 
-  const removeItem = (produitId) => {
+  const removeItem = (produitId: string) => {
     setDevisItems(devisItems.filter(d => d.produit_id !== produitId));
   };
 
@@ -82,7 +89,7 @@ export default function DevisTemplatePage() {
 
   const generateNumeroDevis = async () => {
     const year = new Date().getFullYear().toString().slice(-2);
-    const { data } = await getSupabase().from("devis").select("numero_devis").eq("company_id", currentCompany.id).order("created_at", { ascending: false }).limit(1);
+    const { data } = await getSupabase().from("devis").select("numero_devis").eq("company_id", currentCompany!.id).order("created_at", { ascending: false }).limit(1);
     if (!data || data.length === 0) return `DEV-${year}-0001`;
     const match = data[0].numero_devis.match(/\d+$/);
     if (match) return `DEV-${year}-${String(parseInt(match[0]) + 1).padStart(4, "0")}`;
@@ -95,7 +102,7 @@ export default function DevisTemplatePage() {
     try {
       const numero = await generateNumeroDevis();
       const { data: devis, error } = await getSupabase().from("devis").insert({
-        company_id: currentCompany.id, numero_devis: numero,
+        company_id: currentCompany!.id, numero_devis: numero,
         client_nom: devisInfo.client_nom, client_telephone: devisInfo.client_telephone,
         date_devis: devisInfo.date_devis, validite_jours: devisInfo.validite_jours,
         notes: devisInfo.notes, montant_total: totalDevis, statut: "en_attente",
@@ -109,8 +116,8 @@ export default function DevisTemplatePage() {
       }
       resetForm();
       loadData();
-    } catch (err) {
-      alert("Erreur: " + err.message);
+    } catch (err: unknown) {
+      alert("Erreur: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setSaving(false);
     }
@@ -121,9 +128,9 @@ export default function DevisTemplatePage() {
     setDevisInfo({ client_nom: "", client_telephone: "", date_devis: TODAY(), validite_jours: 30, notes: "" });
   };
 
-  const printDevis = async (devis) => {
+  const printDevis = async (devis: DevisRecord) => {
     const { data: items } = await getSupabase().from("devis_details").select("*, produit:produits(nom,reference)").eq("devis_id", devis.id);
-    const config = getCompanyConfig(currentCompany?.slug);
+    const config = getCompanyConfig(currentCompany!.slug as string);
     const date = new Date(devis.date_devis).toLocaleDateString("fr-FR");
     const validite = new Date(new Date(devis.date_devis).getTime() + devis.validite_jours * 86400000).toLocaleDateString("fr-FR");
     const rows = (items || []).map(d => `
@@ -265,7 +272,7 @@ ${devis.notes ? `<div style="margin-top:8px; padding:5px; border:1px solid #000;
                         <span className="w-6 text-center font-bold text-xs">{item.quantite}</span>
                         <button onClick={() => updateQty(item.produit_id, item.quantite + 1)} className="w-6 h-6 rounded border border-gray-300 flex items-center justify-center text-xs bg-white">+</button>
                       </div>
-                      <Input type="number" value={item.prix_unitaire} onChange={e => updatePrice(item.produit_id, parseFloat(e.target.value) || 0)} className="w-20 h-7 text-xs" />
+                      <Input type="number" value={String(item.prix_unitaire)} onChange={e => updatePrice(item.produit_id, parseFloat(e.target.value) || 0)} className="w-20 h-7 text-xs" />
                       <span className="text-xs font-medium w-16 text-right">{formatAr(item.sous_total)}</span>
                       <button onClick={() => removeItem(item.produit_id)} className="text-red-500 text-xs">✕</button>
                     </div>
@@ -288,7 +295,7 @@ ${devis.notes ? `<div style="margin-top:8px; padding:5px; border:1px solid #000;
                     </div>
                     <div>
                       <label className="text-xs font-medium">Validité (jours)</label>
-                      <Input type="number" value={devisInfo.validite_jours} onChange={e => setDevisInfo(f => ({ ...f, validite_jours: parseInt(e.target.value) || 30 }))} />
+                      <Input type="number" value={String(devisInfo.validite_jours)} onChange={e => setDevisInfo(f => ({ ...f, validite_jours: parseInt(e.target.value) || 30 }))} />
                     </div>
                   </div>
                   <div>

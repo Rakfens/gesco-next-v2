@@ -1,9 +1,33 @@
-// @ts-nocheck
-// pdfExport.js — v3 : optimisé ticket thermique (noir pur sur blanc, police machine à écrire)
+// pdfExport.ts — v3 : optimisé ticket thermique (noir pur sur blanc, police machine à écrire)
 import { formatAr, STATUTS } from './constants';
 
+interface Company {
+  id?: string;
+  name?: string;
+  slug?: string;
+  logo_url?: string | null;
+  type?: string;
+}
+
+interface Livraison {
+  destinataire?: string;
+  destinataire_telephone?: string;
+  destinataire_lieu?: string;
+  colis?: string;
+  client_donneur?: string;
+  montant?: number | string;
+  frais?: number | string;
+  paiement?: string;
+  statut?: string;
+  remarque?: string;
+}
+
+interface Agent {
+  nom?: string;
+}
+
 // ── Logo selon la société ─────────────────────────────────────────────
-const getCompanyLogo = (logoUrlParam = null, company = null) => {
+const getCompanyLogo = (logoUrlParam: string | null = null, company: Company | null = null): string => {
   if (logoUrlParam) return logoUrlParam;
   if (company?.logo_url) return company.logo_url;
   if (!company) return '/logos/aterinay/logo.png';
@@ -109,7 +133,13 @@ const THERMAL_CSS = `
 // ═══════════════════════════════════════════════════════════════════════
 // TICKET LIVREUR — Liste des livraisons par destinataire
 // ═══════════════════════════════════════════════════════════════════════
-export const printAgentList = async (agent, livraisons, date, logoUrlParam = null, company = null) => {
+export const printAgentList = async (
+  agent: Agent,
+  livraisons: Livraison[],
+  date: string,
+  logoUrlParam: string | null = null,
+  company: Company | null = null
+): Promise<void> => {
   const w = window.open('', '_blank');
   if (!w) { alert('Autorisez les popups pour imprimer'); return; }
 
@@ -117,13 +147,20 @@ export const printAgentList = async (agent, livraisons, date, logoUrlParam = nul
   const companyName = company?.name || 'Aterinay Services';
 
   // ── Regrouper par destinataire ──────────────────────────────────────
-  const destsMap = {};
+  const destsMap: Record<string, {
+    destinataire: string;
+    telephone: string;
+    lieu: string;
+    items: Livraison[];
+    totalMontant: number;
+    totalFrais: number;
+  }> = {};
   let grandMontant = 0, grandFrais = 0;
 
   for (const l of livraisons) {
     const dest    = l.destinataire || '—';
-    const montant = l.paiement === 'client' ? 0 : parseFloat(l.montant || 0);
-    const frais   = parseFloat(l.frais || 0);
+    const montant = l.paiement === 'client' ? 0 : parseFloat(String(l.montant || 0));
+    const frais   = parseFloat(String(l.frais || 0));
     grandMontant += montant;
     grandFrais   += frais;
     if (!destsMap[dest]) {
@@ -143,14 +180,14 @@ export const printAgentList = async (agent, livraisons, date, logoUrlParam = nul
   let corpsHtml = '';
   let numDest = 1;
 
-  for (const key in destsMap) {
+  for (const key of Object.keys(destsMap)) {
     const d = destsMap[key];
     const totalDest = d.totalMontant + d.totalFrais;
 
     let itemsHtml = '';
-    d.items.forEach((l, i) => {
-      const montant   = l.paiement === 'client' ? 0 : parseFloat(l.montant || 0);
-      const frais     = parseFloat(l.frais || 0);
+    d.items.forEach((l: Livraison, i: number) => {
+      const montant   = l.paiement === 'client' ? 0 : parseFloat(String(l.montant || 0));
+      const frais     = parseFloat(String(l.frais || 0));
       const montantTxt = l.paiement === 'client' ? 'CLIENT' : formatAr(montant);
 
       itemsHtml += `
@@ -159,7 +196,7 @@ export const printAgentList = async (agent, livraisons, date, logoUrlParam = nul
           <div class="row"><span class="label">Donneur :</span><span class="val">${l.client_donneur || '—'}</span></div>
           <div class="row"><span class="label">Montant :</span><span class="val">${montantTxt}</span></div>
           ${frais > 0 ? `<div class="row"><span class="label">Frais   :</span><span class="val">${formatAr(frais)}</span></div>` : ''}
-          <div class="row"><span class="label">Statut  :</span><span class="val">${STATUTS[l.statut]?.label || l.statut || '—'}</span></div>
+          <div class="row"><span class="label">Statut  :</span><span class="val">${STATUTS[l.statut as string]?.label || l.statut || '—'}</span></div>
         </div>`;
     });
 
@@ -178,10 +215,11 @@ export const printAgentList = async (agent, livraisons, date, logoUrlParam = nul
     numDest++;
   }
 
+  const agentNom = agent.nom || '—';
   w.document.write(`<!DOCTYPE html>
 <html><head>
 <meta charset="UTF-8">
-<title>${companyName} - ${agent.nom} - ${date}</title>
+<title>${companyName} - ${agentNom} - ${date}</title>
 <style>
   body { width:72mm; }
   ${THERMAL_CSS}
@@ -202,7 +240,7 @@ export const printAgentList = async (agent, livraisons, date, logoUrlParam = nul
 <hr class="sep">
 
 <div class="row"><span class="label">DATE    :</span><span class="val">${date}</span></div>
-<div class="row"><span class="label">LIVREUR :</span><span class="val">${agent.nom.toUpperCase()}</span></div>
+<div class="row"><span class="label">LIVREUR :</span><span class="val">${agentNom.toUpperCase()}</span></div>
 <div class="row"><span class="label">COLIS   :</span><span class="val">${livraisons.length}</span></div>
 
 <hr class="sep">
@@ -237,7 +275,14 @@ ${corpsHtml}
 // ═══════════════════════════════════════════════════════════════════════
 // TICKET CLIENT — Facture / bilan du client donneur
 // ═══════════════════════════════════════════════════════════════════════
-export const generateClientPDF = async (client, livraisons, recuperation, province, logoUrlParam = null, company = null) => {
+export const generateClientPDF = async (
+  client: string,
+  livraisons: Livraison[],
+  recuperation: number | string,
+  province: number | string,
+  logoUrlParam: string | null = null,
+  company: Company | null = null
+): Promise<void> => {
   const w = window.open('', '_blank');
   if (!w) { alert('Autorisez les popups pour imprimer'); return; }
 
@@ -245,15 +290,17 @@ export const generateClientPDF = async (client, livraisons, recuperation, provin
   const companyName = company?.name || 'Aterinay Services';
   const date        = new Date().toLocaleDateString('fr-FR');
 
-  const livreesFacturees = livraisons.filter(l => l.statut === 'livre' && l.paiement !== 'client');
-  const totalMontant     = livreesFacturees.reduce((s, l) => s + parseFloat(l.montant || 0), 0);
-  const net              = totalMontant - (parseFloat(recuperation) || 0) - (parseFloat(province) || 0);
+  const livreesFacturees = livraisons.filter((l: Livraison) => l.statut === 'livre' && l.paiement !== 'client');
+  const totalMontant     = livreesFacturees.reduce((s: number, l: Livraison) => s + parseFloat(String(l.montant || 0)), 0);
+  const recNum = parseFloat(String(recuperation)) || 0;
+  const provNum = parseFloat(String(province)) || 0;
+  const net = totalMontant - recNum - provNum;
 
   let livsHtml = '';
-  livraisons.forEach((l, i) => {
-    const statutTxt  = STATUTS[l.statut]?.label || l.statut || '—';
+  livraisons.forEach((l: Livraison, i: number) => {
+    const statutTxt  = STATUTS[l.statut as string]?.label || l.statut || '—';
     const montantTxt = l.paiement === 'client' ? 'CLIENT'
-      : l.statut === 'livre'   ? formatAr(parseFloat(l.montant || 0))
+      : l.statut === 'livre'   ? formatAr(parseFloat(String(l.montant || 0)))
       : l.statut === 'retourne' ? 'RETOURNE'
       : l.statut === 'reporte'  ? 'REPORTE' : '—';
 
@@ -303,8 +350,8 @@ ${livsHtml}
 <div class="total-section">
   <div style="font-size:11px; margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">BILAN FINANCIER</div>
   <div class="row"><span class="label">Total livre   :</span><span class="val">${formatAr(totalMontant)}</span></div>
-  ${recuperation > 0 ? `<div class="row"><span class="label">- Recuperation:</span><span class="val">- ${formatAr(recuperation)}</span></div>` : ''}
-  ${province     > 0 ? `<div class="row"><span class="label">- Province    :</span><span class="val">- ${formatAr(province)}</span></div>` : ''}
+  ${recNum > 0 ? `<div class="row"><span class="label">- Recuperation:</span><span class="val">- ${formatAr(recNum)}</span></div>` : ''}
+  ${provNum > 0 ? `<div class="row"><span class="label">- Province    :</span><span class="val">- ${formatAr(provNum)}</span></div>` : ''}
   <div class="row total-grand">
     <span class="label">A VERSER      :</span>
     <span class="val">${formatAr(net)}</span>

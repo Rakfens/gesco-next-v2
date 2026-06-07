@@ -1,8 +1,8 @@
-// @ts-nocheck
-// agentService.js — v2 : companyId passé en paramètre (plus de getCurrentCompany)
+// agentService.ts — v2 : companyId passé en paramètre
 import { getSupabase } from '@/lib/supabase';
+import type { Agent } from '@/modules/shared/types';
 
-export const fetchAgents = async (companyId) => {
+export const fetchAgents = async (companyId: string): Promise<Agent[]> => {
   if (!companyId) return [];
   const { data, error } = await getSupabase()
     .from('agents')
@@ -13,17 +13,17 @@ export const fetchAgents = async (companyId) => {
   return data || [];
 };
 
-export const addAgent = async (nom, salaire, companyId) => {
+export const addAgent = async (nom: string, salaire: string | number, companyId: string): Promise<Agent> => {
   if (!companyId) throw new Error('Société non sélectionnée');
   const { data, error } = await getSupabase()
     .from('agents')
-    .insert([{ nom, salaire: parseFloat(salaire), company_id: companyId }])
+    .insert([{ nom, salaire: parseFloat(String(salaire)), company_id: companyId }])
     .select();
   if (error) throw error;
   return data[0];
 };
 
-export const updateAgent = async (id, updates, companyId) => {
+export const updateAgent = async (id: string, updates: Partial<Agent>, companyId: string): Promise<void> => {
   if (!companyId) throw new Error('Société non sélectionnée');
   const { error } = await getSupabase()
     .from('agents')
@@ -33,7 +33,7 @@ export const updateAgent = async (id, updates, companyId) => {
   if (error) throw error;
 };
 
-export const deleteAgent = async (id, companyId) => {
+export const deleteAgent = async (id: string, companyId: string): Promise<void> => {
   if (!companyId) throw new Error('Société non sélectionnée');
   const { error } = await getSupabase()
     .from('agents')

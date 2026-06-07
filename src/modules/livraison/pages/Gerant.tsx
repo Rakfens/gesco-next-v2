@@ -1,33 +1,35 @@
-// @ts-nocheck
 // Gerant.tsx — Design system professionnel
 import { useState, useMemo, useEffect } from 'react';
 import { COMMISSION_DEFAUT, CURRENT_MONTH, monthLabel, shouldCountGerantCommission, EXCLUDED_CLIENTS } from '@/modules/shared/utils/constants';
 import { useApp } from '@/modules/shared/context/AppContext';
-import { Button, Input, Select, Badge, Card, StatCard, Modal, ModalHeader, ModalBody, ModalFooter, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty } from '@/modules/shared/components/ui';
+import { Button, Input, Select, Badge, type BadgeVariant, Card, Modal, ModalHeader, ModalBody, ModalFooter, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty } from '@/modules/shared/components/ui';
+import { formatAr } from '@/modules/shared/utils/constants';
+import type { Livraison } from '@/modules/shared/types';
 
-export const Gerant = () => {
-  const { livraisons, showToast } = useApp();
-  const commissionGerant = COMMISSION_DEFAUT;
-
-const Grid2 = ({ children }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>{children}</div>
-);
-
-const SectionTitle = ({ children }) => (
-  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
-    {children}
-  </div>
-);
-
-const StatValue = ({ value, label, color }) => (
+const StatValue = ({ value, label, color }: { value: string | number; label: string; color?: string }) => (
   <Card>
     <div style={{ fontSize: 17, fontWeight: 800, color: color || 'var(--text)', marginBottom: 3 }}>{value}</div>
     <div style={{ fontSize: 11, color: 'var(--muted)' }}>{label}</div>
   </Card>
 );
 
-const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [editCommission, setEditCommission] = useState(false);
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
+    {children}
+  </div>
+);
+
+export const Gerant = () => {
+  const { livraisons, showToast } = useApp();
+  const commissionGerant = COMMISSION_DEFAUT;
+
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
+  const [editCommission, setEditCommission] = useState<boolean>(false);
+  const [tmpCommission, setTmpCommission] = useState<number>(commissionGerant);
+  const [gerantTab, setGerantTab] = useState<string>('jour');
+  const [gerantDate, setGerantDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [gerantMonth, setGerantMonth] = useState<string>(CURRENT_MONTH());
+  const [localCommission, setLocalCommission] = useState<number>(commissionGerant);
 
   useEffect(() => {
     const fn = () => setIsMobile(window.innerWidth < 768);
@@ -35,46 +37,40 @@ const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     return () => window.removeEventListener('resize', fn);
   }, []);
 
-  const [tmpCommission, setTmpCommission] = useState(commissionGerant);
-  const [gerantTab, setGerantTab] = useState('jour');
-  const [gerantDate, setGerantDate] = useState(new Date().toISOString().split('T')[0]);
-  const [gerantMonth, setGerantMonth] = useState(CURRENT_MONTH());
-  const [localCommission, setLocalCommission] = useState(commissionGerant);
-
   useEffect(() => {
     setLocalCommission(commissionGerant);
     setTmpCommission(commissionGerant);
   }, [commissionGerant]);
 
-  const livsGerant = (arr) => arr.filter(l => shouldCountGerantCommission(l));
+  const livsGerant = (arr: Livraison[]) => arr.filter(l => shouldCountGerantCommission(l));
 
-  const gerantDayLivs = useMemo(() => livsGerant(livraisons.filter(l => l.date === gerantDate)), [livraisons, gerantDate]);
+  const gerantDayLivs = useMemo(() => livsGerant((livraisons as Livraison[]).filter(l => l.date === gerantDate)), [livraisons, gerantDate]);
   const gerantDayCount = gerantDayLivs.length;
   const gerantDayGain = gerantDayCount * localCommission;
-  const gerantDayFraisTotal = gerantDayLivs.reduce((s, l) => s + parseFloat(l.frais || 0), 0);
+  const gerantDayFraisTotal = gerantDayLivs.reduce((s, l: Livraison) => s + parseFloat(String(l.frais || 0)), 0);
   const gerantDayNet = gerantDayFraisTotal - gerantDayGain;
 
   const gerantDayExcluded = useMemo(() => {
-    return livraisons.filter(l =>
+    return (livraisons as Livraison[]).filter(l =>
       l.date === gerantDate &&
-      EXCLUDED_CLIENTS.includes(l.client_donneur?.toUpperCase() || '') &&
-      parseFloat(l.frais || 0) > 0
+      EXCLUDED_CLIENTS.includes((l.client_donneur || '').toUpperCase()) &&
+      parseFloat(String(l.frais || 0)) > 0
     );
   }, [livraisons, gerantDate]);
 
   const months = useMemo(() => {
-    const s = new Set(livraisons.map(l => l.date?.slice(0, 7)).filter(Boolean));
+    const s = new Set((livraisons as Livraison[]).map(l => l.date?.slice(0, 7)).filter(Boolean));
     s.add(CURRENT_MONTH());
     return [...s].sort().reverse();
   }, [livraisons]);
 
-  const gerantMonthLivs = useMemo(() => livsGerant(livraisons.filter(l => l.date && l.date.startsWith(gerantMonth))), [livraisons, gerantMonth]);
+  const gerantMonthLivs = useMemo(() => livsGerant((livraisons as Livraison[]).filter(l => l.date && l.date.startsWith(gerantMonth))), [livraisons, gerantMonth]);
   const gerantMonthCount = gerantMonthLivs.length;
   const gerantMonthGain = gerantMonthCount * localCommission;
-  const gerantMonthFrais = gerantMonthLivs.reduce((s, l) => s + parseFloat(l.frais || 0), 0);
+  const gerantMonthFrais = gerantMonthLivs.reduce((s, l: Livraison) => s + parseFloat(String(l.frais || 0)), 0);
 
   const gerantMonthByDay = useMemo(() => {
-    const map = {};
+    const map: Record<string, { date: string; count: number; gain: number }> = {};
     gerantMonthLivs.forEach(l => {
       if (!map[l.date]) map[l.date] = { date: l.date, count: 0, gain: 0 };
       map[l.date].count++;
@@ -84,18 +80,17 @@ const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   }, [gerantMonthLivs, localCommission]);
 
   const handleUpdateCommission = async () => {
-    await onUpdateCommission(tmpCommission);
     setLocalCommission(tmpCommission);
     setEditCommission(false);
     if (showToast) showToast('Commission mise à jour');
   };
 
-  const statutBadge = (statut) => {
-    const variants = {
-      livre: 'success', en_cours: 'info', retourne: 'danger',
-      reporte: 'purple', livre_partiel: 'warning',
+  const statutBadge = (statut: string) => {
+    const variants: Record<string, BadgeVariant> = {
+      livre: 'success', en_cours: 'primary', retourne: 'danger',
+      reporte: 'default', livre_partiel: 'warning',
     };
-    const labels = {
+    const labels: Record<string, string> = {
       livre: 'Livré', en_cours: 'En cours', retourne: 'Retourné',
       reporte: 'Reporté', livre_partiel: 'Partiel',
     };
@@ -130,7 +125,7 @@ const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
               <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                 <Input
                   type="number"
-                  value={tmpCommission}
+                  value={String(tmpCommission)}
                   onChange={e => setTmpCommission(parseFloat(e.target.value) || 0)}
                   style={{ width: 140 }}
                 />
@@ -198,13 +193,13 @@ const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
           )}
 
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(2,1fr)', gap: 10, marginBottom: 20 }}>
-            <Card gridColumn="1/-1" style={{ background: 'linear-gradient(135deg, var(--card2), var(--bg))', border: '1px solid var(--purple)', gridColumn: '1/-1' }}>
+            <div style={{ display: 'grid', gridColumn: '1/-1' }}><Card style={{ background: 'linear-gradient(135deg, var(--card2), var(--bg))', border: '1px solid var(--purple)', gridColumn: '1/-1' }}>
               <div style={{ fontSize: 11, color: 'var(--purple)', fontWeight: 700, marginBottom: 6 }}>
                 GAIN DU GÉRANT — {gerantDate}
               </div>
               <div style={{ fontSize: 32, fontWeight: 900, color: 'var(--text)' }}>{formatAr(gerantDayGain)}</div>
               <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{gerantDayCount} livraisons × {formatAr(localCommission)}</div>
-            </Card>
+            </Card></div>
             <StatValue value={gerantDayCount} label="Livraisons avec commission" color="var(--blue)" />
             <StatValue value={formatAr(gerantDayGain)} label="Gain gérant" color="var(--pink)" />
             <StatValue value={formatAr(gerantDayFraisTotal)} label="Frais collectés" color="var(--orange)" />
@@ -233,8 +228,8 @@ const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
                       <TableCell>{l.client_donneur}</TableCell>
                       <TableCell>{l.destinataire}</TableCell>
                       <TableCell>{l.agent_nom}</TableCell>
-                      <TableCell>{statutBadge(l.statut)}</TableCell>
-                      <TableCell align="right" style={{ color: 'var(--orange)' }}>{formatAr(parseFloat(l.frais || 0))}</TableCell>
+                      <TableCell>{statutBadge(String(l.statut))}</TableCell>
+                      <TableCell align="right" style={{ color: 'var(--orange)' }}>{formatAr(parseFloat(String(l.frais || 0)))}</TableCell>
                       <TableCell align="right">{formatAr(localCommission)}</TableCell>
                     </TableRow>
                   ))}

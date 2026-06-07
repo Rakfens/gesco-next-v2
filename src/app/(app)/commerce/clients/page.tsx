@@ -1,16 +1,24 @@
-// @ts-nocheck
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getSupabase } from '@/lib/supabase';
-import { getCurrentCompany } from '@/lib/supabase';
-import { Button, Input, Badge, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter, Table, TableHead, TableBody, TableRow, TableCell, TableEmpty } from "@/modules/shared/components/ui";
+import { getSupabase, getCurrentCompany } from '@/lib/supabase';
+import { type Company } from '@/modules/shared/types';
+import { Button, Input, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalTitle, ModalBody, Table, TableHead, TableBody, TableRow, TableCell } from "@/modules/shared/components/ui";
+
+interface Client {
+  id: string;
+  nom: string;
+  telephone?: string;
+  email?: string;
+  adresse?: string;
+  company_id: string;
+}
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentCompany, setCurrentCompany] = useState<any>(null);
+  const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -36,8 +44,8 @@ export default function ClientsPage() {
         .order('nom');
       if (error) throw error;
       setClients(data || []);
-    } catch (err: any) {
-      setError(err.message || "Erreur lors du chargement des clients");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur lors du chargement des clients");
       setClients([]);
     } finally {
       setLoading(false);
@@ -71,12 +79,12 @@ export default function ClientsPage() {
       resetForm();
       setShowModal(false);
       fetchClients();
-    } catch (err: any) {
-      setError(err.message || "Erreur lors de l'enregistrement");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur lors de l'enregistrement");
     }
   };
 
-  const handleEdit = (client: any) => {
+  const handleEdit = (client: Client) => {
     setFormData({
       nom: client.nom || "",
       telephone: client.telephone || "",
@@ -94,8 +102,8 @@ export default function ClientsPage() {
       const { error } = await getSupabase().from('clients').delete().eq('id', id).eq('company_id', currentCompany?.id);
       if (error) throw error;
       fetchClients();
-    } catch (err: any) {
-      setError(err.message || "Erreur lors de la suppression");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur lors de la suppression");
     }
   };
 
@@ -114,9 +122,7 @@ export default function ClientsPage() {
       </div>
 
       <Modal open={showModal} onOpenChange={setShowModal}>
-        <ModalHeader>
-          <ModalTitle>{isEditing ? "Modifier le client" : "Nouveau Client"}</ModalTitle>
-        </ModalHeader>
+        <ModalHeader title={isEditing ? "Modifier le client" : "Nouveau Client"} />
         <ModalBody>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

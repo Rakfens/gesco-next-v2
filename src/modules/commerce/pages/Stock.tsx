@@ -1,28 +1,29 @@
-// @ts-nocheck
 // Stock.jsx — v3 : design mobile cards + tous les FIX précédents
 import { useState, useEffect } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
 import { fetchProduits, createProduit, updateProduit, deleteProduit, fetchCategories, updateStock } from '../services/produitService';
-import { fetchMouvementsStock } from '../services/stockService';
+import { fetchMouvementsProduit as fetchMouvementsStock } from '../services/stockService';
 import { getSupabase } from '@/lib/supabase';
 import { formatAr } from '@/modules/shared/utils/constants';
+import { modalStyles, btn, inp, lbl } from '@/modules/shared/utils/helpers';
 import {
   Button, Input, Select, Badge, Card, Modal, ModalHeader, ModalBody, ModalFooter,
 } from '@/modules/shared/components/ui';
+import type { Produit } from '@/modules/shared/types';
 
 function useLocalToast() {
-  const [toasts, setToasts] = useState([]);
-  const show = (msg, type = 'success') => {
+  const [toasts, setToasts] = useState<Array<{ id: number; msg: string; type: string }>>([]);
+  const show = (msg: string, type = 'success') => {
     const id = Date.now();
     setToasts(t => [...t, { id, msg, type }]);
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3500);
   };
-  return { toasts, success: m => show(m,'success'), error: m => show(m,'error'), warn: m => show(m,'warn') };
+  return { toasts, success: (m: string) => show(m,'success'), error: (m: string) => show(m,'error'), warn: (m: string) => show(m,'warn') };
 }
 
-function ToastStack({ toasts }) {
-  const colors = { success:'var(--green)', error:'var(--red)', warn:'var(--yellow)' };
-  const bgs    = { success:'var(--green-dim)', error:'var(--red-dim)', warn:'var(--yellow-dim)' };
+function ToastStack({ toasts }: { toasts: Array<{ id: number; msg: string; type: string }> }) {
+  const colors: Record<string, string> = { success:'var(--green)', error:'var(--red)', warn:'var(--yellow)' };
+  const bgs: Record<string, string>    = { success:'var(--green-dim)', error:'var(--red-dim)', warn:'var(--yellow-dim)' };
   if (!toasts.length) return null;
   return (
     <div style={{ position:'fixed', bottom:90, right:14, zIndex:999, display:'flex', flexDirection:'column', gap:8, maxWidth:280 }}>
@@ -33,7 +34,7 @@ function ToastStack({ toasts }) {
   );
 }
 
-function ConfirmModal({ open, title, message, onConfirm, onCancel }) {
+function ConfirmModal({ open, title, message, onConfirm, onCancel }: { open: boolean; title: string; message: string; onConfirm: () => void; onCancel: () => void }) {
   if (!open) return null;
   return (
     <div style={{ ...modalStyles.overlay, zIndex:300 }}>
@@ -52,10 +53,10 @@ function ConfirmModal({ open, title, message, onConfirm, onCancel }) {
 }
 
 // ─── Card produit mobile ───────────────────────────────────────────────
-function ProduitCard({ p, onEdit, onMovement, onHistory, onDelete }) {
+function ProduitCard({ p, onEdit, onMovement, onHistory, onDelete }: { p: Produit; onEdit: (p: Produit) => void; onMovement: (p: Produit) => void; onHistory: (p: Produit) => void; onDelete: (p: Produit) => void }) {
   const marge    = p.prix_vente && p.prix_achat ? ((p.prix_vente - p.prix_achat) / p.prix_achat * 100).toFixed(0) : null;
-  const isLow    = p.quantite_stock > 0 && p.quantite_stock <= p.stock_minimum;
-  const isOut    = p.quantite_stock === 0;
+  const isLow    = (p.quantite_stock ?? 0) > 0 && (p.quantite_stock ?? 0) <= (p.stock_minimum ?? 0);
+  const isOut    = (p.quantite_stock ?? 0) === 0;
   const statusColor = isOut ? 'var(--red)' : isLow ? 'var(--orange)' : 'var(--green)';
   const statusBg    = isOut ? 'var(--red-dim)' : isLow ? 'var(--orange-dim)' : 'var(--green-dim)';
   const statusLabel = isOut ? 'Rupture' : isLow ? 'Stock bas' : 'OK';
@@ -99,7 +100,7 @@ function ProduitCard({ p, onEdit, onMovement, onHistory, onDelete }) {
             background: Number(marge) >= 20 ? 'var(--green-dim)' : Number(marge) >= 0 ? 'var(--yellow-dim)' : 'var(--red-dim)',
             color:      Number(marge) >= 20 ? 'var(--green)' : Number(marge) >= 0 ? 'var(--yellow)' : 'var(--red)',
           }}>{marge}%</span>
-          {p.stock_minimum > 0 && <span style={{ fontSize:11, color:'var(--muted)', marginLeft:'auto' }}>Min: {p.stock_minimum}</span>}
+          {(p.stock_minimum ?? 0) > 0 && <span style={{ fontSize:11, color:'var(--muted)', marginLeft:'auto' }}>Min: {p.stock_minimum ?? 0}</span>}
         </div>
       )}
 
@@ -118,24 +119,30 @@ export default function Stock() {
   const { currentCompany } = useCompany();
   const toast = useLocalToast();
 
-  const [produits,   setProduits]   = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading,    setLoading]    = useState(true);
-  const [saving,     setSaving]     = useState(false);
-  const [isMobile,   setIsMobile]   = useState(window.innerWidth <= 768);
+  const [produits,   setProduits]   = useState<Produit[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading,    setLoading]    = useState<boolean>(true);
+  const [saving,     setSaving]     = useState<boolean>(false);
+  const [isMobile,   setIsMobile]   = useState<boolean>(window.innerWidth <= 768);
 
-  const [showModal,         setShowModal]         = useState(false);
-  const [showMovementModal, setShowMovementModal] = useState(false);
-  const [showHistoryModal,  setShowHistoryModal]  = useState(false);
-  const [selectedProduit,   setSelectedProduit]   = useState(null);
-  const [mouvements,        setMouvements]        = useState([]);
-  const [editMode,          setEditMode]          = useState(false);
-  const [confirmDelete,     setConfirmDelete]     = useState(null);
-  const [filter,            setFilter]            = useState('');
-  const [categorieFilter,   setCategorieFilter]   = useState('');
+  const [showModal,         setShowModal]         = useState<boolean>(false);
+  const [showMovementModal, setShowMovementModal] = useState<boolean>(false);
+  const [showHistoryModal,  setShowHistoryModal]  = useState<boolean>(false);
+  const [selectedProduit,   setSelectedProduit]   = useState<Produit | null>(null);
+  const [mouvements,        setMouvements]        = useState<Array<{ id: string; type: string; quantite: number; notes?: string; date_mouvement?: string }>>([]);
+  const [editMode,          setEditMode]          = useState<boolean>(false);
+  const [confirmDelete,     setConfirmDelete]     = useState<{ produit: Produit } | null>(null);
+  const [filter,            setFilter]            = useState<string>('');
+  const [categorieFilter,   setCategorieFilter]   = useState<string>('');
 
-  const [form, setForm] = useState({ nom:'', reference:'', categorie:'', prix_achat:0, prix_vente:0, quantite_stock:0, stock_minimum:0, unite:'pièce' });
-  const [movementForm, setMovementForm] = useState({ type:'entree', quantite:0, notes:'' });
+  const [form, setForm] = useState<{
+    nom: string; reference: string; categorie: string;
+    prix_achat: number; prix_vente: number; quantite_stock: number;
+    stock_minimum: number; unite: string;
+  }>({ nom:'', reference:'', categorie:'', prix_achat:0, prix_vente:0, quantite_stock:0, stock_minimum:0, unite:'pièce' });
+  const [movementForm, setMovementForm] = useState<{
+    type: string; quantite: number; notes: string;
+  }>({ type:'entree', quantite:0, notes:'' });
 
   useEffect(() => {
     const fn = () => setIsMobile(window.innerWidth <= 768);
@@ -146,7 +153,7 @@ export default function Stock() {
   useEffect(() => { if (currentCompany) loadData(); }, [currentCompany]);
 
   useEffect(() => {
-    const handler = e => { if (['produits','mouvements_stock'].includes(e.detail?.table)) loadData(); };
+    const handler = (e: Event) => { if (['produits','mouvements_stock'].includes((e as CustomEvent)?.detail?.table)) loadData(); };
     window.addEventListener('supabase_realtime', handler);
     return () => window.removeEventListener('supabase_realtime', handler);
   }, []);
@@ -161,7 +168,7 @@ export default function Stock() {
     finally { setLoading(false); }
   };
 
-  const loadMouvements = async (produitId) => {
+  const loadMouvements = async (produitId: string) => {
     if (!currentCompany) return;
     try {
       const { data, error } = await getSupabase().from('mouvements_stock').select('*, produit:produits(id,nom)').eq('produit_id', produitId).eq('company_id', currentCompany.id).order('date_mouvement', { ascending:false }).limit(50);
@@ -188,8 +195,8 @@ export default function Stock() {
     if (!selectedProduit) return;
     if (movementForm.quantite <= 0) { toast.warn('Quantité doit être > 0'); return; }
     const newQty = movementForm.type === 'entree'
-      ? selectedProduit.quantite_stock + movementForm.quantite
-      : selectedProduit.quantite_stock - movementForm.quantite;
+      ? (selectedProduit.quantite_stock ?? 0) + movementForm.quantite
+      : (selectedProduit.quantite_stock ?? 0) - movementForm.quantite;
     if (newQty < 0) { toast.warn('Stock insuffisant'); return; }
     setSaving(true);
     try {
@@ -200,8 +207,8 @@ export default function Stock() {
     finally { setSaving(false); }
   };
 
-  const handleDeleteProduit = (produit) => {
-    if (produit.quantite_stock > 0) { toast.warn(`Impossible : ${produit.nom} a encore ${produit.quantite_stock} unité(s)`); return; }
+  const handleDeleteProduit = (produit: Produit) => {
+    if ((produit.quantite_stock ?? 0) > 0) { toast.warn(`Impossible : ${produit.nom} a encore ${produit.quantite_stock ?? 0} unité(s)`); return; }
     setConfirmDelete({ produit });
   };
 
@@ -212,19 +219,19 @@ export default function Stock() {
     catch (_) { toast.error('Erreur suppression'); }
   };
 
-  const editProduit = (produit) => {
+  const editProduit = (produit: Produit) => {
     setSelectedProduit(produit);
-    setForm({ nom:produit.nom, reference:produit.reference||'', categorie:produit.categorie||'', prix_achat:produit.prix_achat, prix_vente:produit.prix_vente, quantite_stock:produit.quantite_stock, stock_minimum:produit.stock_minimum, unite:produit.unite });
+    setForm({ nom:produit.nom, reference:produit.reference||'', categorie:produit.categorie||'', prix_achat:produit.prix_achat ?? 0, prix_vente:produit.prix_vente ?? 0, quantite_stock:produit.quantite_stock ?? 0, stock_minimum:produit.stock_minimum ?? 0, unite:produit.unite ?? '' });
     setEditMode(true); setShowModal(true);
   };
 
-  const handleViewHistory = async (produit) => {
+  const handleViewHistory = async (produit: Produit) => {
     setSelectedProduit(produit);
     await loadMouvements(produit.id);
     setShowHistoryModal(true);
   };
 
-  const marge = (p) => p.prix_vente && p.prix_achat ? ((p.prix_vente - p.prix_achat) / p.prix_achat * 100).toFixed(0) : null;
+  const marge = (p: { prix_vente?: number; prix_achat?: number }) => p.prix_vente && p.prix_achat ? ((p.prix_vente - p.prix_achat) / p.prix_achat * 100).toFixed(0) : null;
 
   const filtered = produits.filter(p => {
     if (filter && !p.nom.toLowerCase().includes(filter.toLowerCase()) && !(p.reference||'').toLowerCase().includes(filter.toLowerCase())) return false;
@@ -264,7 +271,7 @@ export default function Stock() {
       <div style={{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:10, marginBottom:16 }}>
         {[
           { label:'Total', value:produits.length, color:'var(--blue)' },
-          { label:'Stock bas', value:produits.filter(p => p.quantite_stock > 0 && p.quantite_stock <= p.stock_minimum).length, color:'var(--orange)' },
+          { label:'Stock bas', value:produits.filter(p => (p.quantite_stock ?? 0) > 0 && (p.quantite_stock ?? 0) <= (p.stock_minimum ?? 0)).length, color:'var(--orange)' },
           { label:'Rupture', value:produits.filter(p => p.quantite_stock === 0).length, color:'var(--red)' },
         ].map(stat => (
           <div key={stat.label} style={{ background:'var(--card)', border:`1px solid ${stat.color}20`, borderRadius:13, padding:'12px 14px', borderTop:`2px solid ${stat.color}` }}>
@@ -304,8 +311,8 @@ export default function Stock() {
                 {filtered.length === 0
                   ? <tr><td colSpan={9} style={{ padding:48, textAlign:'center', color:'var(--muted)' }}><div style={{ fontSize:28, marginBottom:8 }}></div>Aucun produit</td></tr>
                   : filtered.map(p => {
-                    const isLow = p.quantite_stock <= p.stock_minimum;
-                    const isOut = p.quantite_stock === 0;
+                    const isLow = (p.quantite_stock ?? 0) <= (p.stock_minimum ?? 0);
+                    const isOut = (p.quantite_stock ?? 0) === 0;
                     const m = marge(p);
                     return (
                       <tr key={p.id} style={{ borderBottom:'1px solid var(--border)' }}>
@@ -420,8 +427,8 @@ export default function Stock() {
             <div style={{ marginBottom:14 }}><label style={lbl()}>Notes (optionnel)</label><textarea style={{ ...inp(), minHeight:52 }} value={movementForm.notes} onChange={e => setMovementForm({...movementForm, notes:e.target.value})} /></div>
             <div style={{ background:'var(--bg)', padding:12, borderRadius:10, marginBottom:16, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
               <span style={{ fontSize:13, color:'var(--text2)' }}>Stock après :</span>
-              <span style={{ fontWeight:800, fontSize:18, color:(movementForm.type==='entree'?selectedProduit.quantite_stock+movementForm.quantite:selectedProduit.quantite_stock-movementForm.quantite)<0?'var(--red)':'var(--text)' }}>
-                {movementForm.type==='entree'?selectedProduit.quantite_stock+movementForm.quantite:selectedProduit.quantite_stock-movementForm.quantite} {selectedProduit.unite}
+              <span style={{ fontWeight:800, fontSize:18, color:(movementForm.type==='entree'?(selectedProduit.quantite_stock??0)+movementForm.quantite:(selectedProduit.quantite_stock??0)-movementForm.quantite)<0?'var(--red)':'var(--text)' }}>
+                {movementForm.type==='entree'?(selectedProduit.quantite_stock??0)+movementForm.quantite:(selectedProduit.quantite_stock??0)-movementForm.quantite} {selectedProduit.unite}
               </span>
             </div>
             <button style={{ ...btn('var(--blue)','var(--blue2)'), width:'100%', padding:13, opacity:saving?0.7:1 }} onClick={handleMovement} disabled={saving}>
@@ -442,7 +449,7 @@ export default function Stock() {
             </div>
             <div style={{ background:'var(--bg)', padding:'10px 14px', borderRadius:10, marginBottom:14, display:'flex', justifyContent:'space-between' }}>
               <span style={{ color:'var(--muted)', fontSize:13 }}>Stock actuel</span>
-              <span style={{ fontWeight:700 }}>{selectedProduit.quantite_stock} {selectedProduit.unite}</span>
+              <span style={{ fontWeight:700 }}>{selectedProduit.quantite_stock ?? 0} {selectedProduit.unite}</span>
             </div>
             {mouvements.length === 0
               ? <div style={{ textAlign:'center', color:'var(--muted)', padding:40 }}>Aucun mouvement</div>
@@ -453,7 +460,7 @@ export default function Stock() {
                       <span style={{ background:['entree','achat'].includes(m.type)?'var(--green-dim)':'var(--red-dim)', color:['entree','achat'].includes(m.type)?'var(--green)':'var(--red)', padding:'2px 9px', borderRadius:20, fontSize:11, fontWeight:700, marginRight:8 }}>
                         {m.type==='entree'?'Entree':m.type==='achat'?'Achat':m.type==='vente'?'Vente':'Sortie'}
                       </span>
-                      <span style={{ color:'var(--muted)', fontSize:11 }}>{new Date(m.date_mouvement).toLocaleString('fr-FR')}</span>
+                      <span style={{ color:'var(--muted)', fontSize:11 }}>{new Date(m.date_mouvement ?? '').toLocaleString('fr-FR')}</span>
                       {m.notes && <div style={{ fontSize:11, color:'var(--muted)', marginTop:2 }}>{m.notes}</div>}
                     </div>
                     <span style={{ fontWeight:700 }}>{m.quantite} {selectedProduit.unite}</span>

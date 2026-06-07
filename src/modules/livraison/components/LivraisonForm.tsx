@@ -1,11 +1,15 @@
-// @ts-nocheck
 // src/modules/livraison/components/LivraisonForm.jsx — Design system professionnel
 import { useState, useEffect } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
 import { STATUTS, PAIE_MODES, TODAY } from '@/modules/shared/utils/constants';
 import { Button, Input, Select, Card } from '@/modules/shared/components/ui';
 
-const StatusButton = ({ mode, active, onClick }) => (
+interface StatusButtonProps {
+  mode: { key: string; label: string; icon: string };
+  active: boolean;
+  onClick: () => void;
+}
+const StatusButton = ({ mode, active, onClick }: StatusButtonProps) => (
   <button
     onClick={onClick}
     data-testid={`paiement-mode-${mode.key}`}
@@ -34,7 +38,21 @@ const StatusButton = ({ mode, active, onClick }) => (
   </button>
 );
 
-export const LivraisonForm = ({ agents, onAddLivraison, showToast, suggestions }) => {
+interface LivraisonFormProps {
+  agents: Array<{ id: string; nom: string }>;
+  onAddLivraison: (data: Record<string, unknown>) => Promise<void>;
+  showToast: (msg: string, type?: string) => void;
+  suggestions?: { colisList?: string[]; clients?: string[]; lieux?: string[] };
+}
+
+interface FormState {
+  colis: string; client_donneur: string; destinataire: string;
+  destinataire_telephone: string; destinataire_lieu: string;
+  agentId: string; agent_nom: string; montant: string; frais: string;
+  paiement: string; date: string; statut: string; remarque: string;
+}
+
+export const LivraisonForm = ({ agents, onAddLivraison, showToast, suggestions }: LivraisonFormProps) => {
   const { currentCompany } = useCompany();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -44,7 +62,7 @@ export const LivraisonForm = ({ agents, onAddLivraison, showToast, suggestions }
     return () => window.removeEventListener('resize', fn);
   }, []);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormState>({
     colis: '',
     client_donneur: '',
     destinataire: '',
@@ -56,7 +74,8 @@ export const LivraisonForm = ({ agents, onAddLivraison, showToast, suggestions }
     frais: '',
     paiement: 'espece',
     date: TODAY(),
-    statut: 'en_cours'
+    statut: 'en_cours',
+    remarque: ''
   });
 
   const handleSubmit = async () => {
@@ -65,7 +84,7 @@ export const LivraisonForm = ({ agents, onAddLivraison, showToast, suggestions }
       return;
     }
 
-    const selectedAgent = agents.find(a => a.id === parseInt(form.agentId));
+    const selectedAgent = agents.find(a => a.id === form.agentId);
     const agent_nom = selectedAgent?.nom || '—';
 
     const livraisonData = {
@@ -88,7 +107,7 @@ export const LivraisonForm = ({ agents, onAddLivraison, showToast, suggestions }
     setForm({
       colis: '', client_donneur: '', destinataire: '', destinataire_telephone: '',
       destinataire_lieu: '', agentId: '', agent_nom: '', montant: '', frais: '',
-      paiement: 'espece', date: TODAY(), statut: 'en_cours'
+      paiement: 'espece', date: TODAY(), statut: 'en_cours', remarque: ''
     });
     showToast('Livraison enregistrée');
   };
@@ -196,7 +215,7 @@ export const LivraisonForm = ({ agents, onAddLivraison, showToast, suggestions }
             value={form.agentId}
             onChange={e => {
               const agentId = e.target.value;
-              const agent = agents.find(a => a.id === parseInt(agentId));
+              const agent = agents.find(a => a.id === agentId);
               setForm({ ...form, agentId, agent_nom: agent?.nom || '' });
             }}
             options={agentOptions}

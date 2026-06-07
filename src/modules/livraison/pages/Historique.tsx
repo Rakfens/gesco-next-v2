@@ -1,44 +1,50 @@
-// @ts-nocheck
 import { useState, useMemo, useEffect } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
 import { STATUTS, PAIE_MODES, formatAr, TODAY } from '@/modules/shared/utils/constants';
 import { exportToCSV } from '@/modules/shared/utils/csvExport';
 import { printAgentList } from '@/modules/shared/utils/pdfExport';
 import { ClientFeedbackModal } from '@/modules/shared/components/Modals/ClientFeedbackModal';
+import type { Livraison, Agent } from '@/modules/shared/types';
+import { useApp } from '@/modules/shared/context/AppContext';
 import {
   Button, Input, Select, Badge, Card, Modal, ModalHeader, ModalBody, ModalFooter,
   Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty,
 } from '@/modules/shared/components/ui';
 
-const agentMatch = (livraison, agent) => {
+const agentMatch = (livraison: Livraison, agent: Agent): boolean => {
   if (livraison.agent_id != null && agent.id != null) {
     return Number(livraison.agent_id) === Number(agent.id);
   }
   return livraison.agent_nom === agent.nom;
 };
 
-const statusBadge = (statut) => {
-  const map = {
-    livre: 'success', en_cours: 'info', retourne: 'danger',
+const statusBadge = (statut: string) => {
+  const map: Record<string, string> = {
+    livre: 'success', en_cours: 'warning', retourne: 'danger',
     reporte: 'purple', livre_partiel: 'warning',
   };
-  const labels = {
+  const labels: Record<string, string> = {
     livre: 'Livré', en_cours: 'En cours', retourne: 'Retourné',
     reporte: 'Reporté', livre_partiel: 'Partiel',
   };
-  return <Badge variant={map[statut] || 'default'} size="sm">{labels[statut] || statut}</Badge>;
+  return <Badge variant={(map[statut] || 'default') as any} size="sm">{labels[statut] || statut}</Badge>;
 };
 
 const STATUT_OPTIONS = Object.entries(STATUTS).map(([k, v]) => ({ value: k, label: v.label }));
 const PAIE_OPTIONS = Object.entries(PAIE_MODES).map(([k, v]) => ({ value: k, label: v.label }));
 
-import { useApp } from '@/modules/shared/context/AppContext';
+interface ClientStat {
+  client: string;
+  livs: Livraison[];
+  totalMontant: number;
+  totalFrais: number;
+}
 
 export const Historique = () => {
   const { livraisons, agents, showToast, updateLivraison: onUpdateLivraison, deleteLivraison: onDeleteLivraison } = useApp();
   const { currentCompany } = useCompany();
-  const logoUrl = currentCompany?.logo_url || null;
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const logoUrl = currentCompany?.logo_url ? String(currentCompany.logo_url) : null;
+  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
 
   useEffect(() => {
     const fn = () => setIsMobile(window.innerWidth < 768);
@@ -46,15 +52,15 @@ export const Historique = () => {
     return () => window.removeEventListener('resize', fn);
   }, []);
 
-  const [histDate, setHistDate] = useState(TODAY());
-  const [histAgent, setHistAgent] = useState('tous');
-  const [histStatut, setHistStatut] = useState('tous');
-  const [editId, setEditId] = useState(null);
-  const [editData, setEditData] = useState({});
-  const [fbClient, setFbClient] = useState(null);
-  const [fbRecup, setFbRecup] = useState(0);
-  const [fbProvince, setFbProvince] = useState(0);
-  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [histDate, setHistDate] = useState<string>(TODAY());
+  const [histAgent, setHistAgent] = useState<string>('tous');
+  const [histStatut, setHistStatut] = useState<string>('tous');
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editData, setEditData] = useState<Partial<Livraison>>({});
+  const [fbClient, setFbClient] = useState<string | null>(null);
+  const [fbRecup, setFbRecup] = useState<number>(0);
+  const [fbProvince, setFbProvince] = useState<number>(0);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const agentOptions = [
     { value: 'tous', label: 'Tous' },
@@ -67,14 +73,14 @@ export const Historique = () => {
     (histStatut === 'tous' || l.statut === histStatut)
   ), [livraisons, histDate, histAgent, histStatut]);
 
-  const statsByClient = useMemo(() => {
-    const map = {};
+  const statsByClient: ClientStat[] = useMemo(() => {
+    const map: Record<string, ClientStat> = {};
     livsFiltered.forEach(l => {
       const client = l.client_donneur;
       if (!map[client]) map[client] = { client, livs: [], totalMontant: 0, totalFrais: 0 };
       map[client].livs.push(l);
-      if (l.paiement !== 'client') map[client].totalMontant += parseFloat(l.montant || 0);
-      map[client].totalFrais += parseFloat(l.frais || 0);
+      if (l.paiement !== 'client') map[client].totalMontant += Number(l.montant) || 0;
+      map[client].totalFrais += Number(l.frais) || 0;
     });
     return Object.values(map).sort((a, b) => b.totalMontant - a.totalMontant);
   }, [livsFiltered]);
@@ -82,7 +88,7 @@ export const Historique = () => {
   const handleExportCSV = () => {
     if (!livsFiltered.length) return;
     const keys = ['date', 'colis', 'client_donneur', 'destinataire', 'destinataire_lieu', 'agent_nom', 'montant', 'frais', 'paiement', 'statut'];
-    const csv = [keys, ...livsFiltered.map(l => keys.map(k => '"' + (l[k] || '') + '"'))].map(r => r.join(',')).join('\n');
+    const csv = [keys, ...livsFiltered.map(l => keys.map(k => '"' + ((l as unknown as Record<string, unknown>)[k] || '') + '"'))].map(r => r.join(',')).join('\n');
     const b = new Blob(['\uFEFF' + csv], { type: 'text/csv' });
     const u = URL.createObjectURL(b);
     const a = document.createElement('a');
@@ -93,8 +99,8 @@ export const Historique = () => {
   };
 
   const handleUpdate = async () => {
-    const montant = editData.paiement === 'client' ? 0 : parseFloat(editData.montant) || 0;
-    await onUpdateLivraison(editId, { ...editData, montant, frais: parseFloat(editData.frais) || 0 });
+    const montant = editData.paiement === 'client' ? 0 : parseFloat(String(editData.montant)) || 0;
+    await onUpdateLivraison(editId!, { ...editData, montant, frais: parseFloat(String(editData.frais)) || 0 });
     setEditId(null);
     showToast('Livraison mise à jour');
   };
@@ -110,8 +116,8 @@ export const Historique = () => {
   return (
     <div>
       <ClientFeedbackModal
-        fbClient={fbClient} setFbClient={setFbClient} histDate={histDate}
-        fbRecup={fbRecup} setFbRecup={setFbRecup} fbProvince={fbProvince} setFbProvince={setFbProvince}
+        fbClient={fbClient as any} setFbClient={setFbClient as any} histDate={histDate}
+        fbRecup={String(fbRecup)} setFbRecup={setFbRecup as any} fbProvince={String(fbProvince)} setFbProvince={setFbProvince as any}
         livraisons={livsFiltered} onClose={() => setFbClient(null)}
       />
 
@@ -145,7 +151,7 @@ export const Historique = () => {
           <Input type="date" label="Date" value={histDate} onChange={e => setHistDate(e.target.value)} />
           <Select label="Agent" value={histAgent} onChange={e => setHistAgent(e.target.value)} options={agentOptions} />
           {!isMobile && <Select label="Statut" value={histStatut} onChange={e => setHistStatut(e.target.value)} options={[{ value: 'tous', label: 'Tous' }, ...STATUT_OPTIONS]} />}
-          <Badge variant="info">{livsFiltered.length} résultat{livsFiltered.length > 1 ? 's' : ''}</Badge>
+          <Badge variant="primary">{livsFiltered.length} résultat{livsFiltered.length > 1 ? 's' : ''}</Badge>
         </div>
         {isMobile && (
           <div style={{ marginTop: 12 }}>
@@ -209,7 +215,7 @@ export const Historique = () => {
                 <Card key={a.id}>
                   <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{a.nom}</div>
                   <div style={{ fontSize: 12, color: 'var(--orange)', fontWeight: 600 }}>
-                    Frais : {formatAr(ls.reduce((s, l) => s + parseFloat(l.frais || 0), 0))}
+                    Frais : {formatAr(ls.reduce((s, l) => s + (Number(l.frais) || 0), 0))}
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--muted)' }}>{ls.length} livraison(s)</div>
                 </Card>
@@ -227,7 +233,7 @@ export const Historique = () => {
                 <div style={{ fontWeight: 800, color: 'var(--text)', fontSize: 15 }}>{cl.client}</div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <span style={{ color: 'var(--green)', fontWeight: 700, fontSize: 15 }}>{formatAr(cl.totalMontant)}</span>
-                  <Button variant="info" size="sm" onClick={() => { setFbClient(cl.client); setFbRecup(0); setFbProvince(0); }}>
+                  <Button variant="primary" size="sm" onClick={() => { setFbClient(cl.client); setFbRecup(0); setFbProvince(0); }}>
                     PDF
                   </Button>
                 </div>
@@ -240,30 +246,30 @@ export const Historique = () => {
                         <div key={k}>
                           <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>{lb}</label>
                           <input style={{ width: '100%', padding: '7px 10px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: 13, boxSizing: 'border-box', fontFamily: 'var(--font)' }}
-                            value={editData[k] || ''} onChange={e => setEditData({ ...editData, [k]: e.target.value })} />
+                            value={String((editData as Record<string, unknown>)[k] || '')} onChange={e => setEditData({ ...editData, [k]: e.target.value })} />
                         </div>
                       ))}
                       <div>
                         <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>Montant (Ar)</label>
                         <input type="number" style={{ width: '100%', padding: '7px 10px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: 13, boxSizing: 'border-box' }}
-                          value={editData.montant} onChange={e => setEditData({ ...editData, montant: e.target.value })} />
+                          value={String(editData.montant || '')} onChange={e => setEditData({ ...editData, montant: Number(e.target.value) })} />
                       </div>
                       <div>
                         <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>Frais (Ar)</label>
                         <input type="number" style={{ width: '100%', padding: '7px 10px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: 13, boxSizing: 'border-box' }}
-                          value={editData.frais} onChange={e => setEditData({ ...editData, frais: e.target.value })} />
+                          value={String(editData.frais || '')} onChange={e => setEditData({ ...editData, frais: Number(e.target.value) })} />
                       </div>
                       <div>
                         <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>Paiement</label>
                         <select style={{ width: '100%', padding: '7px 10px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: 13, boxSizing: 'border-box' }}
-                          value={editData.paiement} onChange={e => setEditData({ ...editData, paiement: e.target.value })}>
+                          value={String(editData.paiement || '')} onChange={e => setEditData({ ...editData, paiement: e.target.value })}>
                           {PAIE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
                       </div>
                       <div>
                         <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>Statut</label>
                         <select style={{ width: '100%', padding: '7px 10px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: 13, boxSizing: 'border-box' }}
-                          value={editData.statut} onChange={e => setEditData({ ...editData, statut: e.target.value })}>
+                          value={String(editData.statut || '')} onChange={e => setEditData({ ...editData, statut: e.target.value })}>
                           {STATUT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
                       </div>
@@ -273,7 +279,7 @@ export const Historique = () => {
                             {editData.statut === 'retourne' ? 'Motif du retour' : 'Motif du report'}
                           </label>
                           <textarea style={{ width: '100%', minHeight: 60, padding: '7px 10px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: 13, resize: 'vertical', fontFamily: 'var(--font)', boxSizing: 'border-box' }}
-                            value={editData.remarque || ''}
+                            value={String(editData.remarque || '')}
                             onChange={e => setEditData({ ...editData, remarque: e.target.value })}
                             placeholder={editData.statut === 'retourne' ? 'Ex: Destinataire absent, adresse incorrecte...' : 'Ex: Reporté au lendemain, client demande de revenir...'}
                           />
@@ -306,12 +312,12 @@ export const Historique = () => {
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
                         {l.paiement === 'client' ? (
-                          <Badge variant="info" size="sm">Payé client</Badge>
+                          <Badge variant="primary" size="sm">Payé client</Badge>
                         ) : (
-                          <span style={{ color: 'var(--green)', fontWeight: 700, fontSize: 12 }}>{formatAr(parseFloat(l.montant || 0))}</span>
+                          <span style={{ color: 'var(--green)', fontWeight: 700, fontSize: 12 }}>{formatAr(Number(l.montant) || 0)}</span>
                         )}
-                        {statusBadge(l.statut)}
-                        <Button variant="ghost" size="sm" onClick={() => { setEditId(l.id); setEditData(l); }}>Modifier</Button>
+                        {statusBadge(l.statut ?? "")}
+                        <Button variant="secondary" size="sm" onClick={() => { setEditId(l.id); setEditData(l); }}>Modifier</Button>
                         <Button variant="danger" size="sm" onClick={() => setConfirmDelete(l.id)}>Supprimer</Button>
                       </div>
                     </div>
@@ -326,10 +332,10 @@ export const Historique = () => {
             <span style={{ color: 'var(--subtle)', fontWeight: 700, fontSize: 13 }}>TOTAL DU JOUR</span>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               <span style={{ color: 'var(--green)', fontWeight: 700 }}>
-                {formatAr(livsFiltered.filter(l => l.paiement !== 'client').reduce((s, l) => s + parseFloat(l.montant || 0), 0))}
+                {formatAr(livsFiltered.filter(l => l.paiement !== 'client').reduce((s, l) => s + (Number(l.montant) || 0), 0))}
               </span>
               <span style={{ color: 'var(--orange)', fontWeight: 700 }}>
-                Frais : {formatAr(livsFiltered.reduce((s, l) => s + parseFloat(l.frais || 0), 0))}
+                Frais : {formatAr(livsFiltered.reduce((s, l) => s + (Number(l.frais) || 0), 0))}
               </span>
             </div>
           </Card>

@@ -1,53 +1,41 @@
-// @ts-nocheck
 // ui/Button.tsx — Bouton professionnel réutilisable
 import React from 'react';
 
-const variants = {
-  primary: {
-    background: 'var(--accent)',
-    color: '#fff',
-    border: '1px solid transparent',
-    boxShadow: '0 1px 3px rgba(37,99,235,0.2)',
-  },
-  success: {
-    background: 'var(--green)',
-    color: '#fff',
-    border: '1px solid transparent',
-  },
-  danger: {
-    background: 'var(--red)',
-    color: '#fff',
-    border: '1px solid transparent',
-  },
-  warning: {
-    background: 'var(--orange)',
-    color: '#fff',
-    border: '1px solid transparent',
-  },
-  secondary: {
-    background: 'var(--card)',
-    color: 'var(--text)',
-    border: '1px solid var(--border2)',
-  },
-  ghost: {
-    background: 'transparent',
-    color: 'var(--text2)',
-    border: '1px solid transparent',
-  },
-  outline: {
-    background: 'transparent',
-    color: 'var(--accent)',
-    border: '1px solid var(--accent)',
-  },
+type ButtonVariant = 'primary' | 'success' | 'danger' | 'warning' | 'secondary' | 'ghost' | 'outline';
+type ButtonSize = 'sm' | 'md' | 'lg';
+
+const variants: Record<ButtonVariant, React.CSSProperties> = {
+  primary:   { background: 'var(--accent)', color: '#fff', border: '1px solid transparent', boxShadow: '0 1px 3px rgba(37,99,235,0.2)' },
+  success:   { background: 'var(--green)', color: '#fff', border: '1px solid transparent' },
+  danger:    { background: 'var(--red)', color: '#fff', border: '1px solid transparent' },
+  warning:   { background: 'var(--orange)', color: '#fff', border: '1px solid transparent' },
+  secondary: { background: 'var(--card)', color: 'var(--text)', border: '1px solid var(--border2)' },
+  ghost:     { background: 'transparent', color: 'var(--text2)', border: '1px solid transparent' },
+  outline:   { background: 'transparent', color: 'var(--accent)', border: '1px solid var(--accent)' },
 };
 
-const sizes = {
+const sizes: Record<ButtonSize, { padding: string; fontSize: number; borderRadius: number }> = {
   sm: { padding: '6px 12px', fontSize: 12, borderRadius: 6 },
   md: { padding: '9px 16px', fontSize: 13, borderRadius: 8 },
   lg: { padding: '12px 22px', fontSize: 14, borderRadius: 10 },
 };
 
-export const Button = ({
+interface ButtonProps {
+  children: React.ReactNode;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  disabled?: boolean;
+  loading?: boolean;
+  icon?: React.ReactNode;
+  iconRight?: React.ReactNode;
+  fullWidth?: boolean;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  type?: 'button' | 'submit' | 'reset';
+  style?: React.CSSProperties;
+  className?: string;
+}
+
+export const Button: React.FC<ButtonProps> = ({
   children,
   variant = 'primary',
   size = 'md',
@@ -60,10 +48,9 @@ export const Button = ({
   type = 'button',
   style = {},
   className,
-  ...props
 }) => {
-  const v = variants[variant] || variants.primary;
-  const s = sizes[size] || sizes.md;
+  const v = variants[variant];
+  const s = sizes[size];
 
   return (
     <button
@@ -86,7 +73,6 @@ export const Button = ({
         width: fullWidth ? '100%' : 'auto',
         ...style,
       }}
-      {...props}
     >
       {loading ? (
         <span style={{

@@ -1,8 +1,13 @@
-// @ts-nocheck
 // ui/Table.tsx — Tableau professionnel
 import React from 'react';
 
-export const Table = ({ children, style = {}, className }) => (
+interface TableProps {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+  className?: string;
+}
+
+export const Table: React.FC<TableProps> = ({ children, style = {}, className }) => (
   <div className={className} style={{ overflowX: 'auto', borderRadius: 12, border: '1px solid var(--border)', ...style }}>
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       {children}
@@ -10,7 +15,11 @@ export const Table = ({ children, style = {}, className }) => (
   </div>
 );
 
-export const TableHead = ({ children }) => (
+interface TableHeadProps {
+  children: React.ReactNode;
+}
+
+export const TableHead: React.FC<TableHeadProps> = ({ children }) => (
   <thead>
     <tr style={{ background: 'var(--bg)', fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
       {children}
@@ -18,7 +27,14 @@ export const TableHead = ({ children }) => (
   </thead>
 );
 
-export const TableHeader = ({ children, align = 'left', style = {}, className }) => (
+interface TableHeaderProps {
+  children: React.ReactNode;
+  align?: React.CSSProperties['textAlign'];
+  style?: React.CSSProperties;
+  className?: string;
+}
+
+export const TableHeader: React.FC<TableHeaderProps> = ({ children, align = 'left', style = {}, className }) => (
   <th className={className} style={{
     padding: '10px 14px',
     textAlign: align,
@@ -30,15 +46,31 @@ export const TableHeader = ({ children, align = 'left', style = {}, className })
   </th>
 );
 
-export const TableBody = ({ children }) => <tbody>{children}</tbody>;
+interface TableBodyProps {
+  children: React.ReactNode;
+}
 
-export const TableRow = ({ children, style = {} }) => (
+export const TableBody: React.FC<TableBodyProps> = ({ children }) => <tbody>{children}</tbody>;
+
+interface TableRowProps {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+}
+
+export const TableRow: React.FC<TableRowProps> = ({ children, style = {} }) => (
   <tr style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.1s ease', ...style }}>
     {children}
   </tr>
 );
 
-export const TableCell = ({ children, align = 'left', style = {}, className }) => (
+interface TableCellProps {
+  children: React.ReactNode;
+  align?: React.CSSProperties['textAlign'];
+  style?: React.CSSProperties;
+  className?: string;
+}
+
+export const TableCell: React.FC<TableCellProps> = ({ children, align = 'left', style = {}, className }) => (
   <td className={className} style={{
     padding: '10px 14px',
     textAlign: align,
@@ -49,7 +81,12 @@ export const TableCell = ({ children, align = 'left', style = {}, className }) =
   </td>
 );
 
-export const TableEmpty = ({ colSpan = 6, message = 'Aucune donnée' }) => (
+interface TableEmptyProps {
+  colSpan?: number;
+  message?: string;
+}
+
+export const TableEmpty: React.FC<TableEmptyProps> = ({ colSpan = 6, message = 'Aucune donnée' }) => (
   <tr>
     <td colSpan={colSpan} style={{ padding: 40, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>
       {message}
@@ -57,7 +94,11 @@ export const TableEmpty = ({ colSpan = 6, message = 'Aucune donnée' }) => (
   </tr>
 );
 
-export const TableFooter = ({ children }) => (
+interface TableFooterProps {
+  children: React.ReactNode;
+}
+
+export const TableFooter: React.FC<TableFooterProps> = ({ children }) => (
   <tfoot>
     <tr style={{ background: 'var(--bg)', borderTop: '2px solid var(--border2)' }}>
       {children}
