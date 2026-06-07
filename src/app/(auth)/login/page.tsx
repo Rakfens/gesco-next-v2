@@ -99,10 +99,10 @@ export default function LoginPage() {
         console.log('[LOGIN] first company:', JSON.stringify(first));
         const dest = first?.type === 'service' ? '/livraison/dashboard' : '/commerce/dashboard';
         console.log('[LOGIN] Redirecting to', dest);
-        setTimeout(() => { window.location.href = dest; }, 500);
+        window.location.replace(dest);
       } else {
         console.log('[LOGIN] No userId, redirecting to /commerce/dashboard');
-        setTimeout(() => { window.location.href = '/commerce/dashboard'; }, 500);
+        window.location.replace('/commerce/dashboard');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Identifiants incorrects";
