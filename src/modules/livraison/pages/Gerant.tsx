@@ -1,5 +1,6 @@
 // Gerant.tsx — Design system professionnel
 import { useState, useMemo, useEffect } from 'react';
+import { useIsMobile } from '@/modules/shared/hooks/useIsMobile';
 import { COMMISSION_DEFAUT, CURRENT_MONTH, monthLabel, shouldCountGerantCommission, EXCLUDED_CLIENTS } from '@/modules/shared/utils/constants';
 import { useApp } from '@/modules/shared/context/AppContext';
 import { Button, Input, Select, Badge, type BadgeVariant, Card, Modal, ModalHeader, ModalBody, ModalFooter, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty } from '@/modules/shared/components/ui';
@@ -23,19 +24,13 @@ export default function Gerant() {
   const { livraisons, showToast } = useApp();
   const commissionGerant = COMMISSION_DEFAUT;
 
-  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
+  const isMobile = useIsMobile();
   const [editCommission, setEditCommission] = useState<boolean>(false);
   const [tmpCommission, setTmpCommission] = useState<number>(commissionGerant);
   const [gerantTab, setGerantTab] = useState<string>('jour');
   const [gerantDate, setGerantDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [gerantMonth, setGerantMonth] = useState<string>(CURRENT_MONTH());
   const [localCommission, setLocalCommission] = useState<number>(commissionGerant);
-
-  useEffect(() => {
-    const fn = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
-  }, []);
 
   useEffect(() => {
     setLocalCommission(commissionGerant);

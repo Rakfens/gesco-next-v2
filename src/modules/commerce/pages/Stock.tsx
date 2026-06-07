@@ -1,6 +1,7 @@
 // Stock.tsx — Refactorisé avec design system centralisé
 import { useState, useEffect, useMemo } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
+import { useIsMobile } from '@/modules/shared/hooks/useIsMobile';
 import { useApp } from '@/modules/shared/context/AppContext';
 import { fetchProduits, createProduit, updateProduit, deleteProduit, fetchCategories, updateStock } from '../services/produitService';
 import { fetchMouvementsProduit as fetchMouvementsStock } from '../services/stockService';
@@ -13,18 +14,6 @@ import {
   Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty,
   ConfirmDialog, StatCard, SkeletonTable,
 } from '@/modules/shared/components/ui';
-
-// ─── Hook useIsMobile ──────────────────────────────────────────────
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const fn = () => setIsMobile(window.innerWidth <= 768);
-    fn();
-    window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
-  }, []);
-  return isMobile;
-}
 
 // ─── Card produit (mobile) ─────────────────────────────────────────
 function ProduitCard({ p, onEdit, onMovement, onHistory, onDelete }: {

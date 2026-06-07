@@ -1,6 +1,7 @@
 // Achats.jsx — Refactored with design system UI components
 import { useState, useEffect } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
+import { useIsMobile } from '@/modules/shared/hooks/useIsMobile';
 import { Achat, Produit } from '@/modules/shared/types';
 import { useApp } from '@/modules/shared/context/AppContext';
 import { fetchProduits } from '../services/produitService';
@@ -26,7 +27,7 @@ export default function Achats() {
   const [panier, setPanier] = useState<Array<{ produit_id: string; nom: string; quantite: number; prix_unitaire: number; sous_total: number }>>([]);
   const [searchProduit, setSearchProduit] = useState<string>('');
   const [confirmDelete, setConfirmDelete] = useState<{ id: string } | null>(null);
-  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 768);
+  const isMobile = useIsMobile();
 
   // Fournisseurs connus pour autocomplete
   const [fournisseursConnus, setFournisseursConnus] = useState<string[]>([]);
@@ -44,12 +45,6 @@ export default function Achats() {
     montant_paye: 0,
     date_achat: new Date().toISOString().split('T')[0],
   });
-
-  useEffect(() => {
-    const fn = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
-  }, []);
 
   useEffect(() => { loadData(); }, [currentCompany]);
 

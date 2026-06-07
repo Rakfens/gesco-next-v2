@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
+import { useIsMobile } from '@/modules/shared/hooks/useIsMobile';
 import { STATUTS, PAIE_MODES, formatAr, TODAY } from '@/modules/shared/utils/constants';
 import { exportToCSV } from '@/modules/shared/utils/csvExport';
 import { printAgentList } from '@/modules/shared/utils/pdfExport';
@@ -31,14 +32,8 @@ interface ClientStat {
 export default function Historique() {
   const { livraisons, agents, showToast, updateLivraison: onUpdateLivraison, deleteLivraison: onDeleteLivraison } = useApp();
   const { currentCompany } = useCompany();
+  const isMobile = useIsMobile();
   const logoUrl = currentCompany?.logo_url ? String(currentCompany.logo_url) : null;
-  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
-
-  useEffect(() => {
-    const fn = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
-  }, []);
 
   const [histDate, setHistDate] = useState<string>(TODAY());
   const [histAgent, setHistAgent] = useState<string>('tous');

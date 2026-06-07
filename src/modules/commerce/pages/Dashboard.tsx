@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
+import { useIsMobile } from '@/modules/shared/hooks/useIsMobile';
 import type { Produit, Vente } from '@/modules/shared/types';
 import { fetchProduits, getAlertesStockBas, getValeurTotaleStock } from '../services/produitService';
 import { fetchVentes } from '../services/venteService';
@@ -16,7 +17,7 @@ const firstOfMonth = () => { const d = new Date(); d.setDate(1); return d.toISOS
 
 export default function CommerceDashboard() {
   const { currentCompany } = useCompany();
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [recentVentes, setRecentVentes] = useState<Vente[]>([]);
   const [alertes, setAlertes] = useState<Produit[]>([]);
@@ -25,13 +26,6 @@ export default function CommerceDashboard() {
     nbProduits: 0, stockBas: 0, valeurStock: 0, achatsMois: 0,
     depensesJour: 0, depensesMois: 0,
   });
-
-  useEffect(() => {
-    const fn = () => setIsMobile(window.innerWidth < 768);
-    fn();
-    window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
-  }, []);
 
   const load = async () => {
     if (!currentCompany) return;

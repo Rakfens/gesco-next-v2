@@ -1,5 +1,6 @@
 import { useCompany } from '@/modules/shared/context/CompanyContext';
 import { useState, useMemo, useEffect } from 'react';
+import { useIsMobile } from '@/modules/shared/hooks/useIsMobile';
 import { formatAr, currentMonth, monthLabel, shouldCountGerantCommission } from '@/modules/shared/utils/constants';
 import { getRecuperationsByMonth } from '../services/recuperationService';
 import type { Recuperation, Avance, Livraison, Agent } from '@/modules/shared/types';
@@ -34,13 +35,7 @@ export default function Recap() {
   const { livraisons, avances, agents, showToast, addAvance: onAddAvance, deleteAvance: onDeleteAvance } = useApp();
   const { currentCompany } = useCompany();
   const commissionGerant = COMMISSION_DEFAUT;
-  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
-
-  useEffect(() => {
-    const fn = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
-  }, []);
+  const isMobile = useIsMobile();
 
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth());
   const [avanceAgentId, setAvanceAgentId] = useState<string>('');

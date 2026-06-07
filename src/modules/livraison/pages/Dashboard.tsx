@@ -1,5 +1,6 @@
 // ServiceDashboard.tsx — Professional Design
 import { useState, useEffect } from 'react';
+import { useIsMobile } from '@/modules/shared/hooks/useIsMobile';
 import { CardSkeleton } from '@/modules/shared/components/common/Loader';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
 import { formatAr, TODAY, currentMonth, monthLabel, shouldCountGerantCommission, EXCLUDED_CLIENTS } from '@/modules/shared/utils/constants';
@@ -35,7 +36,7 @@ export default function Dashboard() {
   const { agents, livraisons } = useApp();
   const { currentCompany } = useCompany();
   const commissionGerant = COMMISSION_DEFAUT;
-  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 768);
+  const isMobile = useIsMobile();
   const [selectedDate, setSelectedDate] = useState<string>(TODAY());
   const [recuperationsJour, setRecuperationsJour] = useState<Recuperation[]>([]);
   const [loadingRecup, setLoadingRecup] = useState<boolean>(false);
@@ -45,12 +46,6 @@ export default function Dashboard() {
   const livsGerant = todayLivs.filter(l => shouldCountGerantCommission(l));
   const gerantGain = livsGerant.length * commissionGerant;
   const excludedToday = todayLivs.filter(l => EXCLUDED_CLIENTS.includes(l.client_donneur?.toUpperCase() || '') && (Number(l.frais) || 0) > 0);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     const loadRecuperations = async () => {

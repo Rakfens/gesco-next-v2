@@ -1,6 +1,7 @@
 // src/modules/livraison/components/LivraisonForm.jsx — Design system professionnel
 import { useState, useEffect } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
+import { useIsMobile } from '@/modules/shared/hooks/useIsMobile';
 import { STATUTS, PAIE_MODES, TODAY } from '@/modules/shared/utils/constants';
 import { Button, Input, Select, Card } from '@/modules/shared/components/ui';
 
@@ -54,13 +55,7 @@ interface FormState {
 
 export const LivraisonForm = ({ agents, onAddLivraison, showToast, suggestions }: LivraisonFormProps) => {
   const { currentCompany } = useCompany();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const fn = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
-  }, []);
+  const isMobile = useIsMobile();
 
   const [form, setForm] = useState<FormState>({
     colis: '',

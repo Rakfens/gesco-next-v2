@@ -1,5 +1,6 @@
 // Agents.tsx — Design system professionnel
 import { useState, useEffect, useCallback } from 'react';
+import { useIsMobile } from '@/modules/shared/hooks/useIsMobile';
 import { formatAr, currentMonth, monthLabel } from '@/modules/shared/utils/constants';
 import { getRecuperationsByLivreurNom, getTotalRecuperationsByLivreurNom } from '../services/recuperationService';
 import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalBody, ModalFooter, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty } from '@/modules/shared/components/ui';
@@ -19,13 +20,7 @@ interface RecupCumul {
 
 export default function Agents() {
   const { agents, addAgent: onAddAgent, updateAgent: onUpdateAgent, deleteAgent: onDeleteAgent, showToast } = useApp();
-  const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
-
-  useEffect(() => {
-    const fn = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
-  }, []);
+  const isMobile = useIsMobile();
 
   const [newNom, setNewNom] = useState<string>('');
   const [newSalaire, setNewSalaire] = useState<string>('');

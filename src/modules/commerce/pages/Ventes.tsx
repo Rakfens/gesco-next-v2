@@ -1,6 +1,7 @@
 // Ventes.tsx — Refactorisé avec design system centralisé
 import { useState, useEffect, useMemo } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
+import { useIsMobile } from '@/modules/shared/hooks/useIsMobile';
 import { useApp } from '@/modules/shared/context/AppContext';
 import { Produit, Vente } from '@/modules/shared/types';
 import { fetchProduits } from '../services/produitService';
@@ -42,18 +43,6 @@ const PAIEMENT_OPTIONS = [
   { value: 'mobile_money', label: 'Mobile Money' },
   { value: 'carte', label: 'Carte' },
 ];
-
-// ─── Hook useIsMobile (pas de flicker) ──────────────────────────────
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const fn = () => setIsMobile(window.innerWidth <= 768);
-    fn(); // set initial value after mount
-    window.addEventListener('resize', fn);
-    return () => window.removeEventListener('resize', fn);
-  }, []);
-  return isMobile;
-}
 
 // ─── Composant principal ────────────────────────────────────────────
 export default function Ventes() {
