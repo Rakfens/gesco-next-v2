@@ -10,3 +10,5 @@ export { ConfirmDialog } from './ConfirmDialog';
 export { StatusBadge } from './StatusBadge';
 export { StatCard } from './StatCard';
 export { Skeleton, SkeletonCard, SkeletonGrid, SkeletonTable } from './Skeleton';
+export { NavIcons, MoonIcon, SunIcon, LogoutIcon, ChevronDownIcon, MenuIcon, LockIcon, CheckIcon } from './Icons';
+export type { NavIconKey } from './Icons';
