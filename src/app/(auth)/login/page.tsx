@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { getSupabase } from '@/lib/supabase';
 import { LOGIN_EMAIL, LOGIN_PASSWORD } from '@/modules/shared/utils/constants';
 
@@ -32,8 +32,6 @@ const LockIcon = () => (
 
 export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '';
   const [email, setEmail] = useState(LOGIN_EMAIL);
   const [password, setPassword] = useState(LOGIN_PASSWORD);
   const [error, setError] = useState("");
@@ -58,9 +56,9 @@ export default function LoginPage() {
         const list: Array<{ type?: string }> = (uc || []).map((r: { company: { type?: string }[] | { type?: string } }) => Array.isArray(r.company) ? r.company[0] : r.company).filter(Boolean) as Array<{ type?: string }>;
         const first = list[0];
         if (first?.type === 'service') {
-          router.replace(redirectTo || "/livraison/dashboard");
+          router.replace("/livraison/dashboard");
         } else {
-          router.replace(redirectTo || "/commerce/dashboard");
+          router.replace("/commerce/dashboard");
         }
       }
     });
@@ -88,12 +86,12 @@ export default function LoginPage() {
         const list: Array<{ type?: string }> = (uc || []).map((r: { company: { type?: string }[] | { type?: string } }) => Array.isArray(r.company) ? r.company[0] : r.company).filter(Boolean) as Array<{ type?: string }>;
         const first = list[0];
         if (first?.type === 'service') {
-          router.replace(redirectTo || "/livraison/dashboard");
+          router.replace("/livraison/dashboard");
         } else {
-          router.replace(redirectTo || "/commerce/dashboard");
+          router.replace("/commerce/dashboard");
         }
       } else {
-        router.replace(redirectTo || "/commerce/dashboard");
+        router.replace("/commerce/dashboard");
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Identifiants incorrects");
