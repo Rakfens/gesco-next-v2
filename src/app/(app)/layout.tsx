@@ -20,23 +20,8 @@ export const dynamic = 'force-dynamic';
 
 // ─── Main Layout ────────────────────────────────────────────────
 function LayoutContent({ children }: { children: ReactNode }) {
-  const [mounted, setMounted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Avoid hydration mismatch: don't render until mounted
-  if (!mounted) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f8fafc' }}>
-        <div style={{ fontSize: 14, color: '#64748b' }}>Chargement...</div>
-      </div>
-    );
-  }
-
   const { currentCompany, companies, switchCompany } = useCompany();
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
@@ -58,6 +43,17 @@ function LayoutContent({ children }: { children: ReactNode }) {
   const logoSrc = getLogoSrc(currentCompany);
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+
+  // Avoid hydration mismatch: don't render full layout until mounted
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f8fafc' }}>
+        <div style={{ fontSize: 14, color: '#64748b' }}>Chargement...</div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: 'var(--bg)', fontFamily: 'var(--font)' }}>
