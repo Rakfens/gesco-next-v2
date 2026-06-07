@@ -18,18 +18,6 @@ const agentMatch = (livraison: Livraison, agent: Agent): boolean => {
   return livraison.agent_nom === agent.nom;
 };
 
-const statusBadge = (statut: string) => {
-  const map: Record<string, string> = {
-    livre: 'success', en_cours: 'warning', retourne: 'danger',
-    reporte: 'purple', livre_partiel: 'warning',
-  };
-  const labels: Record<string, string> = {
-    livre: 'Livré', en_cours: 'En cours', retourne: 'Retourné',
-    reporte: 'Reporté', livre_partiel: 'Partiel',
-  };
-  return <Badge variant={(map[statut] || 'default') as any} size="sm">{labels[statut] || statut}</Badge>;
-};
-
 const STATUT_OPTIONS = Object.entries(STATUTS).map(([k, v]) => ({ value: k, label: v.label }));
 const PAIE_OPTIONS = Object.entries(PAIE_MODES).map(([k, v]) => ({ value: k, label: v.label }));
 
@@ -316,7 +304,12 @@ export default function Historique() {
                         ) : (
                           <span style={{ color: 'var(--green)', fontWeight: 700, fontSize: 12 }}>{formatAr(Number(l.montant) || 0)}</span>
                         )}
-                        {statusBadge(l.statut ?? "")}
+                        <Badge
+                          variant={l.statut === 'livre' ? 'success' : l.statut === 'retourne' ? 'danger' : l.statut === 'reporte' ? 'purple' : 'warning'}
+                          size="sm"
+                        >
+                          {l.statut === 'livre' ? 'Livré' : l.statut === 'en_cours' ? 'En cours' : l.statut === 'retourne' ? 'Retourné' : l.statut === 'reporte' ? 'Reporté' : l.statut === 'livre_partiel' ? 'Partiel' : l.statut}
+                        </Badge>
                         <Button variant="secondary" size="sm" onClick={() => { setEditId(l.id); setEditData(l); }}>Modifier</Button>
                         <Button variant="danger" size="sm" onClick={() => setConfirmDelete(l.id)}>Supprimer</Button>
                       </div>
