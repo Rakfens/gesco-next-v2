@@ -63,7 +63,7 @@ function LayoutContent({ children }: { children: ReactNode }) {
           ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)')
           : 'none',
         transition: 'transform 0.2s',
-      }}>
+      }} className={isMobile && !sidebarOpen ? 'sidebar-mobile-hide' : ''}>
         {/* Sidebar header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
