@@ -72,36 +72,23 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      console.log('[LOGIN] Attempting login for:', email);
       const sb = getSupabase();
-      console.log('[LOGIN] Supabase client created');
       const { error: authError } = await sb.auth.signInWithPassword({ email, password });
-      if (authError) {
-        console.error('[LOGIN] Auth error:', authError.message);
-        throw authError;
-      }
-      console.log('[LOGIN] Auth success, fetching session...');
+      if (authError) throw authError;
 
       const { data: sessionData } = await sb.auth.getSession();
       const userId = sessionData.session?.user.id;
-      console.log('[LOGIN] Session userId:', userId);
 
       if (userId) {
-        console.log('[LOGIN] Fetching user_companies...');
-        const { data: uc, error: ucErr } = await sb
+        const { data: uc } = await sb
           .from('user_companies')
           .select('company:companies(*)')
           .eq('user_id', userId);
-        if (ucErr) console.error('[LOGIN] user_companies error:', ucErr.message);
-        console.log('[LOGIN] user_companies result:', JSON.stringify(uc));
         const list: Array<{ type?: string }> = (uc || []).map((r: { company: { type?: string }[] | { type?: string } }) => Array.isArray(r.company) ? r.company[0] : r.company).filter(Boolean) as Array<{ type?: string }>;
         const first = list[0];
-        console.log('[LOGIN] first company:', JSON.stringify(first));
         const dest = first?.type === 'service' ? '/livraison/dashboard' : '/commerce/dashboard';
-        console.log('[LOGIN] Redirecting to', dest);
         window.location.replace(dest);
       } else {
-        console.log('[LOGIN] No userId, redirecting to /commerce/dashboard');
         window.location.replace('/commerce/dashboard');
       }
     } catch (err: unknown) {

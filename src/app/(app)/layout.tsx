@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, ReactNode } from 'react';
+import { useState, useCallback, useEffect, ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { getSupabase } from '@/lib/supabase';
@@ -20,8 +20,23 @@ export const dynamic = 'force-dynamic';
 
 // ─── Main Layout ────────────────────────────────────────────────
 function LayoutContent({ children }: { children: ReactNode }) {
+  const [mounted, setMounted] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Avoid hydration mismatch: don't render until mounted
+  if (!mounted) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f8fafc' }}>
+        <div style={{ fontSize: 14, color: '#64748b' }}>Chargement...</div>
+      </div>
+    );
+  }
+
   const { currentCompany, companies, switchCompany } = useCompany();
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
