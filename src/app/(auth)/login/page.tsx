@@ -99,14 +99,14 @@ export default function LoginPage() {
         console.log('[LOGIN] first company:', JSON.stringify(first));
         if (first?.type === 'service') {
           console.log('[LOGIN] Redirecting to /livraison/dashboard');
-          router.replace("/livraison/dashboard");
+          window.location.href = "/livraison/dashboard";
         } else {
           console.log('[LOGIN] Redirecting to /commerce/dashboard');
-          router.replace("/commerce/dashboard");
+          window.location.href = "/commerce/dashboard";
         }
       } else {
         console.log('[LOGIN] No userId, redirecting to /commerce/dashboard');
-        router.replace("/commerce/dashboard");
+        window.location.href = "/commerce/dashboard";
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Identifiants incorrects";
