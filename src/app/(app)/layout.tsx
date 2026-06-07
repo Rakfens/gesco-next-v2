@@ -45,17 +45,6 @@ function LayoutContent({ children }: { children: ReactNode }) {
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
-  // Avoid hydration mismatch: don't render full layout until mounted
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-  if (!mounted) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f8fafc' }}>
-        <div style={{ fontSize: 14, color: '#64748b' }}>Chargement...</div>
-      </div>
-    );
-  }
-
   return (
     <div style={{ display: 'flex', height: '100vh', background: 'var(--bg)', fontFamily: 'var(--font)' }}>
       {/* Mobile overlay */}
@@ -66,12 +55,15 @@ function LayoutContent({ children }: { children: ReactNode }) {
 
       {/* Sidebar */}
       <aside style={{
-        position: 'fixed', inset: '0 auto 0 0', zIndex: 40,
+        position: isMobile ? 'fixed' : 'static',
+        ...(isMobile ? { inset: '0 auto 0 0', zIndex: 40 } : {}),
         display: 'flex', flexDirection: 'column', width: 256,
         background: 'var(--card)', borderRight: '1px solid var(--border)',
-        transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transform: isMobile
+          ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)')
+          : 'none',
         transition: 'transform 0.2s',
-      }} className="lg:static lg:translate-x-0">
+      }}>
         {/* Sidebar header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
