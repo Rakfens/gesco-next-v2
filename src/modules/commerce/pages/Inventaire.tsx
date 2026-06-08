@@ -154,7 +154,7 @@ export default function Inventaire() {
       <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)' }} data-testid="page-title">Inventaire</h1>
       <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4 }}>{currentCompany?.name} · Comptez votre stock physique</p>
       </div>
-      {!currentInventory && <Button onClick={handleStartInventory} disabled={saving}>Demarrer inventaire</Button>} {/* Désactiver le bouton pendant une action */}
+      {!currentInventory && <Button onClick={handleStartInventory} disabled={saving}>Demarrer inventaire</Button>}
       </div>
 
       {/* Count Modal */}
@@ -205,7 +205,7 @@ export default function Inventaire() {
       <ModalHeader title={"Details - Inventaire du " + (selectedInventory?.date_debut ? new Date(selectedInventory.date_debut ?? '').toLocaleDateString() : '')} onClose={() => setShowDetailsModal(false)} />
       <ModalBody>
       {detailsLoading ? (
-        <div style={{ textAlign: 'center', padding: 40 }}>Chargement des détails...</div> {/* Message de chargement spécifique */}
+        <div style={{ textAlign: 'center', padding: 40 }}>Chargement des détails...</div>
       ) : !inventoryDetails ? (
         <div style={{ textAlign: 'center', padding: 40, color: 'var(--muted)' }}>Aucun detail disponible</div>
       ) : (
