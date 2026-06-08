@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useIsMobile } from '@/modules/shared/hooks/useIsMobile';
 import { formatAr, currentMonth, monthLabel } from '@/modules/shared/utils/constants';
 import { getRecuperationsByLivreurNom, getTotalRecuperationsByLivreurNom } from '../services/recuperationService';
-import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalBody, ModalFooter, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty } from '@/modules/shared/components/ui';
+import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalBody, ModalFooter } from '@/modules/shared/components/ui';
 import type { Recuperation, Agent } from '@/modules/shared/types';
 import { useApp } from '@/modules/shared/context/AppContext';
 
@@ -92,7 +92,7 @@ export default function Agents() {
       <Modal open={!!confirmDel} onClose={() => setConfirmDel(null)}>
         <ModalHeader title="Supprimer l'agent ?" onClose={() => setConfirmDel(null)} />
         <ModalBody>
-          <p style={{ fontSize: 13, color: 'var(--text2)' }}>
+          <p className="page-header-subtitle">
             {confirmDel?.name} et toutes ses données seront supprimés définitivement.
           </p>
         </ModalBody>
@@ -103,12 +103,12 @@ export default function Agents() {
       </Modal>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+      <div className="page-header">
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em' }}>Agents</h1>
-          <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4 }}>{agents.length} agent(s) enregistré(s)</p>
+          <h1 className="page-header-title">Agents</h1>
+          <p className="page-header-subtitle">{agents.length} agent(s) enregistré(s)</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="flex items-center gap-8">
           <Select
             value={month}
             onChange={e => setMonth(e.target.value)}
@@ -126,7 +126,7 @@ export default function Agents() {
         <CardHeader>
           <CardTitle>Ajouter un agent</CardTitle>
         </CardHeader>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 14 }}>
+        <div className={isMobile ? '' : 'agent-form-grid'}>
           <Input
             placeholder="Nom complet"
             value={newNom}
@@ -145,13 +145,13 @@ export default function Agents() {
       </Card>
 
       {loading && (
-        <div style={{ textAlign: 'center', color: 'var(--muted)', padding: 20, fontSize: 13 }}>
+        <div className="loading-text">
           Chargement des récupérations...
         </div>
       )}
 
       {/* Liste des agents */}
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
+      <div className="section-label">
         Liste des agents ({agents.length})
       </div>
 
@@ -162,7 +162,7 @@ export default function Agents() {
           <Card key={a.id} style={{ marginBottom: 10 }} data-testid={`agent-card-${a.id}`}>
             {editId === a.id ? (
               <div>
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10, marginBottom: 12 }}>
+                <div className={isMobile ? '' : 'agent-edit-grid'}>
                   <Input
                     value={editData.nom}
                     onChange={e => setEditData({ ...editData, nom: e.target.value })}
@@ -173,7 +173,7 @@ export default function Agents() {
                     onChange={e => setEditData({ ...editData, salaire: e.target.value })}
                   />
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div className="flex gap-8 mt-12">
                   <Button variant="success" onClick={handleUpdate} style={{ flex: 1 }}>Sauver</Button>
                   <Button variant="secondary" onClick={() => setEditId(null)}>Annuler</Button>
                 </div>
@@ -181,20 +181,15 @@ export default function Agents() {
             ) : (
               <div>
                 {/* Ligne principale */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                  <div style={{
-                    width: 44, height: 44, borderRadius: '50%',
-                    background: 'linear-gradient(135deg, var(--accent), #6366f1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontWeight: 800, fontSize: 18, color: '#fff', flexShrink: 0,
-                  }}>
+                <div className="flex items-center gap-12 agent-row">
+                  <div className="avatar-circle">
                     {a.nom.charAt(0)}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text)', fontSize: 15 }}>{a.nom}</div>
-                    <div style={{ fontSize: 12, color: 'var(--green)', fontWeight: 600 }}>{formatAr(Number(a.salaire) || 0)} / mois</div>
+                  <div className="flex-1">
+                    <div className="agent-name">{a.nom}</div>
+                    <div className="agent-salary">{formatAr(Number(a.salaire) || 0)} / mois</div>
                   </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div className="flex gap-6">
                     <Button variant="ghost" size="sm" onClick={() => { setEditId(a.id); setEditData({ nom: a.nom, salaire: String(a.salaire ?? 0) }); }} data-testid={`btn-edit-${a.id}`}>
                       Modifier
                     </Button>
@@ -205,21 +200,21 @@ export default function Agents() {
                 </div>
 
                 {/* Récupérations du mois */}
-                <div style={{ background: 'var(--bg)', borderRadius: 10, padding: '10px 12px', marginBottom: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: rm.details?.length ? 8 : 0 }}>
-                    <span style={{ fontSize: 11, color: 'var(--yellow)', fontWeight: 700 }}>{monthLabel(month)}</span>
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <span style={{ fontSize: 12, color: 'var(--muted)' }}>{rm.count} récup.</span>
-                      <span style={{ fontSize: 13, color: 'var(--green)', fontWeight: 700 }}>{formatAr(rm.total)}</span>
+                <div className="info-panel">
+                  <div className="info-panel-header" style={{ marginBottom: rm.details?.length ? 8 : 0 }}>
+                    <span className="info-panel-label">{monthLabel(month)}</span>
+                    <div className="flex gap-12">
+                      <span className="info-panel-stats">{rm.count} récup.</span>
+                      <span className="info-panel-value">{formatAr(rm.total)}</span>
                     </div>
                   </div>
                   {rm.details?.length > 0 && (
-                    <div style={{ borderTop: '1px solid var(--border)', paddingTop: 6 }}>
+                    <div className="info-panel-details">
                       {rm.details.map((r, i) => (
-                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--muted)', padding: '3px 0' }}>
+                        <div key={i} className="info-panel-detail-row">
                           <span>{r.date}</span>
                           <span>{r.client_donneur}</span>
-                          <span style={{ color: 'var(--green)', fontWeight: 600 }}>{formatAr(r.frais_recuperation)}</span>
+                          <span className="info-panel-detail-value">{formatAr(r.frais_recuperation)}</span>
                         </div>
                       ))}
                     </div>
@@ -227,11 +222,11 @@ export default function Agents() {
                 </div>
 
                 {/* Cumul total */}
-                <div style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: 10, padding: '10px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 11, color: 'var(--yellow)', fontWeight: 700 }}>Cumul total</span>
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    <span style={{ fontSize: 12, color: 'var(--muted)' }}>{rc.count} récup.</span>
-                    <span style={{ fontSize: 14, color: 'var(--yellow)', fontWeight: 800 }}>{formatAr(rc.total)}</span>
+                <div className="cumul-panel">
+                  <span className="info-panel-label">Cumul total</span>
+                  <div className="flex gap-12">
+                    <span className="cumul-panel-stats">{rc.count} récup.</span>
+                    <span className="cumul-panel-value">{formatAr(rc.total)}</span>
                   </div>
                 </div>
               </div>
@@ -241,4 +236,4 @@ export default function Agents() {
       })}
     </div>
   );
-};
+}

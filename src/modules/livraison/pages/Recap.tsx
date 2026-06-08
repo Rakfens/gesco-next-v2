@@ -7,7 +7,8 @@ import type { Recuperation, Avance, Livraison, Agent } from '@/modules/shared/ty
 import { useApp } from '@/modules/shared/context/AppContext';
 import { COMMISSION_DEFAUT } from '@/modules/shared/utils/constants';
 import {
-  Button, Input, Select, Badge, Card, Modal, ModalHeader, ModalBody, ModalFooter,
+  Button, Input, Select, Badge, Card, CardHeader, CardTitle,
+  Modal, ModalHeader, ModalBody, ModalFooter, SectionHeader,
 } from '@/modules/shared/components/ui';
 
 const agentMatch = (livraison: Livraison, agent: Agent): boolean => {
@@ -134,80 +135,90 @@ export default function Recap() {
         </ModalFooter>
       </Modal>
 
-      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20,flexWrap:'wrap',gap:12}}>
-        <div>
-          <h1 style={{fontSize:22,fontWeight:800,color:'var(--text)',margin:0}}>Recapitulatif</h1>
-          <p style={{color:'var(--muted)',fontSize:13,marginTop:4}}>{currentCompany?.name}</p>
-        </div>
-        <Select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} options={monthOptions} style={{width:'auto'}} />
-      </div>
+      <SectionHeader
+        title="Recapitulatif"
+        subtitle={currentCompany?.name}
+        action={
+          <Select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} options={monthOptions} style={{ width: 'auto' }} />
+        }
+      />
 
-      <Card style={{marginBottom:12,borderColor:monthBenefice>=0?'var(--green)':'var(--red)'}}>
-        <div style={{display:'flex',justifyContent:'space-between',flexWrap:'wrap',gap:12,alignItems:'center'}}>
-          <div>
-            <div style={{fontSize:11,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',marginBottom:4}}>
+      <Card style={{ marginBottom: 12, borderColor: monthBenefice >= 0 ? 'var(--green)' : 'var(--red)' }}>
+        <CardHeader>
+          <CardTitle>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>
               Benefice net - {monthLabel(selectedMonth)}
-            </div>
-            <div style={{fontSize:30,fontWeight:900,color:monthBenefice>=0?'var(--green)':'var(--red)'}}>
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 30, fontWeight: 900, color: monthBenefice >= 0 ? 'var(--green)' : 'var(--red)' }}>
               {formatAr(monthBenefice)}
             </div>
-            <div style={{fontSize:11,color:'var(--muted)'}}>Frais - Salaires - Commission - Recuperations</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)' }}>Frais - Salaires - Commission - Recuperations</div>
           </div>
-          <div style={{fontSize:12,color:'var(--muted)',textAlign:'right'}}>
-            <div>Montant colis : <b style={{color:'var(--green)'}}>{formatAr(monthTotalMontant)}</b></div>
-            <div>Frais collectes : <b style={{color:'var(--orange)'}}>{formatAr(monthTotalFrais)}</b></div>
-            <div>Salaires agents : <b style={{color:'var(--red)'}}>{formatAr(monthTotalSalaires)}</b></div>
-            <div>Commission gerant : <b style={{color:'var(--pink)'}}>{formatAr(monthGerantGain)}</b></div>
-            <div>Recuperations : <b style={{color:'var(--yellow)'}}>{formatAr(monthTotalRecuperations)}</b></div>
+          <div style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'right' }}>
+            <div>Montant colis : <b style={{ color: 'var(--green)' }}>{formatAr(monthTotalMontant)}</b></div>
+            <div>Frais collectes : <b style={{ color: 'var(--orange)' }}>{formatAr(monthTotalFrais)}</b></div>
+            <div>Salaires agents : <b style={{ color: 'var(--red)' }}>{formatAr(monthTotalSalaires)}</b></div>
+            <div>Commission gerant : <b style={{ color: 'var(--pink)' }}>{formatAr(monthGerantGain)}</b></div>
+            <div>Recuperations : <b style={{ color: 'var(--yellow)' }}>{formatAr(monthTotalRecuperations)}</b></div>
             <div>{monthLivs.length} livraisons</div>
           </div>
         </div>
       </Card>
 
-      <Card style={{marginBottom:20,borderColor:'var(--purple)'}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:10}}>
-          <div>
-            <div style={{fontSize:11,color:'var(--purple)',fontWeight:700,marginBottom:4}}>
+      <Card style={{ marginBottom: 20, borderColor: 'var(--purple)' }}>
+        <CardHeader>
+          <CardTitle>
+            <span style={{ fontSize: 11, color: 'var(--purple)', fontWeight: 700 }}>
               Commission gerant - {monthLabel(selectedMonth)}
-            </div>
-            <div style={{fontSize:22,fontWeight:900,color:'var(--text)'}}>{formatAr(monthGerantGain)}</div>
-            <div style={{fontSize:11,color:'var(--muted)'}}>{livsGerant(monthLivs).length} livraisons x {formatAr(commissionGerant)}</div>
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)' }}>{formatAr(monthGerantGain)}</div>
+            <div style={{ fontSize: 11, color: 'var(--muted)' }}>{livsGerant(monthLivs).length} livraisons x {formatAr(commissionGerant)}</div>
           </div>
         </div>
       </Card>
 
-      <div style={{fontSize:11,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:10}}>
-        Agents - {monthLabel(selectedMonth)}
-      </div>
+      <SectionHeader
+        title={`Agents - ${monthLabel(selectedMonth)}`}
+        subtitle={`${monthStatsByAgent.length} agent(s)`}
+      />
+
       {monthStatsByAgent.map(a => (
-        <Card key={a.id} style={{marginBottom:10}}>
-          <div style={{display:'flex',justifyContent:'space-between',flexWrap:'wrap',gap:8,marginBottom:8}}>
-            <div style={{fontWeight:800,color:'var(--text)',fontSize:16}}>{a.nom}</div>
-            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+        <Card key={a.id} style={{ marginBottom: 10 }}>
+          <CardHeader>
+            <CardTitle>{a.nom}</CardTitle>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Badge variant="success" size="sm">Sal: {formatAr(a.salaire)}</Badge>
               {a.totalAvances > 0 && <Badge variant="warning" size="sm">Av: {formatAr(a.totalAvances)}</Badge>}
               <Badge variant={a.netSalaire >= 0 ? 'success' : 'danger'} size="sm">Net: {formatAr(a.netSalaire)}</Badge>
             </div>
-          </div>
-          <div style={{display:'flex',flexWrap:'wrap',gap:10,fontSize:12,color:'var(--muted)',marginBottom:10}}>
-            <span>Total : <b style={{color:'var(--text)'}}>{a.nbLivs}</b></span>
-            <span>Livres : <b style={{color:'var(--green)'}}>{a.nbLivres}</b></span>
-            <span>Retournes : <b style={{color:'var(--red)'}}>{a.nbRetours}</b></span>
-            <span>Reportes : <b style={{color:'var(--purple)'}}>{a.nbReportes}</b></span>
-            <span>Frais : <b style={{color:'var(--orange)'}}>{formatAr(a.totalFrais)}</b></span>
+          </CardHeader>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>
+            <span>Total : <b style={{ color: 'var(--text)' }}>{a.nbLivs}</b></span>
+            <span>Livres : <b style={{ color: 'var(--green)' }}>{a.nbLivres}</b></span>
+            <span>Retournes : <b style={{ color: 'var(--red)' }}>{a.nbRetours}</b></span>
+            <span>Reportes : <b style={{ color: 'var(--purple)' }}>{a.nbReportes}</b></span>
+            <span>Frais : <b style={{ color: 'var(--orange)' }}>{formatAr(a.totalFrais)}</b></span>
           </div>
           {a.avances.length > 0 && (
-            <div style={{marginTop:10,borderTop:'1px solid var(--border)',paddingTop:8}}>
-              <div style={{fontSize:10,fontWeight:700,color:'var(--pink)',marginBottom:6,textTransform:'uppercase'}}>
+            <div style={{ marginTop: 10, borderTop: '1px solid var(--border)', paddingTop: 8 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--pink)', marginBottom: 6, textTransform: 'uppercase' }}>
                 Avances sur salaire (deduites du salaire)
               </div>
               {a.avances.map(av => (
-                <div key={av.id} style={{background:'var(--bg)',borderRadius:7,padding:'8px 10px',marginBottom:4,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
-                  <div style={{flex:1}}>
-                    <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
-                      <span style={{color:'var(--orange)',fontWeight:700,fontSize:13}}>{formatAr(Number(av.montant) || 0)}</span>
-                      {av.motif && <span style={{fontSize:11,color:'var(--subtle)',background:'var(--border)',padding:'2px 10px',borderRadius:15}}>{av.motif}</span>}
-                      <span style={{fontSize:10,color:'var(--muted)'}}>{av.date}</span>
+                <div key={av.id} style={{ background: 'var(--bg)', borderRadius: 7, padding: '8px 10px', marginBottom: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                      <span style={{ color: 'var(--orange)', fontWeight: 700, fontSize: 13 }}>{formatAr(Number(av.montant) || 0)}</span>
+                      {av.motif && <span style={{ fontSize: 11, color: 'var(--subtle)', background: 'var(--border)', padding: '2px 10px', borderRadius: 15 }}>{av.motif}</span>}
+                      <span style={{ fontSize: 10, color: 'var(--muted)' }}>{av.date}</span>
                     </div>
                   </div>
                   <Button variant="danger" size="sm" onClick={() => setConfirmAvance(av.id)}>Supprimer</Button>
@@ -216,18 +227,18 @@ export default function Recap() {
             </div>
           )}
           {a.nbRecuperations > 0 && (
-            <div style={{marginTop:8,borderTop:'1px solid var(--border)',paddingTop:8}}>
-              <div style={{fontSize:10,fontWeight:700,color:'var(--yellow)',marginBottom:6,textTransform:'uppercase',display:'flex',alignItems:'center',gap:6}}>
+            <div style={{ marginTop: 8, borderTop: '1px solid var(--border)', paddingTop: 8 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--yellow)', marginBottom: 6, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
                 Recuperations matinales ({a.nbRecuperations})
-                <span style={{fontSize:11,color:'var(--green)',marginLeft:'auto'}}>{formatAr(a.totalRecuperations)}</span>
+                <span style={{ fontSize: 11, color: 'var(--green)', marginLeft: 'auto' }}>{formatAr(a.totalRecuperations)}</span>
               </div>
               {a.recuperations.map(rec => (
-                <div key={rec.id} style={{background:'var(--bg)',borderRadius:7,padding:'6px 10px',marginBottom:4,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:6}}>
+                <div key={rec.id} style={{ background: 'var(--bg)', borderRadius: 7, padding: '6px 10px', marginBottom: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
                   <div>
-                    <span style={{fontSize:11,color:'var(--yellow)'}}>{rec.client_donneur}</span>
-                    <span style={{fontSize:10,color:'var(--muted)',marginLeft:10}}>{rec.date}</span>
+                    <span style={{ fontSize: 11, color: 'var(--yellow)' }}>{rec.client_donneur}</span>
+                    <span style={{ fontSize: 10, color: 'var(--muted)', marginLeft: 10 }}>{rec.date}</span>
                   </div>
-                  <div><span style={{color:'var(--green)',fontWeight:600}}>{formatAr(rec.frais_recuperation)}</span></div>
+                  <div><span style={{ color: 'var(--green)', fontWeight: 600 }}>{formatAr(rec.frais_recuperation)}</span></div>
                 </div>
               ))}
             </div>
@@ -235,30 +246,28 @@ export default function Recap() {
         </Card>
       ))}
 
-      <div style={{fontSize:11,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:10,marginTop:20}}>
-        Ajouter une avance
+      <div style={{ marginTop: 20 }}>
+        <SectionHeader title="Ajouter une avance" />
       </div>
       <Card>
-        <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:10,marginBottom:10}}>
-          <Select label="Agent" value={avanceAgentId} onChange={e => setAvanceAgentId(e.target.value)} options={[{value:'',label:'-- Agent --'},...agentOptions]} />
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10, marginBottom: 10 }}>
+          <Select label="Agent" value={avanceAgentId} onChange={e => setAvanceAgentId(e.target.value)} options={[{ value: '', label: '-- Agent --' }, ...agentOptions]} />
           <Input type="number" label="Montant (Ar)" placeholder="50000" value={avanceMontant} onChange={e => setAvanceMontant(e.target.value)} />
         </div>
-        <div style={{marginBottom:12}}>
+        <div style={{ marginBottom: 12 }}>
           <Input label="Motif de l'avance" placeholder="Ex: Urgence familiale, Achat materiel, Soins medicaux..." value={avanceMotif} onChange={e => setAvanceMotif(e.target.value)} />
         </div>
         <Button variant="warning" fullWidth onClick={handleAddAvance}>Enregistrer l'avance</Button>
       </Card>
 
       {avances.filter(a => a.mois === selectedMonth && a.annule).length > 0 && (
-        <div style={{marginTop:16}}>
-          <div style={{fontSize:11,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.06em',marginBottom:8}}>
-            Avances annulees
-          </div>
+        <div style={{ marginTop: 16 }}>
+          <SectionHeader title="Avances annulees" />
           {avances.filter(a => a.mois === selectedMonth && a.annule).map(av => (
-            <div key={av.id} style={{background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,padding:'8px 14px',marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:6,opacity:0.6}}>
+            <div key={av.id} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 14px', marginBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6, opacity: 0.6 }}>
               <div>
-                <span style={{color:'var(--muted)',textDecoration:'line-through'}}>{av.agent_nom} - {formatAr(Number(av.montant) || 0)}</span>
-                {av.motif && <span style={{fontSize:11,color:'var(--muted)',marginLeft:8}}>({av.motif})</span>}
+                <span style={{ color: 'var(--muted)', textDecoration: 'line-through' }}>{av.agent_nom} - {formatAr(Number(av.montant) || 0)}</span>
+                {av.motif && <span style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 8 }}>({av.motif})</span>}
               </div>
               <Button variant="danger" size="sm" onClick={() => setConfirmAvance(av.id)}>Definitivement</Button>
             </div>
@@ -267,4 +276,4 @@ export default function Recap() {
       )}
     </div>
   );
-};
+}

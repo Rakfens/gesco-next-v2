@@ -1,4 +1,3 @@
-// Ventes.tsx — Refactorisé avec design system centralisé
 import { useState, useEffect, useMemo } from 'react';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
 import { useIsMobile } from '@/modules/shared/hooks/useIsMobile';
@@ -9,9 +8,9 @@ import { fetchVentes, fetchVenteWithDetails, createVente, updateVente, deleteVen
 import { printTicketVente } from '../services/impressionService';
 import { formatAr } from '@/modules/shared/utils/constants';
 import {
-  Button, Input, Select, Badge, Card, Modal, ModalHeader, ModalBody, ModalFooter,
-  Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty,
-  ConfirmDialog, StatusBadge, SkeletonTable,
+  Button, Input, Select, Badge, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalBody, ModalFooter,
+  Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty, TableFooter,
+  ConfirmDialog, StatusBadge, SkeletonTable, StatCard,
 } from '@/modules/shared/components/ui';
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -237,7 +236,7 @@ export default function Ventes() {
       />
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+      <CardHeader>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)' }}>Ventes</h1>
           <p style={{ color: 'var(--muted)', fontSize: 12, marginTop: 3 }}>
@@ -247,26 +246,37 @@ export default function Ventes() {
         <Button variant="success" onClick={() => { resetForm(); setShowModal(true); }}>
           + Nouvelle vente
         </Button>
-      </div>
+      </CardHeader>
+
+      {/* Summary cards */}
+      {!isMobile && ventes.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
+          <StatCard title="Total général" value={formatAr(totalGeneral)} color="green" />
+          <StatCard title="Total payé" value={formatAr(totalPaye)} color="blue" />
+          <StatCard title="Solde restant" value={formatAr(totalSolde)} color="orange" />
+        </div>
+      )}
 
       {/* Liste — Mobile cards / Desktop table */}
       {isMobile ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {ventes.length === 0 ? (
-            <div style={{ textAlign: 'center', color: 'var(--muted)', padding: 48 }}>Aucune vente</div>
+            <Card padding={48}>
+              <div style={{ textAlign: 'center', color: 'var(--muted)' }}>Aucune vente</div>
+            </Card>
           ) : ventes.map(v => {
             const solde = v.reste_a_payer || 0;
             return (
               <Card key={v.id} padding={16}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                <CardHeader>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{v.numero_facture}</div>
+                    <CardTitle>{v.numero_facture}</CardTitle>
                     <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
                       {v.client_nom || '—'} · {new Date(v.date_vente ?? '').toLocaleDateString('fr-FR')}
                     </div>
                   </div>
                   <StatusBadge status={v.statut ?? 'en_attente'} />
-                </div>
+                </CardHeader>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
                   {[
                     { l: 'TOTAL', v: formatAr(v.montant_total), c: 'var(--text)' },
@@ -288,76 +298,76 @@ export default function Ventes() {
             );
           })}
           {ventes.length > 0 && (
-            <Card padding={14} style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-              <span style={{ fontWeight: 700, fontSize: 13 }}>TOTAL GÉNÉRAL</span>
-              <div style={{ display: 'flex', gap: 16 }}>
-                <span style={{ color: 'var(--green)', fontWeight: 800 }}>{formatAr(totalGeneral)}</span>
-                <span style={{ color: 'var(--orange)', fontWeight: 700 }}>Solde: {formatAr(totalSolde)}</span>
+            <Card padding={14}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                <span style={{ fontWeight: 700, fontSize: 13 }}>TOTAL GÉNÉRAL</span>
+                <div style={{ display: 'flex', gap: 16 }}>
+                  <span style={{ color: 'var(--green)', fontWeight: 800 }}>{formatAr(totalGeneral)}</span>
+                  <span style={{ color: 'var(--orange)', fontWeight: 700 }}>Solde: {formatAr(totalSolde)}</span>
+                </div>
               </div>
             </Card>
           )}
         </div>
       ) : (
         <Card padding={0} style={{ overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeader>Facture</TableHeader>
-                  <TableHeader>Client</TableHeader>
-                  <TableHeader>Date</TableHeader>
-                  <TableHeader style={{ textAlign: 'right' }}>Montant</TableHeader>
-                  <TableHeader style={{ textAlign: 'right' }}>Payé</TableHeader>
-                  <TableHeader style={{ textAlign: 'right' }}>Solde</TableHeader>
-                  <TableHeader style={{ textAlign: 'center' }}>Statut</TableHeader>
-                  <TableHeader style={{ textAlign: 'center' }}>Actions</TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {ventes.length === 0 ? (
-                  <TableEmpty colSpan={8} message="Aucune vente" />
-                ) : ventes.map(v => {
-                  const solde = v.reste_a_payer || 0;
-                  return (
-                    <TableRow key={v.id}>
-                      <TableCell style={{ fontWeight: 600 }}>{v.numero_facture}</TableCell>
-                      <TableCell>{v.client_nom || <span style={{ color: 'var(--muted)' }}>—</span>}</TableCell>
-                      <TableCell>{new Date(v.date_vente ?? '').toLocaleDateString('fr-FR')}</TableCell>
-                      <TableCell style={{ textAlign: 'right', fontWeight: 600 }}>{formatAr(v.montant_total)}</TableCell>
-                      <TableCell style={{ textAlign: 'right' }}>{formatAr(v.montant_paye)}</TableCell>
-                      <TableCell style={{ textAlign: 'right', fontWeight: 700, color: solde > 0 ? 'var(--orange)' : 'var(--green)' }}>
-                        {solde > 0 ? formatAr(solde) : '✓'}
-                      </TableCell>
-                      <TableCell style={{ textAlign: 'center' }}><StatusBadge status={v.statut ?? 'en_attente'} /></TableCell>
-                      <TableCell style={{ textAlign: 'center' }}>
-                        <div style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
-                          <Button variant="secondary" size="sm" onClick={() => handlePrint(v.id)}>Impr.</Button>
-                          <Button variant="primary" size="sm" onClick={() => handleEdit(v)}>Modif.</Button>
-                          <Button variant="danger" size="sm" onClick={() => setConfirmDelete(v.id)}>Suppr.</Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-              {ventes.length > 0 && (
-                <tfoot>
-                  <tr style={{ background: 'var(--bg)', borderTop: '2px solid var(--border)' }}>
-                    <td colSpan={3} style={{ padding: '10px 12px', fontWeight: 700, fontSize: 13 }}>TOTAL GÉNÉRAL</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 800, fontSize: 15, color: 'var(--green)' }}>{formatAr(totalGeneral)}</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700 }}>{formatAr(totalPaye)}</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--orange)' }}>{formatAr(totalSolde)}</td>
-                    <td colSpan={2} />
-                  </tr>
-                </tfoot>
-              )}
-            </Table>
-          </div>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Facture</TableHeader>
+                <TableHeader>Client</TableHeader>
+                <TableHeader>Date</TableHeader>
+                <TableHeader align="right">Montant</TableHeader>
+                <TableHeader align="right">Payé</TableHeader>
+                <TableHeader align="right">Solde</TableHeader>
+                <TableHeader align="center">Statut</TableHeader>
+                <TableHeader align="center">Actions</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {ventes.length === 0 ? (
+                <TableEmpty colSpan={8} message="Aucune vente" />
+              ) : ventes.map(v => {
+                const solde = v.reste_a_payer || 0;
+                return (
+                  <TableRow key={v.id}>
+                    <TableCell style={{ fontWeight: 600 }}>{v.numero_facture}</TableCell>
+                    <TableCell>{v.client_nom || <span style={{ color: 'var(--muted)' }}>—</span>}</TableCell>
+                    <TableCell>{new Date(v.date_vente ?? '').toLocaleDateString('fr-FR')}</TableCell>
+                    <TableCell align="right" style={{ fontWeight: 600 }}>{formatAr(v.montant_total)}</TableCell>
+                    <TableCell align="right">{formatAr(v.montant_paye)}</TableCell>
+                    <TableCell align="right">
+                      <Badge variant={solde > 0 ? 'warning' : 'success'}>
+                        {solde > 0 ? formatAr(solde) : '✓ Payé'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell align="center"><StatusBadge status={v.statut ?? 'en_attente'} /></TableCell>
+                    <TableCell align="center">
+                      <div style={{ display: 'flex', gap: 5, justifyContent: 'center' }}>
+                        <Button variant="secondary" size="sm" onClick={() => handlePrint(v.id)}>Impr.</Button>
+                        <Button variant="primary" size="sm" onClick={() => handleEdit(v)}>Modif.</Button>
+                        <Button variant="danger" size="sm" onClick={() => setConfirmDelete(v.id)}>Suppr.</Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+            {ventes.length > 0 && (
+              <TableFooter>
+                <td colSpan={3} style={{ padding: '10px 14px', fontWeight: 700, fontSize: 13 }}>TOTAL GÉNÉRAL</td>
+                <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 800, fontSize: 15, color: 'var(--green)' }}>{formatAr(totalGeneral)}</td>
+                <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700 }}>{formatAr(totalPaye)}</td>
+                <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700, color: 'var(--orange)' }}>{formatAr(totalSolde)}</td>
+                <td colSpan={2} />
+              </TableFooter>
+            )}
+          </Table>
         </Card>
       )}
 
       {/* Modal Nouvelle/Modification vente */}
-      <Modal open={showModal} onClose={() => setShowModal(false)}>
+      <Modal open={showModal} onClose={() => setShowModal(false)} width={isMobile ? 480 : 900}>
         <ModalHeader
           title={editMode ? 'Modifier la vente' : 'Nouvelle vente'}
           onClose={() => setShowModal(false)}
@@ -417,34 +427,16 @@ export default function Ventes() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>Client</label>
-                  <Input placeholder="Nom (optionnel)" value={form.client_nom} onChange={e => setForm({ ...form, client_nom: e.target.value })} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>Téléphone</label>
-                  <Input placeholder="Optionnel" value={form.client_telephone} onChange={e => setForm({ ...form, client_telephone: e.target.value })} />
-                </div>
+                <Input label="Client" placeholder="Nom (optionnel)" value={form.client_nom} onChange={e => setForm({ ...form, client_nom: e.target.value })} />
+                <Input label="Téléphone" placeholder="Optionnel" value={form.client_telephone} onChange={e => setForm({ ...form, client_telephone: e.target.value })} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>Paiement</label>
-                  <Select options={PAIEMENT_OPTIONS} value={form.type_paiement} onChange={e => setForm({ ...form, type_paiement: e.target.value })} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>Date</label>
-                  <Input type="date" value={form.date_vente} onChange={e => setForm({ ...form, date_vente: e.target.value })} />
-                </div>
+                <Select label="Paiement" options={PAIEMENT_OPTIONS} value={form.type_paiement} onChange={e => setForm({ ...form, type_paiement: e.target.value })} />
+                <Input label="Date" type="date" value={form.date_vente} onChange={e => setForm({ ...form, date_vente: e.target.value })} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>Remise (Ar)</label>
-                  <Input type="number" value={String(form.remise)} onChange={e => setForm({ ...form, remise: Number(e.target.value) || 0 })} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>Montant payé</label>
-                  <Input type="number" value={String(form.montant_paye)} onChange={e => setForm({ ...form, montant_paye: Number(e.target.value) || 0 })} />
-                </div>
+                <Input label="Remise (Ar)" type="number" value={String(form.remise)} onChange={e => setForm({ ...form, remise: Number(e.target.value) || 0 })} />
+                <Input label="Montant payé" type="number" value={String(form.montant_paye)} onChange={e => setForm({ ...form, montant_paye: Number(e.target.value) || 0 })} />
               </div>
 
               {/* Récapitulatif */}

@@ -1,24 +1,13 @@
-// Gerant.tsx — Design system professionnel
+// Gerant.tsx — Refactorisé avec design system professionnel
 import { useState, useMemo, useEffect } from 'react';
 import { useIsMobile } from '@/modules/shared/hooks/useIsMobile';
 import { COMMISSION_DEFAUT, CURRENT_MONTH, monthLabel, shouldCountGerantCommission, EXCLUDED_CLIENTS } from '@/modules/shared/utils/constants';
 import { useApp } from '@/modules/shared/context/AppContext';
-import { Button, Input, Select, Badge, type BadgeVariant, Card, Modal, ModalHeader, ModalBody, ModalFooter, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty } from '@/modules/shared/components/ui';
+import { Button, Input, Select, Badge, type BadgeVariant, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalBody, ModalFooter, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty, TableFooter, StatCard } from '@/modules/shared/components/ui';
 import { formatAr } from '@/modules/shared/utils/constants';
 import type { Livraison } from '@/modules/shared/types';
 
-const StatValue = ({ value, label, color }: { value: string | number; label: string; color?: string }) => (
-  <Card>
-    <div style={{ fontSize: 17, fontWeight: 800, color: color || 'var(--text)', marginBottom: 3 }}>{value}</div>
-    <div style={{ fontSize: 11, color: 'var(--muted)' }}>{label}</div>
-  </Card>
-);
-
-const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
-    {children}
-  </div>
-);
+type TabKey = 'jour' | 'mois';
 
 export default function Gerant() {
   const { livraisons, showToast } = useApp();
@@ -27,7 +16,7 @@ export default function Gerant() {
   const isMobile = useIsMobile();
   const [editCommission, setEditCommission] = useState<boolean>(false);
   const [tmpCommission, setTmpCommission] = useState<number>(commissionGerant);
-  const [gerantTab, setGerantTab] = useState<string>('jour');
+  const [gerantTab, setGerantTab] = useState<TabKey>('jour');
   const [gerantDate, setGerantDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [gerantMonth, setGerantMonth] = useState<string>(CURRENT_MONTH());
   const [localCommission, setLocalCommission] = useState<number>(commissionGerant);
@@ -94,6 +83,11 @@ export default function Gerant() {
 
   const monthOptions = months.map(m => ({ value: m, label: monthLabel(m) }));
 
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: 'jour', label: 'Par jour' },
+    { key: 'mois', label: 'Par mois' },
+  ];
+
   return (
     <div data-testid="gerant-page">
       {/* Header */}
@@ -146,23 +140,16 @@ export default function Gerant() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--card)', borderRadius: 12, padding: 4, border: '1px solid var(--border)' }}>
-        {[
-          { key: 'jour', label: 'Par jour' },
-          { key: 'mois', label: 'Par mois' },
-        ].map(tab => (
-          <button
+        {tabs.map(tab => (
+          <Button
             key={tab.key}
+            variant={gerantTab === tab.key ? 'primary' : 'ghost'}
+            size="sm"
             onClick={() => setGerantTab(tab.key)}
-            style={{
-              flex: 1, padding: '10px', border: 'none', borderRadius: 9,
-              background: gerantTab === tab.key ? 'var(--accent)' : 'transparent',
-              color: gerantTab === tab.key ? '#fff' : 'var(--subtle)',
-              fontWeight: gerantTab === tab.key ? 700 : 500,
-              cursor: 'pointer', fontSize: 13, transition: 'all 0.15s ease',
-            }}
+            style={{ flex: 1 }}
           >
             {tab.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -180,30 +167,32 @@ export default function Gerant() {
           </div>
 
           {gerantDayExcluded.length > 0 && (
-            <div style={{ background: 'var(--orange-dim)', border: '1px solid #f59e0b', borderRadius: 8, padding: '10px 14px', marginBottom: 16 }}>
-              <div style={{ fontSize: 11, color: 'var(--yellow)', fontWeight: 600 }}>
+            <Card style={{ marginBottom: 16, background: 'var(--orange-dim)', borderColor: 'var(--orange)' }}>
+              <div style={{ fontSize: 11, color: 'var(--orange)', fontWeight: 600 }}>
                 {gerantDayExcluded.length} livraison(s) exclue(s) de la commission (clients {EXCLUDED_CLIENTS.join(', ')})
               </div>
-            </div>
+            </Card>
           )}
 
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(2,1fr)', gap: 10, marginBottom: 20 }}>
-            <div style={{ display: 'grid', gridColumn: '1/-1' }}><Card style={{ background: 'linear-gradient(135deg, var(--card2), var(--bg))', border: '1px solid var(--purple)', gridColumn: '1/-1' }}>
+            <Card style={{ background: 'linear-gradient(135deg, var(--card2), var(--bg))', border: '1px solid var(--purple)', gridColumn: '1/-1' }}>
               <div style={{ fontSize: 11, color: 'var(--purple)', fontWeight: 700, marginBottom: 6 }}>
                 GAIN DU GÉRANT — {gerantDate}
               </div>
               <div style={{ fontSize: 32, fontWeight: 900, color: 'var(--text)' }}>{formatAr(gerantDayGain)}</div>
               <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{gerantDayCount} livraisons × {formatAr(localCommission)}</div>
-            </Card></div>
-            <StatValue value={gerantDayCount} label="Livraisons avec commission" color="var(--blue)" />
-            <StatValue value={formatAr(gerantDayGain)} label="Gain gérant" color="var(--pink)" />
-            <StatValue value={formatAr(gerantDayFraisTotal)} label="Frais collectés" color="var(--orange)" />
-            <StatValue value={formatAr(gerantDayNet)} label="Frais nets (frais - commission)" color={gerantDayNet >= 0 ? 'var(--green)' : 'var(--red)'} />
+            </Card>
+            <StatCard value={gerantDayCount} label="Livraisons avec commission" color="blue" />
+            <StatCard value={formatAr(gerantDayGain)} label="Gain gérant" color="purple" />
+            <StatCard value={formatAr(gerantDayFraisTotal)} label="Frais collectés" color="orange" />
+            <StatCard value={formatAr(gerantDayNet)} label="Frais nets (frais - commission)" color={gerantDayNet >= 0 ? 'green' : 'red'} />
           </div>
 
           {gerantDayLivs.length > 0 && (
             <div>
-              <SectionTitle>Détail des livraisons avec commission — {gerantDate}</SectionTitle>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
+                Détail des livraisons avec commission — {gerantDate}
+              </div>
               <Table>
                 <TableHead>
                   <TableHeader>#</TableHeader>
@@ -229,20 +218,18 @@ export default function Gerant() {
                     </TableRow>
                   ))}
                 </TableBody>
-                <tfoot>
-                  <tr style={{ background: 'var(--bg)', borderTop: '2px solid var(--border2)' }}>
-                    <td colSpan={6} style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--muted)', fontSize: 11 }}>TOTAL</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--orange)' }}>{formatAr(gerantDayFraisTotal)}</td>
-                    <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--pink)' }}>{formatAr(gerantDayGain)}</td>
-                  </tr>
-                </tfoot>
+                <TableFooter>
+                  <td colSpan={6} style={{ padding: '10px 12px', fontWeight: 700, color: 'var(--muted)', fontSize: 11 }}>TOTAL</td>
+                  <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--orange)' }}>{formatAr(gerantDayFraisTotal)}</td>
+                  <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: 'var(--pink)' }}>{formatAr(gerantDayGain)}</td>
+                </TableFooter>
               </Table>
             </div>
           )}
           {gerantDayLivs.length === 0 && (
-            <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '40px 0' }}>
+            <Card style={{ textAlign: 'center', color: 'var(--muted)', padding: '40px 0' }}>
               Aucune livraison avec commission ce jour.
-            </div>
+            </Card>
           )}
         </div>
       )}
@@ -278,7 +265,9 @@ export default function Gerant() {
 
           {gerantMonthByDay.length > 0 && (
             <div>
-              <SectionTitle>Détail jour par jour — {monthLabel(gerantMonth)}</SectionTitle>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
+                Détail jour par jour — {monthLabel(gerantMonth)}
+              </div>
               <Table>
                 <TableHead>
                   <TableHeader>Date</TableHeader>
@@ -286,7 +275,7 @@ export default function Gerant() {
                   <TableHeader align="right">Gain gérant</TableHeader>
                 </TableHead>
                 <TableBody>
-                  {gerantMonthByDay.map((d, i) => (
+                  {gerantMonthByDay.map((d) => (
                     <TableRow key={d.date}>
                       <TableCell style={{ fontWeight: 600 }}>{d.date}</TableCell>
                       <TableCell><Badge variant="info">{d.count}</Badge></TableCell>
@@ -296,23 +285,21 @@ export default function Gerant() {
                     </TableRow>
                   ))}
                 </TableBody>
-                <tfoot>
-                  <tr style={{ background: 'var(--bg)', borderTop: '2px solid var(--border2)' }}>
-                    <td style={{ padding: '11px 14px', fontWeight: 700, color: 'var(--muted)', fontSize: 11 }}>TOTAL DU MOIS</td>
-                    <td style={{ padding: '11px 14px', fontWeight: 700, color: 'var(--blue)' }}>{gerantMonthCount}</td>
-                    <td style={{ padding: '11px 14px', textAlign: 'right', fontWeight: 900, color: 'var(--pink)', fontSize: 15 }}>{formatAr(gerantMonthGain)}</td>
-                  </tr>
-                </tfoot>
+                <TableFooter>
+                  <td style={{ padding: '11px 14px', fontWeight: 700, color: 'var(--muted)', fontSize: 11 }}>TOTAL DU MOIS</td>
+                  <td style={{ padding: '11px 14px', fontWeight: 700, color: 'var(--blue)' }}>{gerantMonthCount}</td>
+                  <td style={{ padding: '11px 14px', textAlign: 'right', fontWeight: 900, color: 'var(--pink)', fontSize: 15 }}>{formatAr(gerantMonthGain)}</td>
+                </TableFooter>
               </Table>
             </div>
           )}
           {gerantMonthByDay.length === 0 && (
-            <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '40px 0' }}>
+            <Card style={{ textAlign: 'center', color: 'var(--muted)', padding: '40px 0' }}>
               Aucune livraison avec commission ce mois.
-            </div>
+            </Card>
           )}
         </div>
       )}
     </div>
   );
-};
+}

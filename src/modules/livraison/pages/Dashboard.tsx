@@ -1,14 +1,29 @@
 // ServiceDashboard.tsx — Professional Design
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/modules/shared/hooks/useIsMobile';
-import { CardSkeleton } from '@/modules/shared/components/common/Loader';
 import { useCompany } from '@/modules/shared/context/CompanyContext';
 import { formatAr, TODAY, currentMonth, monthLabel, shouldCountGerantCommission, EXCLUDED_CLIENTS } from '@/modules/shared/utils/constants';
-import { badge as badgeStyle, inpSm } from '@/modules/shared/utils/helpers';
 import { getRecuperationsByDate } from '../services/recuperationService';
 import type { Recuperation, Livraison, Agent } from '@/modules/shared/types';
 import { useApp } from '@/modules/shared/context/AppContext';
 import { COMMISSION_DEFAUT } from '@/modules/shared/utils/constants';
+import {
+  Button,
+  Input,
+  Badge,
+  Card,
+  CardHeader,
+  CardTitle,
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+  StatCard,
+  StatusBadge,
+  SkeletonGrid,
+} from '@/modules/shared/components/ui';
 
 const agentMatch = (livraison: Livraison, agent: Agent): boolean => {
   if (livraison.agent_id != null && agent.id != null) {
@@ -16,14 +31,6 @@ const agentMatch = (livraison: Livraison, agent: Agent): boolean => {
   }
   return livraison.agent_nom === agent.nom;
 };
-
-const StatCard = ({ label, value, color, sub }: { label: string; value: string | number; color: string; sub?: string }) => (
-  <div className="stat-card" style={{ borderLeft: `3px solid ${color}`, textAlign: 'center' }}>
-    <div style={{ fontSize: 26, fontWeight: 800, color }}>{value}</div>
-    <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 4, fontWeight: 500 }}>{label}</div>
-    {sub && <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>{sub}</div>}
-  </div>
-);
 
 interface RecupParLivreur {
   livreur: string;
@@ -92,24 +99,25 @@ export default function Dashboard() {
       </div>
 
       {/* Récupérations */}
-      <div style={{
-        background: 'var(--card)', border: '1px solid var(--border)',
-        borderRadius: 14, padding: '20px', marginBottom: 24,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+      <Card style={{ marginBottom: 24 }}>
+        <CardHeader>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Récupérations matinales</div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--orange)' }}>{formatAr(totalRecuperationsJour)}</div>
+            <CardTitle>Récupérations matinales</CardTitle>
+            <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--orange)', marginTop: 4 }}>{formatAr(totalRecuperationsJour)}</div>
             <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{nbRecuperationsJour} récupération(s)</div>
           </div>
           <div>
-            <label style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 4, display: 'block', fontWeight: 600 }}>Date</label>
-            <input type="date" style={{ ...inpSm(), background: 'var(--card)' }} value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
+            <Input
+              type="date"
+              label="Date"
+              value={selectedDate}
+              onChange={e => setSelectedDate(e.target.value)}
+            />
           </div>
-        </div>
+        </CardHeader>
 
         {loadingRecup && (
-          <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '16px 0', fontSize: 13 }}>Chargement...</div>
+          <SkeletonGrid cols={isMobile ? 1 : 2} rows={2} />
         )}
 
         {!loadingRecup && Object.keys(recuperationsParLivreur).length > 0 ? (
@@ -143,13 +151,10 @@ export default function Dashboard() {
             </div>
           )
         )}
-      </div>
+      </Card>
 
       {/* Gérant */}
-      <div style={{
-        background: '#f5f3ff', border: '1px solid #ddd6fe',
-        borderRadius: 14, padding: '20px', marginBottom: 24,
-      }}>
+      <Card style={{ marginBottom: 24, background: '#f5f3ff', borderColor: '#ddd6fe' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <div style={{ fontSize: 12, color: 'var(--purple)', fontWeight: 700, marginBottom: 4 }}>Gérant — Aujourd'hui ({TODAY()})</div>
@@ -161,23 +166,16 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-          <button
-            onClick={() => {}}
-            style={{
-              padding: '10px 18px', background: 'var(--purple)', color: '#fff',
-              border: 'none', borderRadius: 8, fontWeight: 600, fontSize: 13,
-              cursor: 'pointer',
-            }}
-          >
+          <Button variant="primary" onClick={() => {}} style={{ background: 'var(--purple)', boxShadow: '0 1px 2px rgba(139,92,246,0.15)' }}>
             Voir détails →
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
 
       {/* Récap par agent */}
       <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Récap par agent</h2>
-        <span style={{ fontSize: 11, background: 'var(--bg2)', padding: '3px 10px', borderRadius: 100, color: 'var(--muted)', fontWeight: 600 }}>Tous temps</span>
+        <Badge variant="default" size="sm">Tous temps</Badge>
       </div>
 
       {isMobile ? (
@@ -190,7 +188,7 @@ export default function Dashboard() {
             const reportes = ls.filter(l => l.statut === 'reporte').length;
 
             return (
-              <div key={a.id} className="card" style={{ padding: 16 }}>
+              <Card key={a.id} padding={16}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
                   <div style={{
                     width: 40, height: 40, borderRadius: 10,
@@ -226,61 +224,57 @@ export default function Dashboard() {
                     height: '100%', background: 'var(--green)', borderRadius: 2, transition: 'width 0.3s ease',
                   }} />
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
       ) : (
-        <div style={{ overflowX: 'auto', borderRadius: 14, border: '1px solid var(--border)' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 600 }}>
-            <thead>
-              <tr style={{ background: 'var(--bg)' }}>
-                {['Agent', 'Total', 'Livrés', 'Retournés', 'Reportés', 'Frais', 'Taux réussite'].map(h => (
-                  <th key={h} style={{
-                    padding: '10px 14px', color: 'var(--muted)', fontWeight: 600,
-                    textAlign: h === 'Agent' ? 'left' : 'center', fontSize: 11,
-                    textTransform: 'uppercase', letterSpacing: '0.04em',
-                  }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {agents?.map(a => {
-                const ls = livraisons?.filter(l => agentMatch(l, a)) || [];
-                const totalFrais = ls.reduce((s, l) => s + (Number(l.frais) || 0), 0);
-                const livres = ls.filter(l => l.statut === 'livre').length;
-                const retournes = ls.filter(l => l.statut === 'retourne').length;
-                const reportes = ls.filter(l => l.statut === 'reporte').length;
-                const taux = ls.length ? Math.round((livres / ls.length) * 100) : 0;
+        <Table>
+          <TableHead>
+            <TableHeader align="left">Agent</TableHeader>
+            <TableHeader align="center">Total</TableHeader>
+            <TableHeader align="center">Livrés</TableHeader>
+            <TableHeader align="center">Retournés</TableHeader>
+            <TableHeader align="center">Reportés</TableHeader>
+            <TableHeader align="right">Frais</TableHeader>
+            <TableHeader align="center">Taux réussite</TableHeader>
+          </TableHead>
+          <TableBody>
+            {agents?.map(a => {
+              const ls = livraisons?.filter(l => agentMatch(l, a)) || [];
+              const totalFrais = ls.reduce((s, l) => s + (Number(l.frais) || 0), 0);
+              const livres = ls.filter(l => l.statut === 'livre').length;
+              const retournes = ls.filter(l => l.statut === 'retourne').length;
+              const reportes = ls.filter(l => l.statut === 'reporte').length;
+              const taux = ls.length ? Math.round((livres / ls.length) * 100) : 0;
 
-                return (
-                  <tr key={a.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '10px 14px', fontWeight: 600 }}>{a.nom}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 700 }}>{ls.length}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'center' }}>
-                      <span className="badge" style={badgeStyle('success')}>{livres}</span>
-                    </td>
-                    <td style={{ padding: '10px 14px', textAlign: 'center' }}>
-                      <span className="badge" style={badgeStyle('danger')}>{retournes}</span>
-                    </td>
-                    <td style={{ padding: '10px 14px', textAlign: 'center' }}>
-                      <span className="badge" style={badgeStyle('purple')}>{reportes}</span>
-                    </td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--orange)', fontWeight: 600 }}>{formatAr(totalFrais)}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
-                        <div style={{ width: 40, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
-                          <div style={{ width: `${taux}%`, height: '100%', background: taux >= 70 ? 'var(--green)' : taux >= 40 ? 'var(--orange)' : 'var(--red)' }} />
-                        </div>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text2)' }}>{taux}%</span>
+              return (
+                <TableRow key={a.id}>
+                  <TableCell style={{ fontWeight: 600 }}>{a.nom}</TableCell>
+                  <TableCell align="center" style={{ fontWeight: 700 }}>{ls.length}</TableCell>
+                  <TableCell align="center">
+                    <Badge variant="success" size="sm">{livres}</Badge>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Badge variant="danger" size="sm">{retournes}</Badge>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Badge variant="purple" size="sm">{reportes}</Badge>
+                  </TableCell>
+                  <TableCell align="right" style={{ color: 'var(--orange)', fontWeight: 600 }}>{formatAr(totalFrais)}</TableCell>
+                  <TableCell align="center">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+                      <div style={{ width: 40, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
+                        <div style={{ width: `${taux}%`, height: '100%', background: taux >= 70 ? 'var(--green)' : taux >= 40 ? 'var(--orange)' : 'var(--red)' }} />
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text2)' }}>{taux}%</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       )}
     </div>
   );

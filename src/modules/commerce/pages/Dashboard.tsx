@@ -8,8 +8,9 @@ import { fetchAchats } from '../services/achatService';
 import { getSupabase } from '@/lib/supabase';
 import { formatAr } from '@/modules/shared/utils/constants';
 import {
-  Card, Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty,
-  StatCard, SkeletonGrid, StatusBadge,
+  Card, CardHeader, CardTitle, CardContent,
+  Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty,
+  StatCard, SkeletonGrid, StatusBadge, SectionHeader,
 } from '@/modules/shared/components/ui';
 
 const today = () => new Date().toISOString().split('T')[0];
@@ -69,7 +70,7 @@ export default function CommerceDashboard() {
 
   if (loading) {
     return (
-      <div style={{ padding: '0 0 20px' }}>
+      <div style={{ paddingBottom: 20 }}>
         <SkeletonGrid cols={6} rows={1} />
       </div>
     );
@@ -78,11 +79,11 @@ export default function CommerceDashboard() {
   const pomanayExtra = currentCompany?.slug === 'pomanay';
 
   return (
-    <div style={{ padding: '0 0 24px' }}>
-      <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em' }} data-testid="page-title">Tableau de bord</h1>
-        <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4 }}>{currentCompany?.name} - Apercu de l'activite</p>
-      </div>
+    <div style={{ paddingBottom: 24 }}>
+      <SectionHeader
+        title="Tableau de bord"
+        subtitle={`${currentCompany?.name} — Aperçu de l'activité`}
+      />
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginBottom: 24 }}>
         <StatCard label="Ventes aujourd'hui" value={stats.ventesJour} color="var(--blue)" />
@@ -93,62 +94,77 @@ export default function CommerceDashboard() {
         <StatCard label="Valeur stock" value={formatAr(stats.valeurStock)} color="var(--blue)" />
         <StatCard label="Alertes stock" value={stats.stockBas} color={stats.stockBas > 0 ? 'var(--red)' : 'var(--green)'} sub={stats.stockBas > 0 ? 'Produits en rupture' : 'Stock OK'} />
         <StatCard label="Achats du mois" value={formatAr(stats.achatsMois)} color="var(--orange)" />
-        {pomanayExtra && <StatCard label="Depenses aujourd'hui" value={formatAr(stats.depensesJour)} color="var(--red)" />}
-        {pomanayExtra && <StatCard label="Depenses du mois" value={formatAr(stats.depensesMois)} color="var(--orange)" />}
+        {pomanayExtra && <StatCard label="Dépenses aujourd'hui" value={formatAr(stats.depensesJour)} color="var(--red)" />}
+        {pomanayExtra && <StatCard label="Dépenses du mois" value={formatAr(stats.depensesMois)} color="var(--orange)" />}
       </div>
 
       {pomanayExtra && (
-        <Card padding={20} style={{ marginBottom: 24, background: benefice >= 0 ? '#f0fdf4' : '#fef2f2', border: '1px solid ' + (benefice >= 0 ? '#bbf7d0' : '#fecaca') }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: benefice >= 0 ? 'var(--green)' : 'var(--red)', marginBottom: 6 }}>Benefice net du mois</div>
-          <div style={{ fontSize: 32, fontWeight: 800, color: benefice >= 0 ? 'var(--green)' : 'var(--red)' }}>{formatAr(benefice)}</div>
-          <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>
-            CA {formatAr(stats.caMois)} - Achats {formatAr(stats.achatsMois)} - Depenses {formatAr(stats.depensesMois)}
+        <Card
+          padding={20}
+          style={{
+            marginBottom: 24,
+            background: benefice >= 0 ? '#f0fdf4' : '#fef2f2',
+            border: `1px solid ${benefice >= 0 ? '#bbf7d0' : '#fecaca'}`,
+          }}
+        >
+          <CardTitle style={{ color: benefice >= 0 ? 'var(--green)' : 'var(--red)', marginBottom: 6 }}>
+            Bénéfice net du mois
+          </CardTitle>
+          <div style={{ fontSize: 32, fontWeight: 800, color: benefice >= 0 ? 'var(--green)' : 'var(--red)' }}>
+            {formatAr(benefice)}
           </div>
+          <CardContent style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6, padding: 0 }}>
+            CA {formatAr(stats.caMois)} — Achats {formatAr(stats.achatsMois)} — Dépenses {formatAr(stats.depensesMois)}
+          </CardContent>
         </Card>
       )}
 
       {alertes.length > 0 && (
         <Card padding={16} style={{ marginBottom: 24, background: '#fffbeb', border: '1px solid #fde68a' }}>
-          <h3 style={{ color: 'var(--orange)', marginBottom: 10, fontSize: 14, fontWeight: 700 }}>Stock bas ({alertes.length})</h3>
-          {alertes.map(p => (
-            <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '6px 0', borderBottom: '1px solid #fde68a' }}>
-              <span>{p.nom}</span>
-              <span style={{ color: 'var(--orange)', fontWeight: 600 }}>{p.quantite_stock} / min {p.stock_minimum}</span>
-            </div>
-          ))}
+          <CardTitle style={{ color: 'var(--orange)' }}>
+            Stock bas ({alertes.length})
+          </CardTitle>
+          <CardContent style={{ padding: 0 }}>
+            {alertes.map(p => (
+              <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '6px 0', borderBottom: '1px solid #fde68a' }}>
+                <span>{p.nom}</span>
+                <span style={{ color: 'var(--orange)', fontWeight: 600 }}>{p.quantite_stock} / min {p.stock_minimum}</span>
+              </div>
+            ))}
+          </CardContent>
         </Card>
       )}
 
-      <Card padding={0} style={{ overflow: 'hidden' }}>
-        <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          Dernieres ventes
-          <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 400 }}>{recentVentes.length} transaction(s)</span>
-        </div>
-        <div style={{ overflowX: 'auto' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                {['Facture', 'Client', 'Date', 'Montant', 'Statut'].map(h => (
-                  <TableHeader key={h} style={{ textAlign: h === 'Montant' ? 'right' : h === 'Statut' ? 'center' : 'left' }}>{h}</TableHeader>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {recentVentes.length === 0
-                ? <TableEmpty colSpan={5} message="Aucune vente" />
-                : recentVentes.map(v => (
-                  <TableRow key={v.id}>
-                    <TableCell style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>{v.numero_facture}</TableCell>
-                    <TableCell>{v.client_nom || '-'}</TableCell>
-                    <TableCell style={{ color: 'var(--text2)' }}>{new Date(v.date_vente ?? '').toLocaleDateString('fr-FR')}</TableCell>
-                    <TableCell style={{ textAlign: 'right', fontWeight: 600, color: 'var(--green)' }}>{formatAr(v.montant_total)}</TableCell>
-                    <TableCell style={{ textAlign: 'center' }}><StatusBadge status={v.statut} /></TableCell>
-                  </TableRow>
-                ))
-              }
-            </TableBody>
-          </Table>
-        </div>
+      <Card padding={0}>
+        <CardHeader style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
+          <CardTitle>Dernières ventes</CardTitle>
+          <span style={{ fontSize: 12, color: 'var(--muted)' }}>{recentVentes.length} transaction(s)</span>
+        </CardHeader>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableHeader>Facture</TableHeader>
+              <TableHeader>Client</TableHeader>
+              <TableHeader>Date</TableHeader>
+              <TableHeader align="right">Montant</TableHeader>
+              <TableHeader align="center">Statut</TableHeader>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {recentVentes.length === 0
+              ? <TableEmpty colSpan={5} message="Aucune vente" />
+              : recentVentes.map(v => (
+                <TableRow key={v.id}>
+                  <TableCell style={{ fontWeight: 600, fontFamily: 'var(--font-mono)' }}>{v.numero_facture}</TableCell>
+                  <TableCell>{v.client_nom || '-'}</TableCell>
+                  <TableCell style={{ color: 'var(--text2)' }}>{new Date(v.date_vente ?? '').toLocaleDateString('fr-FR')}</TableCell>
+                  <TableCell align="right" style={{ fontWeight: 600, color: 'var(--green)' }}>{formatAr(v.montant_total)}</TableCell>
+                  <TableCell align="center"><StatusBadge status={v.statut} /></TableCell>
+                </TableRow>
+              ))
+            }
+          </TableBody>
+        </Table>
       </Card>
     </div>
   );

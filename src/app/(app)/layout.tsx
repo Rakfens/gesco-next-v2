@@ -7,7 +7,6 @@ import { getSupabase } from '@/lib/supabase';
 import { CompanyProvider, useCompany } from '@/modules/shared/context/CompanyContext';
 import { ThemeProvider, useTheme } from '@/modules/shared/context/ThemeContext';
 import { AppProvider } from '@/modules/shared/context/AppContext';
-import { useIsMobile } from '@/modules/shared/hooks/useIsMobile';
 import { NAV_CONFIG } from '@/modules/shared/components/layout/navConfig';
 import { getCompanyMeta, getLogoSrc } from '@/modules/shared/components/layout/company';
 import { CompanySheet } from '@/modules/shared/components/layout/CompanySheet';
@@ -26,7 +25,6 @@ function LayoutContent({ children }: { children: ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
-  const isMobile = useIsMobile();
   const [logoError, setLogoError] = useState(false);
 
   const handleLogout = useCallback(async () => {
@@ -56,17 +54,14 @@ function LayoutContent({ children }: { children: ReactNode }) {
 
       {/* ─── Sidebar ─── */}
       <aside style={{
-        position: isMobile ? 'fixed' : 'static',
-        ...(isMobile ? { inset: '0 auto 0 0', zIndex: 40 } : {}),
+        position: 'fixed', inset: '0 auto 0 0', zIndex: 40,
         display: 'flex', flexDirection: 'column',
         width: 'var(--sidebar-w)',
         background: 'var(--sidebar-bg)',
-        transform: isMobile
-          ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)')
-          : 'none',
+        transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
         transition: 'transform 0.25s cubic-bezier(0.4,0,0.2,1)',
         flexShrink: 0,
-      }} className={isMobile && !sidebarOpen ? 'sidebar-mobile-hide' : ''}>
+      }} className={!sidebarOpen ? 'sidebar-mobile-hide' : ''}>
 
         {/* Sidebar brand */}
         <div style={{
@@ -222,13 +217,11 @@ function LayoutContent({ children }: { children: ReactNode }) {
           position: 'sticky', top: 0, zIndex: 50, gap: 12,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {isMobile && (
-              <button type="button" onClick={() => setSidebarOpen(true)} style={{
-                background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 4, display: 'flex',
-              }}>
-                <MenuIcon />
-              </button>
-            )}
+            <button type="button" onClick={() => setSidebarOpen(true)} style={{
+              background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: 4, display: 'flex',
+            }} className="mobile-menu-btn">
+              <MenuIcon />
+            </button>
             {/* Breadcrumb-like title */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-muted)' }}>
               <span>{currentCompany?.name || 'GesCo'}</span>
@@ -286,9 +279,9 @@ function LayoutContent({ children }: { children: ReactNode }) {
         {/* Content */}
         <main style={{
           flex: 1, overflow: 'auto',
-          padding: isMobile ? undefined : 28,
+          padding: 28,
           background: 'var(--bg-secondary)',
-        }} className={isMobile ? 'mobile-main' : ''}>
+        }} className="app-main">
           {children}
         </main>
       </div>
