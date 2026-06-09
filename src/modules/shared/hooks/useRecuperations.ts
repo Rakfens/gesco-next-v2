@@ -1,10 +1,15 @@
-'use client';
+"use client";
 
 // useRecuperations.ts — avec Realtime sync
-import { useState, useEffect, useCallback } from 'react';
-import { fetchRecuperations, addRecuperation, updateRecuperation, deleteRecuperation } from '../../livraison/services/recuperationService';
-import { useCompany } from '../context/CompanyContext';
-import type { Recuperation } from '@/modules/shared/types';
+import { useCallback, useEffect, useState } from "react";
+import type { Recuperation } from "@/modules/shared/types";
+import {
+  addRecuperation,
+  deleteRecuperation,
+  fetchRecuperations,
+  updateRecuperation,
+} from "../../livraison/services/recuperationService";
+import { useCompany } from "../context/CompanyContext";
 
 interface UseRecuperationsReturn {
   recuperations: Recuperation[];
@@ -23,55 +28,74 @@ export const useRecuperations = (): UseRecuperationsReturn => {
   const { currentCompany } = useCompany();
 
   const loadRecuperations = useCallback(async () => {
-    if (!currentCompany?.id) { setRecuperations([]); setLoading(false); return; }
+    if (!currentCompany?.id) {
+      setRecuperations([]);
+      setLoading(false);
+      return;
+    }
     try {
       setError(null);
       const data = await fetchRecuperations(currentCompany.id);
       setRecuperations(data);
-    } catch (err) {
+    } catch (err: unknown) {
       setError((err as Error).message);
     } finally {
       setLoading(false);
     }
   }, [currentCompany?.id]);
 
-  useEffect(() => { loadRecuperations(); }, [loadRecuperations]);
+  useEffect(() => {
+    loadRecuperations();
+  }, [loadRecuperations]);
 
   useEffect(() => {
     const handler = (e: Event) => {
-      if ((e as CustomEvent).detail?.table === 'recuperations') loadRecuperations();
+      if ((e as CustomEvent).detail?.table === "recuperations") loadRecuperations();
     };
-    window.addEventListener('supabase_realtime', handler);
-    return () => window.removeEventListener('supabase_realtime', handler);
+    window.addEventListener("supabase_realtime", handler);
+    return () => window.removeEventListener("supabase_realtime", handler);
   }, [loadRecuperations]);
 
   const handleAddRecuperation = async (rec: Record<string, unknown>) => {
     try {
       setError(null);
-      const newRec = await addRecuperation(rec);
-      setRecuperations(prev => [newRec, ...prev]);
+      const newRec = await addRecuperation(rec as Partial<Recuperation>, currentCompany?.id);
+      setRecuperations((prev) => [newRec, ...prev]);
       return newRec;
-    } catch (err) { setError((err as Error).message); throw err; }
+    } catch (err: unknown) {
+      setError((err as Error).message);
+      throw err;
+    }
   };
 
   const handleUpdateRecuperation = async (id: string, updates: Partial<Recuperation>) => {
     try {
       setError(null);
-      await updateRecuperation(id, updates);
-      setRecuperations(prev => prev.map(r => r.id === id ? { ...r, ...updates } as Recuperation : r));
-    } catch (err) { setError((err as Error).message); throw err; }
+      await updateRecuperation(id, updates, currentCompany?.id);
+      setRecuperations((prev) =>
+        prev.map((r) => (r.id === id ? ({ ...r, ...updates } as Recuperation) : r)),
+      );
+    } catch (err: unknown) {
+      setError((err as Error).message);
+      throw err;
+    }
   };
 
   const handleDeleteRecuperation = async (id: string) => {
     try {
       setError(null);
-      await deleteRecuperation(id);
-      setRecuperations(prev => prev.filter(r => r.id !== id));
-    } catch (err) { setError((err as Error).message); throw err; }
+      await deleteRecuperation(id, currentCompany?.id);
+      setRecuperations((prev) => prev.filter((r) => r.id !== id));
+    } catch (err: unknown) {
+      setError((err as Error).message);
+      throw err;
+    }
   };
 
   return {
-    recuperations, loading, error,
+    recuperations,
+    loading,
+    error,
     addRecuperation: handleAddRecuperation,
     updateRecuperation: handleUpdateRecuperation,
     deleteRecuperation: handleDeleteRecuperation,

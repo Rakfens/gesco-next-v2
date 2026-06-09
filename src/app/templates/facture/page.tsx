@@ -1,41 +1,69 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getSupabase, getCurrentCompany } from '@/lib/supabase';
+import { useEffect, useState } from "react";
+import { getCurrentCompany, getSupabase } from "@/lib/supabase";
+import {
+  Badge,
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  Input,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from "@/modules/shared/components/ui";
+import type { Company, Vente, VenteDetail } from "@/modules/shared/types";
 import { formatAr } from "@/modules/shared/utils/constants";
-import { Button, Input, Select, Badge, Card, CardHeader, CardTitle, Table, TableHead, TableBody, TableRow, TableCell, Modal, ModalHeader, ModalBody, ModalFooter } from "@/modules/shared/components/ui";
-import { THERMAL_CSS, getCompanyConfig, openPrintWindow } from "../printStyles";
-
-import type { Company, Vente } from '@/modules/shared/types';
+import { getCompanyConfig, openPrintWindow } from "../printStyles";
 
 export default function FactureTemplatePage() {
   const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
   const [ventes, setVentes] = useState<Vente[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedVente, setSelectedVente] = useState<Vente | null>(null);
-  const [details, setDetails] = useState<Record<string, unknown>[]>([]);
+  const [details, setDetails] = useState<VenteDetail[]>([]);
   const [filters, setFilters] = useState({ dateDebut: "", dateFin: "", statut: "", search: "" });
 
   useEffect(() => {
     const company = getCurrentCompany();
-    if (company) { setCurrentCompany(company); loadVentes(); }
-  }, []);
+    if (company) {
+      setCurrentCompany(company);
+      loadVentes();
+    }
+  }, [loadVentes]);
 
   const loadVentes = async () => {
     if (!currentCompany) return;
     setLoading(true);
-    let q = getSupabase().from("ventes").select("*").eq("company_id", currentCompany.id).order("date_vente", { ascending: false }).limit(50);
+    let q = getSupabase()
+      .from("ventes")
+      .select("*")
+      .eq("company_id", currentCompany.id)
+      .order("date_vente", { ascending: false })
+      .limit(50);
     if (filters.dateDebut) q = q.gte("date_vente", filters.dateDebut);
     if (filters.dateFin) q = q.lte("date_vente", filters.dateFin);
     if (filters.statut) q = q.eq("statut", filters.statut);
-    if (filters.search) q = q.or(`client_nom.ilike.%${filters.search}%,numero_facture.ilike.%${filters.search}%`);
+    if (filters.search)
+      q = q.or(`client_nom.ilike.%${filters.search}%,numero_facture.ilike.%${filters.search}%`);
     const { data, error } = await q;
     if (!error) setVentes(data || []);
     setLoading(false);
   };
 
   const loadDetails = async (venteId: string) => {
-    const { data } = await getSupabase().from("vente_details").select("*, produit:produits(nom,reference,prix_vente)").eq("vente_id", venteId);
+    const { data } = await getSupabase()
+      .from("vente_details")
+      .select("*, produit:produits(nom,reference,prix_vente)")
+      .eq("vente_id", venteId);
     return data || [];
   };
 
@@ -50,16 +78,24 @@ export default function FactureTemplatePage() {
     printFacture(vente, d, currentCompany);
   };
 
-  const printFacture = (vente: Vente, details: Record<string, unknown>[], company: Company | null) => {
-    const config = getCompanyConfig(company?.slug ?? '');
-    const date = new Date(vente.date_vente ?? '').toLocaleDateString("fr-FR");
-    const rows = details.map((d: Record<string, unknown>) => `
+  const printFacture = (
+    vente: Vente,
+    details: Record<string, unknown>[],
+    company: Company | null,
+  ) => {
+    const config = getCompanyConfig(company?.slug ?? "");
+    const date = new Date(vente.date_vente ?? "").toLocaleDateString("fr-FR");
+    const rows = details
+      .map(
+        (d: Record<string, unknown>) => `
       <tr>
         <td>${(d.produit as Record<string, unknown>)?.nom || "Produit"}</td>
         <td class="text-right">${String(d.quantite)}</td>
         <td class="text-right">${formatAr(Number(d.prix_unitaire) || 0)}</td>
         <td class="text-right">${formatAr(Number(d.sous_total) || 0)}</td>
-      </tr>`).join("");
+      </tr>`,
+      )
+      .join("");
 
     const html = `
 <div class="no-print">
@@ -105,16 +141,36 @@ ${vente.client_telephone ? `<div class="row"><span class="label">Tél :</span><s
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <CardTitle className="text-xl font-bold">Factures</CardTitle>
             <div className="flex flex-wrap gap-3">
-              <Input type="date" value={filters.dateDebut} onChange={e => setFilters(f => ({ ...f, dateDebut: e.target.value }))} className="w-32" />
-              <Input type="date" value={filters.dateFin} onChange={e => setFilters(f => ({ ...f, dateFin: e.target.value }))} className="w-32" />
-              <Select value={filters.statut} onChange={e => setFilters(f => ({ ...f, statut: e.target.value }))} className="w-36"
+              <Input
+                type="date"
+                value={filters.dateDebut}
+                onChange={(e) => setFilters((f) => ({ ...f, dateDebut: e.target.value }))}
+                className="w-32"
+              />
+              <Input
+                type="date"
+                value={filters.dateFin}
+                onChange={(e) => setFilters((f) => ({ ...f, dateFin: e.target.value }))}
+                className="w-32"
+              />
+              <Select
+                value={filters.statut}
+                onChange={(e) => setFilters((f) => ({ ...f, statut: e.target.value }))}
+                className="w-36"
                 options={[
-                  {value: "", label: "Tous statuts"},
-                  {value: "paye", label: "Payé"},
-                  {value: "credit", label: "Crédit"},
-                  {value: "en_attente", label: "En attente"}
-                ]} />
-              <Input type="text" placeholder="Client ou facture..." value={filters.search} onChange={e => setFilters(f => ({ ...f, search: e.target.value }))} className="w-44" />
+                  { value: "", label: "Tous statuts" },
+                  { value: "paye", label: "Payé" },
+                  { value: "credit", label: "Crédit" },
+                  { value: "en_attente", label: "En attente" },
+                ]}
+              />
+              <Input
+                type="text"
+                placeholder="Client ou facture..."
+                value={filters.search}
+                onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+                className="w-44"
+              />
               <Button onClick={loadVentes}>Filtrer</Button>
             </div>
           </CardHeader>
@@ -122,7 +178,9 @@ ${vente.client_telephone ? `<div class="row"><span class="label">Tél :</span><s
       </div>
 
       {loading ? (
-        <div className="text-center py-12"><div className="inline-block animate-spin rounded-full border-4 border-primary border-t-transparent h-8 w-8"></div></div>
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full border-4 border-primary border-t-transparent h-8 w-8"></div>
+        </div>
       ) : ventes.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">Aucune vente trouvée.</div>
       ) : (
@@ -139,21 +197,39 @@ ${vente.client_telephone ? `<div class="row"><span class="label">Tél :</span><s
               </TableRow>
             </TableHead>
             <TableBody>
-              {ventes.map(v => (
+              {ventes.map((v) => (
                 <TableRow key={v.id}>
                   <TableCell className="font-semibold">{v.numero_facture}</TableCell>
-                  <TableCell>{new Date((v as any).date_vente).toLocaleDateString("fr-FR")}</TableCell>
+                  <TableCell>{new Date(v.date_vente ?? "").toLocaleDateString("fr-FR")}</TableCell>
                   <TableCell>{v.client_nom || "—"}</TableCell>
-                  <TableCell className="text-right font-medium">{formatAr(v.montant_total)}</TableCell>
+                  <TableCell className="text-right font-medium">
+                    {formatAr(v.montant_total)}
+                  </TableCell>
                   <TableCell>
-                    <Badge variant={v.statut === "paye" ? "success" : v.statut === "credit" ? "warning" : "default"}>
-                      {v.statut === "paye" ? "Payé" : v.statut === "credit" ? "Crédit" : "En attente"}
+                    <Badge
+                      variant={
+                        v.statut === "paye"
+                          ? "success"
+                          : v.statut === "credit"
+                            ? "warning"
+                            : "default"
+                      }
+                    >
+                      {v.statut === "paye"
+                        ? "Payé"
+                        : v.statut === "credit"
+                          ? "Crédit"
+                          : "En attente"}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button variant="outline" size="sm" onClick={() => handlePreview(v)}>Aperçu</Button>
-                      <Button variant="outline" size="sm" onClick={() => handlePrint(v)}>Imprimer</Button>
+                      <Button variant="outline" size="sm" onClick={() => handlePreview(v)}>
+                        Aperçu
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handlePrint(v)}>
+                        Imprimer
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -165,15 +241,41 @@ ${vente.client_telephone ? `<div class="row"><span class="label">Tél :</span><s
 
       {/* Modal Aperçu */}
       {selectedVente && (
-        <Modal open={true} onClose={() => { setSelectedVente(null); setDetails([]); }}>
-          <ModalHeader title={`Facture ${selectedVente.numero_facture}`} onClose={() => { setSelectedVente(null); setDetails([]); }} />
+        <Modal
+          open={true}
+          onClose={() => {
+            setSelectedVente(null);
+            setDetails([]);
+          }}
+        >
+          <ModalHeader
+            title={`Facture ${selectedVente.numero_facture}`}
+            onClose={() => {
+              setSelectedVente(null);
+              setDetails([]);
+            }}
+          />
           <ModalBody>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-muted-foreground">Client:</span> <span className="font-medium">{selectedVente.client_nom || "—"}</span></div>
-                <div><span className="text-muted-foreground">Date:</span> <span className="font-medium">{new Date(selectedVente!.date_vente as string).toLocaleDateString("fr-FR")}</span></div>
-                <div><span className="text-muted-foreground">Tél:</span> <span className="font-medium">{selectedVente.client_telephone || "—"}</span></div>
-                <div><span className="text-muted-foreground">Paiement:</span> <span className="font-medium">{selectedVente.type_paiement}</span></div>
+                <div>
+                  <span className="text-muted-foreground">Client:</span>{" "}
+                  <span className="font-medium">{selectedVente.client_nom || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Date:</span>{" "}
+                  <span className="font-medium">
+                    {new Date(selectedVente!.date_vente as string).toLocaleDateString("fr-FR")}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Tél:</span>{" "}
+                  <span className="font-medium">{selectedVente.client_telephone || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Paiement:</span>{" "}
+                  <span className="font-medium">{selectedVente.type_paiement}</span>
+                </div>
               </div>
               <Table className="text-sm">
                 <TableHead>
@@ -187,26 +289,58 @@ ${vente.client_telephone ? `<div class="row"><span class="label">Tél :</span><s
                 <TableBody>
                   {details.map((d, i) => (
                     <TableRow key={i}>
-                      <TableCell>{(d as any).produit?.nom || "Produit"}</TableCell>
+                      <TableCell>{d.produit?.nom || "Produit"}</TableCell>
                       <TableCell className="text-right">{String(d.quantite)}</TableCell>
-                      <TableCell className="text-right">{formatAr(Number(d.prix_unitaire) || 0)}</TableCell>
-                      <TableCell className="text-right font-medium">{formatAr(Number(d.sous_total) || 0)}</TableCell>
+                      <TableCell className="text-right">
+                        {formatAr(Number(d.prix_unitaire) || 0)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatAr(Number(d.sous_total) || 0)}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
               <div className="p-3 bg-gray-50 rounded-lg space-y-1 text-sm">
-                <div className="flex justify-between"><span>Total HT</span><span>{formatAr(selectedVente.montant_ht)}</span></div>
-                {(selectedVente.remise || 0) > 0 && <div className="flex justify-between"><span>Remise</span><span>-{formatAr(selectedVente.remise)}</span></div>}
-                <div className="flex justify-between font-bold border-t pt-1"><span>TOTAL</span><span>{formatAr(selectedVente.montant_total)}</span></div>
-                <div className="flex justify-between text-green-600"><span>Payé</span><span>{formatAr(selectedVente.montant_paye)}</span></div>
-                {(selectedVente.reste_a_payer || 0) > 0 && <div className="flex justify-between text-orange-500 font-bold"><span>Reste</span><span>{formatAr(selectedVente.reste_a_payer)}</span></div>}
+                <div className="flex justify-between">
+                  <span>Total HT</span>
+                  <span>{formatAr(selectedVente.montant_ht)}</span>
+                </div>
+                {(selectedVente.remise || 0) > 0 && (
+                  <div className="flex justify-between">
+                    <span>Remise</span>
+                    <span>-{formatAr(selectedVente.remise)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold border-t pt-1">
+                  <span>TOTAL</span>
+                  <span>{formatAr(selectedVente.montant_total)}</span>
+                </div>
+                <div className="flex justify-between text-green-600">
+                  <span>Payé</span>
+                  <span>{formatAr(selectedVente.montant_paye)}</span>
+                </div>
+                {(selectedVente.reste_a_payer || 0) > 0 && (
+                  <div className="flex justify-between text-orange-500 font-bold">
+                    <span>Reste</span>
+                    <span>{formatAr(selectedVente.reste_a_payer)}</span>
+                  </div>
+                )}
               </div>
             </div>
           </ModalBody>
           <ModalFooter>
-            <Button variant="outline" onClick={() => handlePrint(selectedVente)}>Imprimer</Button>
-            <Button onClick={() => { setSelectedVente(null); setDetails([]); }}>Fermer</Button>
+            <Button variant="outline" onClick={() => handlePrint(selectedVente)}>
+              Imprimer
+            </Button>
+            <Button
+              onClick={() => {
+                setSelectedVente(null);
+                setDetails([]);
+              }}
+            >
+              Fermer
+            </Button>
           </ModalFooter>
         </Modal>
       )}

@@ -154,7 +154,7 @@ export interface Depense {
 export interface MouvementStock {
   id?: string;
   produit_id: string;
-  type: 'entree' | 'sortie' | 'achat' | 'vente' | 'inventaire' | 'ajustement';
+  type: "entree" | "sortie" | "achat" | "vente" | "inventaire" | "ajustement";
   quantite: number;
   prix_unitaire?: number;
   montant_total?: number;

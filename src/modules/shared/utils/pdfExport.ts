@@ -1,5 +1,5 @@
 // pdfExport.ts — v3 : optimisé ticket thermique (noir pur sur blanc, police machine à écrire)
-import { formatAr, STATUTS } from './constants';
+import { formatAr, STATUTS } from "./constants";
 
 interface Company {
   id?: string;
@@ -27,13 +27,16 @@ interface Agent {
 }
 
 // ── Logo selon la société ─────────────────────────────────────────────
-const getCompanyLogo = (logoUrlParam: string | null = null, company: Company | null = null): string => {
+const getCompanyLogo = (
+  logoUrlParam: string | null = null,
+  company: Company | null = null,
+): string => {
   if (logoUrlParam) return logoUrlParam;
   if (company?.logo_url) return company.logo_url;
-  if (!company) return '/logos/aterinay/logo.png';
-  if (company.slug === 'pomanay')   return '/logos/pomanay/logo.png';
-  if (company.slug === 'zazatiana') return '/logos/zazatiana/logo.png';
-  return '/logos/aterinay/logo.png';
+  if (!company) return "/logos/aterinay/logo.png";
+  if (company.slug === "pomanay") return "/logos/pomanay/logo.png";
+  if (company.slug === "zazatiana") return "/logos/zazatiana/logo.png";
+  return "/logos/aterinay/logo.png";
 };
 
 // ── CSS commun ticket thermique ───────────────────────────────────────
@@ -138,84 +141,93 @@ export const printAgentList = async (
   livraisons: Livraison[],
   date: string,
   logoUrlParam: string | null = null,
-  company: Company | null = null
+  company: Company | null = null,
 ): Promise<void> => {
-  const w = window.open('', '_blank');
-  if (!w) { alert('Autorisez les popups pour imprimer'); return; }
+  const w = window.open("", "_blank");
+  if (!w) {
+    alert("Autorisez les popups pour imprimer");
+    return;
+  }
 
-  const logoUrl    = getCompanyLogo(logoUrlParam, company);
-  const companyName = company?.name || 'Aterinay Services';
+  const logoUrl = getCompanyLogo(logoUrlParam, company);
+  const companyName = company?.name || "Aterinay Services";
 
   // ── Regrouper par destinataire ──────────────────────────────────────
-  const destsMap: Record<string, {
-    destinataire: string;
-    telephone: string;
-    lieu: string;
-    items: Livraison[];
-    totalMontant: number;
-    totalFrais: number;
-  }> = {};
-  let grandMontant = 0, grandFrais = 0;
+  const destsMap: Record<
+    string,
+    {
+      destinataire: string;
+      telephone: string;
+      lieu: string;
+      items: Livraison[];
+      totalMontant: number;
+      totalFrais: number;
+    }
+  > = {};
+  let grandMontant = 0,
+    grandFrais = 0;
 
   for (const l of livraisons) {
-    const dest    = l.destinataire || '—';
-    const montant = l.paiement === 'client' ? 0 : parseFloat(String(l.montant || 0));
-    const frais   = parseFloat(String(l.frais || 0));
+    const dest = l.destinataire || "—";
+    const montant = l.paiement === "client" ? 0 : parseFloat(String(l.montant || 0));
+    const frais = parseFloat(String(l.frais || 0));
     grandMontant += montant;
-    grandFrais   += frais;
+    grandFrais += frais;
     if (!destsMap[dest]) {
       destsMap[dest] = {
         destinataire: dest,
-        telephone: l.destinataire_telephone || '',
-        lieu:      l.destinataire_lieu || '',
-        items: [], totalMontant: 0, totalFrais: 0,
+        telephone: l.destinataire_telephone || "",
+        lieu: l.destinataire_lieu || "",
+        items: [],
+        totalMontant: 0,
+        totalFrais: 0,
       };
     }
     destsMap[dest].items.push(l);
     destsMap[dest].totalMontant += montant;
-    destsMap[dest].totalFrais   += frais;
+    destsMap[dest].totalFrais += frais;
   }
 
   // ── Construire le HTML de chaque destinataire ───────────────────────
-  let corpsHtml = '';
+  let corpsHtml = "";
   let numDest = 1;
 
   for (const key of Object.keys(destsMap)) {
     const d = destsMap[key];
     const totalDest = d.totalMontant + d.totalFrais;
 
-    let itemsHtml = '';
+    let itemsHtml = "";
     d.items.forEach((l: Livraison, i: number) => {
-      const montant   = l.paiement === 'client' ? 0 : parseFloat(String(l.montant || 0));
-      const frais     = parseFloat(String(l.frais || 0));
-      const montantTxt = l.paiement === 'client' ? 'CLIENT' : formatAr(montant);
+      const montant = l.paiement === "client" ? 0 : parseFloat(String(l.montant || 0));
+      const frais = parseFloat(String(l.frais || 0));
+      const montantTxt = l.paiement === "client" ? "CLIENT" : formatAr(montant);
 
       itemsHtml += `
         <div style="margin:4px 0; padding:4px 0; border-bottom:1px dashed #000;">
-          <div class="bold" style="font-size:12px;">${i + 1}. ${l.colis || '—'}</div>
-          <div class="row"><span class="label">Donneur :</span><span class="val">${l.client_donneur || '—'}</span></div>
+          <div class="bold" style="font-size:12px;">${i + 1}. ${l.colis || "—"}</div>
+          <div class="row"><span class="label">Donneur :</span><span class="val">${l.client_donneur || "—"}</span></div>
           <div class="row"><span class="label">Montant :</span><span class="val">${montantTxt}</span></div>
-          ${frais > 0 ? `<div class="row"><span class="label">Frais   :</span><span class="val">${formatAr(frais)}</span></div>` : ''}
-          <div class="row"><span class="label">Statut  :</span><span class="val">${STATUTS[l.statut as string]?.label || l.statut || '—'}</span></div>
+          ${frais > 0 ? `<div class="row"><span class="label">Frais   :</span><span class="val">${formatAr(frais)}</span></div>` : ""}
+          <div class="row"><span class="label">Statut  :</span><span class="val">${STATUTS[l.statut as string]?.label || l.statut || "—"}</span></div>
         </div>`;
     });
 
     corpsHtml += `
       <div class="block">
         <div class="block-title">DEST. ${numDest} : ${d.destinataire}</div>
-        ${d.telephone ? `<div class="row"><span class="label">Tel  :</span><span class="val">${d.telephone}</span></div>` : ''}
-        ${d.lieu      ? `<div class="row"><span class="label">Lieu :</span><span class="val">${d.lieu}</span></div>` : ''}
+        ${d.telephone ? `<div class="row"><span class="label">Tel  :</span><span class="val">${d.telephone}</span></div>` : ""}
+        ${d.lieu ? `<div class="row"><span class="label">Lieu :</span><span class="val">${d.lieu}</span></div>` : ""}
         ${itemsHtml}
         <div style="margin-top:4px; padding-top:4px; border-top:1px solid #000;">
-          ${d.totalMontant > 0 ? `<div class="row"><span class="label">Montant :</span><span class="val">${formatAr(d.totalMontant)}</span></div>` : ''}
-          ${d.totalFrais   > 0 ? `<div class="row"><span class="label">Frais   :</span><span class="val">${formatAr(d.totalFrais)}</span></div>` : ''}
+          ${d.totalMontant > 0 ? `<div class="row"><span class="label">Montant :</span><span class="val">${formatAr(d.totalMontant)}</span></div>` : ""}
+          ${d.totalFrais > 0 ? `<div class="row"><span class="label">Frais   :</span><span class="val">${formatAr(d.totalFrais)}</span></div>` : ""}
           <div class="row bold"><span class="label">TOTAL   :</span><span class="val">${formatAr(totalDest)}</span></div>
         </div>
       </div>`;
     numDest++;
   }
 
-  const agentNom = agent.nom || '—';
+  const agentNom = agent.nom || "—";
   w.document.write(`<!DOCTYPE html>
 <html><head>
 <meta charset="UTF-8">
@@ -249,8 +261,8 @@ ${corpsHtml}
 
 <div class="total-section">
   <div style="font-size:11px; margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">RECAPITULATIF</div>
-  ${grandMontant > 0 ? `<div class="row"><span class="label">Total montant :</span><span class="val">${formatAr(grandMontant)}</span></div>` : ''}
-  ${grandFrais   > 0 ? `<div class="row"><span class="label">Total frais   :</span><span class="val">${formatAr(grandFrais)}</span></div>` : ''}
+  ${grandMontant > 0 ? `<div class="row"><span class="label">Total montant :</span><span class="val">${formatAr(grandMontant)}</span></div>` : ""}
+  ${grandFrais > 0 ? `<div class="row"><span class="label">Total frais   :</span><span class="val">${formatAr(grandFrais)}</span></div>` : ""}
   <div class="row total-grand">
     <span class="label">A REMETTRE    :</span>
     <span class="val">${formatAr(grandMontant + grandFrais)}</span>
@@ -281,38 +293,52 @@ export const generateClientPDF = async (
   recuperation: number | string,
   province: number | string,
   logoUrlParam: string | null = null,
-  company: Company | null = null
+  company: Company | null = null,
 ): Promise<void> => {
-  const w = window.open('', '_blank');
-  if (!w) { alert('Autorisez les popups pour imprimer'); return; }
+  const w = window.open("", "_blank");
+  if (!w) {
+    alert("Autorisez les popups pour imprimer");
+    return;
+  }
 
-  const logoUrl     = getCompanyLogo(logoUrlParam, company);
-  const companyName = company?.name || 'Aterinay Services';
-  const date        = new Date().toLocaleDateString('fr-FR');
+  const logoUrl = getCompanyLogo(logoUrlParam, company);
+  const companyName = company?.name || "Aterinay Services";
+  const date = new Date().toLocaleDateString("fr-FR");
 
-  const livreesFacturees = livraisons.filter((l: Livraison) => l.statut === 'livre' && l.paiement !== 'client');
-  const totalMontant     = livreesFacturees.reduce((s: number, l: Livraison) => s + parseFloat(String(l.montant || 0)), 0);
+  const livreesFacturees = livraisons.filter(
+    (l: Livraison) => l.statut === "livre" && l.paiement !== "client",
+  );
+  const totalMontant = livreesFacturees.reduce(
+    (s: number, l: Livraison) => s + parseFloat(String(l.montant || 0)),
+    0,
+  );
   const recNum = parseFloat(String(recuperation)) || 0;
   const provNum = parseFloat(String(province)) || 0;
   const net = totalMontant - recNum - provNum;
 
-  let livsHtml = '';
+  let livsHtml = "";
   livraisons.forEach((l: Livraison, i: number) => {
-    const statutTxt  = STATUTS[l.statut as string]?.label || l.statut || '—';
-    const montantTxt = l.paiement === 'client' ? 'CLIENT'
-      : l.statut === 'livre'   ? formatAr(parseFloat(String(l.montant || 0)))
-      : l.statut === 'retourne' ? 'RETOURNE'
-      : l.statut === 'reporte'  ? 'REPORTE' : '—';
+    const statutTxt = STATUTS[l.statut as string]?.label || l.statut || "—";
+    const montantTxt =
+      l.paiement === "client"
+        ? "CLIENT"
+        : l.statut === "livre"
+          ? formatAr(parseFloat(String(l.montant || 0)))
+          : l.statut === "retourne"
+            ? "RETOURNE"
+            : l.statut === "reporte"
+              ? "REPORTE"
+              : "—";
 
-    const hasRemarque = (l.statut === 'retourne' || l.statut === 'reporte') && l.remarque;
+    const hasRemarque = (l.statut === "retourne" || l.statut === "reporte") && l.remarque;
     livsHtml += `
       <div style="margin:4px 0; padding:4px 0; border-bottom:1px dashed #000;">
-        <div class="bold" style="font-size:12px;">${i+1}. ${l.colis || '—'}</div>
-        <div class="row"><span class="label">Destinataire :</span><span class="val">${l.destinataire || '—'}</span></div>
-        ${l.destinataire_lieu ? `<div class="row"><span class="label">Lieu         :</span><span class="val">${l.destinataire_lieu}</span></div>` : ''}
+        <div class="bold" style="font-size:12px;">${i + 1}. ${l.colis || "—"}</div>
+        <div class="row"><span class="label">Destinataire :</span><span class="val">${l.destinataire || "—"}</span></div>
+        ${l.destinataire_lieu ? `<div class="row"><span class="label">Lieu         :</span><span class="val">${l.destinataire_lieu}</span></div>` : ""}
         <div class="row"><span class="label">Statut       :</span><span class="val">${statutTxt}</span></div>
         <div class="row"><span class="label">Montant      :</span><span class="val">${montantTxt}</span></div>
-        ${hasRemarque ? `<div style="margin-top:3px; padding:3px 5px; border-left:2px solid #000; font-size:10px;"><span class="bold">Motif : </span>${l.remarque}</div>` : ''}
+        ${hasRemarque ? `<div style="margin-top:3px; padding:3px 5px; border-left:2px solid #000; font-size:10px;"><span class="bold">Motif : </span>${l.remarque}</div>` : ""}
       </div>`;
   });
 
@@ -350,8 +376,8 @@ ${livsHtml}
 <div class="total-section">
   <div style="font-size:11px; margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">BILAN FINANCIER</div>
   <div class="row"><span class="label">Total livre   :</span><span class="val">${formatAr(totalMontant)}</span></div>
-  ${recNum > 0 ? `<div class="row"><span class="label">- Recuperation:</span><span class="val">- ${formatAr(recNum)}</span></div>` : ''}
-  ${provNum > 0 ? `<div class="row"><span class="label">- Province    :</span><span class="val">- ${formatAr(provNum)}</span></div>` : ''}
+  ${recNum > 0 ? `<div class="row"><span class="label">- Recuperation:</span><span class="val">- ${formatAr(recNum)}</span></div>` : ""}
+  ${provNum > 0 ? `<div class="row"><span class="label">- Province    :</span><span class="val">- ${formatAr(provNum)}</span></div>` : ""}
   <div class="row total-grand">
     <span class="label">A VERSER      :</span>
     <span class="val">${formatAr(net)}</span>

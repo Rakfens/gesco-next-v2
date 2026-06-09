@@ -1,10 +1,24 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { getSupabase, getCurrentCompany } from '@/lib/supabase';
-import { type Company } from '@/modules/shared/types';
+import { useCallback, useEffect, useState } from "react";
+import { getCurrentCompany, getSupabase } from "@/lib/supabase";
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  Input,
+  Modal,
+  ModalBody,
+  ModalHeader,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from "@/modules/shared/components/ui";
+import type { Company } from "@/modules/shared/types";
 import { formatAr, formatNumber } from "@/modules/shared/utils/constants";
-import { Button, Input, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalTitle, ModalBody, Table, TableHead, TableBody, TableRow, TableCell } from "@/modules/shared/components/ui";
 
 interface Produit {
   id: string;
@@ -40,7 +54,7 @@ export default function ProduitsPage() {
       setCurrentCompany(company);
       fetchProduits();
     }
-  }, []);
+  }, [fetchProduits]);
 
   const fetchProduits = useCallback(async () => {
     if (!currentCompany) return;
@@ -48,10 +62,10 @@ export default function ProduitsPage() {
     setError(null);
     try {
       const { data, error } = await getSupabase()
-        .from('produits')
-        .select('*')
-        .eq('company_id', currentCompany.id)
-        .order('nom');
+        .from("produits")
+        .select("*")
+        .eq("company_id", currentCompany.id)
+        .order("nom");
       if (error) throw error;
       setProduits(data || []);
     } catch (err: unknown) {
@@ -63,7 +77,14 @@ export default function ProduitsPage() {
   }, [currentCompany]);
 
   const resetForm = () => {
-    setFormData({ nom: "", categorie: "", prix_achat: "", prix_vente: "", stock: "", unite: "piece" });
+    setFormData({
+      nom: "",
+      categorie: "",
+      prix_achat: "",
+      prix_vente: "",
+      stock: "",
+      unite: "piece",
+    });
     setIsEditing(false);
     setEditingId(null);
   };
@@ -85,10 +106,14 @@ export default function ProduitsPage() {
         company_id: currentCompany?.id,
       };
       if (isEditing && editingId) {
-        const { error } = await getSupabase().from('produits').update(payload).eq('id', editingId).eq('company_id', currentCompany?.id);
+        const { error } = await getSupabase()
+          .from("produits")
+          .update(payload)
+          .eq("id", editingId)
+          .eq("company_id", currentCompany?.id);
         if (error) throw error;
       } else {
-        const { error } = await getSupabase().from('produits').insert(payload);
+        const { error } = await getSupabase().from("produits").insert(payload);
         if (error) throw error;
       }
       resetForm();
@@ -116,7 +141,11 @@ export default function ProduitsPage() {
   const handleDelete = async (id: string) => {
     if (!window.confirm("Supprimer ce produit ?")) return;
     try {
-      const { error } = await getSupabase().from('produits').delete().eq('id', id).eq('company_id', currentCompany?.id);
+      const { error } = await getSupabase()
+        .from("produits")
+        .delete()
+        .eq("id", id)
+        .eq("company_id", currentCompany?.id);
       if (error) throw error;
       fetchProduits();
     } catch (err: unknown) {
@@ -130,11 +159,21 @@ export default function ProduitsPage() {
         <Card className="p-4">
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <CardTitle className="text-xl font-bold">Gestion des Produits</CardTitle>
-            <Button onClick={() => { resetForm(); setShowModal(true); }} className="ml-auto">
+            <Button
+              onClick={() => {
+                resetForm();
+                setShowModal(true);
+              }}
+              className="ml-auto"
+            >
               + Nouveau Produit
             </Button>
           </CardHeader>
-          {error && <div className="mt-3 p-3 bg-red-50 border border-red-200 text-red-800 rounded">{error}</div>}
+          {error && (
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 text-red-800 rounded">
+              {error}
+            </div>
+          )}
         </Card>
       </div>
 
@@ -144,16 +183,30 @@ export default function ProduitsPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">Nom *</label>
-              <Input type="text" value={formData.nom} onChange={(e) => setFormData(p => ({ ...p, nom: e.target.value }))} required />
+              <Input
+                type="text"
+                value={formData.nom}
+                onChange={(e) => setFormData((p) => ({ ...p, nom: e.target.value }))}
+                required
+              />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium mb-2">Catégorie</label>
-                <Input type="text" value={formData.categorie} onChange={(e) => setFormData(p => ({ ...p, categorie: e.target.value }))} placeholder="Ex: Accessoires" />
+                <Input
+                  type="text"
+                  value={formData.categorie}
+                  onChange={(e) => setFormData((p) => ({ ...p, categorie: e.target.value }))}
+                  placeholder="Ex: Accessoires"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Unité</label>
-                <select value={formData.unite} onChange={(e) => setFormData(p => ({ ...p, unite: e.target.value }))} className="w-full border rounded px-3 py-2">
+                <select
+                  value={formData.unite}
+                  onChange={(e) => setFormData((p) => ({ ...p, unite: e.target.value }))}
+                  className="w-full border rounded px-3 py-2"
+                >
                   <option value="piece">Pièce</option>
                   <option value="kg">Kg</option>
                   <option value="g">g</option>
@@ -163,19 +216,41 @@ export default function ProduitsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Prix d'achat (MGA)</label>
-                <Input type="number" value={formData.prix_achat} onChange={(e) => setFormData(p => ({ ...p, prix_achat: e.target.value }))} />
+                <Input
+                  type="number"
+                  value={formData.prix_achat}
+                  onChange={(e) => setFormData((p) => ({ ...p, prix_achat: e.target.value }))}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Prix de vente (MGA) *</label>
-                <Input type="number" value={formData.prix_vente} onChange={(e) => setFormData(p => ({ ...p, prix_vente: e.target.value }))} required />
+                <Input
+                  type="number"
+                  value={formData.prix_vente}
+                  onChange={(e) => setFormData((p) => ({ ...p, prix_vente: e.target.value }))}
+                  required
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Stock</label>
-                <Input type="number" value={formData.stock} onChange={(e) => setFormData(p => ({ ...p, stock: e.target.value }))} />
+                <Input
+                  type="number"
+                  value={formData.stock}
+                  onChange={(e) => setFormData((p) => ({ ...p, stock: e.target.value }))}
+                />
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => { resetForm(); setShowModal(false); }}>Annuler</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  resetForm();
+                  setShowModal(false);
+                }}
+              >
+                Annuler
+              </Button>
               <Button type="submit">{isEditing ? "Mettre à jour" : "Enregistrer"}</Button>
             </div>
           </form>
@@ -190,7 +265,9 @@ export default function ProduitsPage() {
               <p className="mt-2 text-muted-foreground">Chargement des produits...</p>
             </div>
           ) : produits.length === 0 ? (
-            <div className="text-center py-8"><p className="text-muted-foreground">Aucun produit trouvé.</p></div>
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Aucun produit trouvé.</p>
+            </div>
           ) : (
             <Table className="w-full">
               <TableHead>
@@ -209,11 +286,19 @@ export default function ProduitsPage() {
                     <TableCell className="font-medium">{p.nom}</TableCell>
                     <TableCell>{p.categorie || "—"}</TableCell>
                     <TableCell className="text-right">{formatAr(p.prix_achat)}</TableCell>
-                    <TableCell className="text-right font-medium">{formatAr(p.prix_vente)}</TableCell>
-                    <TableCell className="text-right">{formatNumber(p.stock)} {p.unite || ""}</TableCell>
+                    <TableCell className="text-right font-medium">
+                      {formatAr(p.prix_vente)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatNumber(p.stock)} {p.unite || ""}
+                    </TableCell>
                     <TableCell className="flex gap-2 justify-end">
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(p)}>Modifier</Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(p.id)}>Supprimer</Button>
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(p)}>
+                        Modifier
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleDelete(p.id)}>
+                        Supprimer
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

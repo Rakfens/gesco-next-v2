@@ -1,4 +1,6 @@
-import { formatAr } from '@/modules/shared/utils/constants';
+import type { Company, Vente } from "@/modules/shared/types";
+import { formatAr } from "@/modules/shared/utils/constants";
+import type { VenteDetailItem } from "./venteService";
 
 interface CompanyConfig {
   name: string;
@@ -7,63 +9,48 @@ interface CompanyConfig {
   footer: string;
 }
 
-interface Company {
-  slug: string;
-  type: string;
-}
-
-interface Vente {
-  numero_facture: string;
-  date_vente: string;
-  client_nom?: string;
-  client_telephone?: string;
-  montant_ht: number;
-  remise: number;
-  montant_total: number;
-  montant_paye: number;
-  reste_a_payer: number;
-  type_paiement?: string;
-}
-
-interface VenteDetail {
-  produit?: { nom?: string };
-  quantite: number;
-  prix_unitaire: number;
-  sous_total: number;
-}
-
 const COMPANY_CONFIG: Record<string, CompanyConfig> = {
-  'aterinay': {
-    name: 'Aterinay Service',
-    logo: '/logos/aterinay/logo.png',
-    defaultLogo: '/logo-aterinay.png',
-    footer: 'Service livraison - Merci pour votre confiance'
+  aterinay: {
+    name: "Aterinay Service",
+    logo: "/logos/aterinay/logo.png",
+    defaultLogo: "/logo-aterinay.png",
+    footer: "Service livraison - Merci pour votre confiance",
   },
-  'pomanay': {
-    name: 'Pomanay',
-    logo: '/logos/pomanay/logo.png',
-    defaultLogo: '/logo-pomanay.png',
-    footer: 'Boutique accessoires téléphones - Merci de votre visite'
+  pomanay: {
+    name: "Pomanay",
+    logo: "/logos/pomanay/logo.png",
+    defaultLogo: "/logo-pomanay.png",
+    footer: "Boutique accessoires téléphones - Merci de votre visite",
   },
-  'zazatiana': {
-    name: 'Zazatiana',
-    logo: '/logos/zazatiana/logo.png',
-    defaultLogo: '/logo-zazatiana.png',
-    footer: 'Boutique articles bébé - Merci de votre visite'
-  }
+  zazatiana: {
+    name: "Zazatiana",
+    logo: "/logos/zazatiana/logo.png",
+    defaultLogo: "/logo-zazatiana.png",
+    footer: "Boutique articles bébé - Merci de votre visite",
+  },
 };
 
-export const printTicketVente = (vente: Vente, details: VenteDetail[], company: Company): void => {
-  const config = COMPANY_CONFIG[company.slug] || COMPANY_CONFIG['aterinay'];
+export const printTicketVente = (
+  vente: Vente,
+  details: VenteDetailItem[],
+  company: Company,
+): void => {
+  const config = COMPANY_CONFIG[company.slug ?? ""] || COMPANY_CONFIG.aterinay;
   const logoUrl = config.logo || config.defaultLogo;
 
-  const date = new Date(vente.date_vente).toLocaleString();
+  const date = vente.date_vente ? new Date(vente.date_vente).toLocaleString() : "";
+  const numeroFacture = vente.numero_facture ?? "—";
+  const remise = vente.remise ?? 0;
+  const montantTotal = vente.montant_total ?? 0;
+  const montantPaye = vente.montant_paye ?? 0;
+  const montantHt = vente.montant_ht ?? 0;
+  const resteAPayer = vente.reste_a_payer ?? 0;
   const ticketHtml = `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="UTF-8">
-      <title>Ticket de vente - ${vente.numero_facture}</title>
+      <title>Ticket de vente - ${numeroFacture}</title>
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0 auto; padding: 8px; background: white; color: black; }
@@ -91,32 +78,36 @@ export const printTicketVente = (vente: Vente, details: VenteDetail[], company: 
       <div class="header">
         <img src="${logoUrl}" class="logo" alt="Logo" onerror="this.style.display='none'">
         <div class="shop-name">${config.name}</div>
-        <div class="shop-type">${company.type === 'service' ? 'Service livraison' : 'Boutique'}</div>
+        <div class="shop-type">${company.type === "service" ? "Service livraison" : "Boutique"}</div>
       </div>
-      <div class="info-line"><span>Ticket N°:</span><span>${vente.numero_facture}</span></div>
+      <div class="info-line"><span>Ticket N°:</span><span>${numeroFacture}</span></div>
       <div class="info-line"><span>Date:</span><span>${date}</span></div>
-      <div class="info-line"><span>Client:</span><span>${vente.client_nom || 'Client au comptant'}</span></div>
-      ${vente.client_telephone ? `<div class="info-line"><span>Tél:</span><span>${vente.client_telephone}</span></div>` : ''}
+      <div class="info-line"><span>Client:</span><span>${vente.client_nom || "Client au comptant"}</span></div>
+      ${vente.client_telephone ? `<div class="info-line"><span>Tél:</span><span>${vente.client_telephone}</span></div>` : ""}
       <div class="title">DÉTAILS DE LA VENTE</div>
       <table>
         <thead><tr><th>Article</th><th class="text-right">Qté</th><th class="text-right">Prix</th><th class="text-right">Total</th></tr></thead>
         <tbody>
-          ${details.map(d => `
+          ${details
+            .map(
+              (d) => `
             <tr>
-              <td>${d.produit?.nom || 'Produit'}</td>
+              <td>${d.produit?.nom || "Produit"}</td>
               <td class="text-right">${d.quantite}</td>
               <td class="text-right">${formatAr(d.prix_unitaire)}</td>
-              <td class="text-right">${formatAr(d.sous_total)}</td>
+              <td class="text-right">${formatAr(d.sous_total ?? 0)}</td>
             </tr>
-          `).join('')}
+          `,
+            )
+            .join("")}
         </tbody>
       </table>
-      <div class="info-line"><span>SOUS-TOTAL:</span><span>${formatAr(vente.montant_ht)}</span></div>
-      ${vente.remise > 0 ? `<div class="info-line"><span>REMISE:</span><span>- ${formatAr(vente.remise)}</span></div>` : ''}
-      <div class="info-line total-row"><span>TOTAL:</span><span>${formatAr(vente.montant_total)}</span></div>
-      <div class="info-line"><span>Payé:</span><span>${formatAr(vente.montant_paye)}</span></div>
-      ${vente.reste_a_payer > 0 ? `<div class="info-line"><span>Reste à payer:</span><span>${formatAr(vente.reste_a_payer)}</span></div>` : ''}
-      <div class="info-line"><span>Paiement:</span><span>${vente.type_paiement === 'especes' ? 'Espèces' : vente.type_paiement === 'mobile_money' ? 'Mobile Money' : 'Carte'}</span></div>
+      <div class="info-line"><span>SOUS-TOTAL:</span><span>${formatAr(montantHt)}</span></div>
+      ${remise > 0 ? `<div class="info-line"><span>REMISE:</span><span>- ${formatAr(remise)}</span></div>` : ""}
+      <div class="info-line total-row"><span>TOTAL:</span><span>${formatAr(montantTotal)}</span></div>
+      <div class="info-line"><span>Payé:</span><span>${formatAr(montantPaye)}</span></div>
+      ${resteAPayer > 0 ? `<div class="info-line"><span>Reste à payer:</span><span>${formatAr(resteAPayer)}</span></div>` : ""}
+      <div class="info-line"><span>Paiement:</span><span>${vente.type_paiement === "especes" ? "Espèces" : vente.type_paiement === "mobile_money" ? "Mobile Money" : "Carte"}</span></div>
       <div class="thankyou">Merci de votre visite !</div>
       <div class="footer">${config.footer}<br>${new Date().toLocaleDateString()}</div>
       <div class="no-print" style="text-align: center; margin-top: 20px;">
@@ -127,18 +118,23 @@ export const printTicketVente = (vente: Vente, details: VenteDetail[], company: 
     </html>
   `;
 
-  const printWindow = window.open('', '_blank');
+  const printWindow = window.open("", "_blank");
   if (printWindow) {
     printWindow.document.write(ticketHtml);
     printWindow.document.close();
     printWindow.focus();
   } else {
-    alert('Veuillez autoriser les popups pour imprimer');
+    alert("Veuillez autoriser les popups pour imprimer");
   }
 };
 
-export const printVentesList = (ventes: Vente[], company: Company, dateDebut: string, dateFin: string): void => {
-  const config = COMPANY_CONFIG[company.slug] || COMPANY_CONFIG['aterinay'];
+export const printVentesList = (
+  ventes: Vente[],
+  company: Company,
+  dateDebut: string,
+  dateFin: string,
+): void => {
+  const config = COMPANY_CONFIG[company.slug ?? ""] || COMPANY_CONFIG.aterinay;
   const logoUrl = config.logo || config.defaultLogo;
   const totalVentes = ventes.reduce((s: number, v: Vente) => s + (v.montant_total || 0), 0);
 
@@ -177,15 +173,19 @@ export const printVentesList = (ventes: Vente[], company: Company, dateDebut: st
       <table>
         <thead><tr><th>N° Facture</th><th>Date</th><th>Client</th><th class="text-right">Montant</th><th>Statut</th></tr></thead>
         <tbody>
-          ${ventes.map(v => `
+          ${ventes
+            .map(
+              (v) => `
             <tr>
-              <td>${v.numero_facture}</td>
-              <td>${new Date(v.date_vente).toLocaleDateString()}</td>
-              <td>${v.client_nom || '-'}</td>
+              <td>${v.numero_facture ?? "—"}</td>
+              <td>${v.date_vente ? new Date(v.date_vente).toLocaleDateString() : "—"}</td>
+              <td>${v.client_nom || "-"}</td>
               <td class="text-right">${formatAr(v.montant_total)}</td>
-              <td>${'En attente' /* v.statut not in Vente type */}</td>
+              <td>${"En attente" /* v.statut not in Vente type */}</td>
             </tr>
-          `).join('')}
+          `,
+            )
+            .join("")}
         </tbody>
       </table>
       <div class="total">TOTAL: ${formatAr(totalVentes)}</div>
@@ -198,11 +198,11 @@ export const printVentesList = (ventes: Vente[], company: Company, dateDebut: st
     </html>
   `;
 
-  const printWindow = window.open('', '_blank');
+  const printWindow = window.open("", "_blank");
   if (printWindow) {
     printWindow.document.write(html);
     printWindow.document.close();
   } else {
-    alert('Veuillez autoriser les popups pour imprimer');
+    alert("Veuillez autoriser les popups pour imprimer");
   }
 };

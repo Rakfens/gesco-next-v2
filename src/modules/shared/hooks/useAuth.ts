@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
 // useAuth.ts — utilise getSupabase() au lieu du Proxy
-import { useState, useEffect, useRef } from 'react';
-import { getSupabase, clearCurrentCompany } from '@/lib/supabase';
+import { useEffect, useRef, useState } from "react";
+import { clearCurrentCompany, getSupabase } from "@/lib/supabase";
 
 interface SupabaseUser {
   id: string;
@@ -20,13 +20,15 @@ interface UseAuthReturn {
 }
 
 export const useAuth = (): UseAuthReturn => {
-  const [user,      setUser]      = useState<SupabaseUser | null | undefined>(undefined);
+  const [user, setUser] = useState<SupabaseUser | null | undefined>(undefined);
   const [authError, setAuthError] = useState<string | null>(null);
   const resolved = useRef(false);
 
   useEffect(() => {
     const sb = getSupabase();
-    const { data: { subscription } } = sb.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = sb.auth.onAuthStateChange((_event, session) => {
       const u = (session?.user ?? null) as SupabaseUser | null;
       setUser(u);
       resolved.current = true;
@@ -46,7 +48,10 @@ export const useAuth = (): UseAuthReturn => {
     setAuthError(null);
     const sb = getSupabase();
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) { setAuthError(error.message); throw error; }
+    if (error) {
+      setAuthError(error.message);
+      throw error;
+    }
     return data;
   };
 
@@ -61,7 +66,7 @@ export const useAuth = (): UseAuthReturn => {
 
   return {
     user,
-    loading:         user === undefined,
+    loading: user === undefined,
     isAuthenticated: !!user,
     login,
     logout,

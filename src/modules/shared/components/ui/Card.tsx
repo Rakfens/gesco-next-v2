@@ -1,5 +1,5 @@
 // ui/Card.tsx — Carte moderne avec ombres subtiles
-import React from 'react';
+import type React from "react";
 
 interface CardProps {
   children: React.ReactNode;
@@ -11,31 +11,36 @@ interface CardProps {
 }
 
 export const Card: React.FC<CardProps> = ({
-  children, padding = 20, style = {}, className, hover = false, onClick,
+  children,
+  padding = 20,
+  style = {},
+  className,
+  hover = false,
+  onClick,
 }) => (
   <div
     className={className}
     onClick={onClick}
     style={{
-      background: 'var(--card)',
-      border: '1px solid var(--border)',
-      borderRadius: 'var(--radius-lg)',
+      background: "var(--card)",
+      border: "1px solid var(--border)",
+      borderRadius: "var(--radius-lg)",
       padding,
-      boxShadow: 'var(--shadow-sm)',
-      transition: 'all var(--transition)',
-      cursor: onClick ? 'pointer' : 'default',
+      boxShadow: "var(--shadow-sm)",
+      transition: "all var(--transition)",
+      cursor: onClick ? "pointer" : "default",
       ...style,
     }}
-    onMouseEnter={e => {
+    onMouseEnter={(e) => {
       if (hover) {
-        (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-md)';
-        (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-strong)';
+        (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-md)";
+        (e.currentTarget as HTMLElement).style.borderColor = "var(--border-strong)";
       }
     }}
-    onMouseLeave={e => {
+    onMouseLeave={(e) => {
       if (hover) {
-        (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-sm)';
-        (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
+        (e.currentTarget as HTMLElement).style.boxShadow = "var(--shadow-sm)";
+        (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
       }
     }}
   >
@@ -51,17 +56,30 @@ interface SectionHeaderProps {
 }
 
 export const SectionHeader: React.FC<SectionHeaderProps> = ({ title, subtitle, action }) => (
-  <div style={{
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    marginBottom: 20, flexWrap: 'wrap', gap: 12,
-  }}>
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 20,
+      flexWrap: "wrap",
+      gap: 12,
+    }}
+  >
     <div>
-      <h2 style={{
-        fontSize: 18, fontWeight: 700, color: 'var(--text)',
-        letterSpacing: '-0.01em', margin: 0,
-      }}>{title}</h2>
+      <h2
+        style={{
+          fontSize: 18,
+          fontWeight: 700,
+          color: "var(--text)",
+          letterSpacing: "-0.01em",
+          margin: 0,
+        }}
+      >
+        {title}
+      </h2>
       {subtitle && (
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>{subtitle}</p>
+        <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2 }}>{subtitle}</p>
       )}
     </div>
     {action}
@@ -76,10 +94,18 @@ interface CardHeaderProps {
 }
 
 export const CardHeader: React.FC<CardHeaderProps> = ({ children, className, style = {} }) => (
-  <div className={className} style={{
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    marginBottom: 12, ...style,
-  }}>{children}</div>
+  <div
+    className={className}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 12,
+      ...style,
+    }}
+  >
+    {children}
+  </div>
 );
 
 // CardTitle — titre de carte
@@ -90,10 +116,19 @@ interface CardTitleProps {
 }
 
 export const CardTitle: React.FC<CardTitleProps> = ({ children, className, style = {} }) => (
-  <h3 className={className} style={{
-    fontSize: 14, fontWeight: 700, color: 'var(--text)',
-    margin: 0, letterSpacing: '-0.01em', ...style,
-  }}>{children}</h3>
+  <h3
+    className={className}
+    style={{
+      fontSize: 14,
+      fontWeight: 700,
+      color: "var(--text)",
+      margin: 0,
+      letterSpacing: "-0.01em",
+      ...style,
+    }}
+  >
+    {children}
+  </h3>
 );
 
 // CardContent — contenu de carte
@@ -113,10 +148,19 @@ interface CardFooterProps {
 }
 
 export const CardFooter: React.FC<CardFooterProps> = ({ children, style = {} }) => (
-  <div style={{
-    marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)',
-    display: 'flex', justifyContent: 'flex-end', gap: 8, ...style,
-  }}>{children}</div>
+  <div
+    style={{
+      marginTop: 12,
+      paddingTop: 12,
+      borderTop: "1px solid var(--border)",
+      display: "flex",
+      justifyContent: "flex-end",
+      gap: 8,
+      ...style,
+    }}
+  >
+    {children}
+  </div>
 );
 
 export default Card;

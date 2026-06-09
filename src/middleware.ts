@@ -1,14 +1,14 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 // Routes publiques (pas besoin d'auth)
-const PUBLIC_ROUTES = ['/login', '/_next', '/favicon.ico', '/api'];
+const PUBLIC_ROUTES = ["/login", "/_next", "/favicon.ico", "/api"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Laisser passer les routes publiques
-  if (PUBLIC_ROUTES.some(route => pathname.startsWith(route))) {
+  if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
@@ -18,7 +18,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

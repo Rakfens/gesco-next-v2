@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
 // src/modules/shared/hooks/useToast.ts
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from "react";
 
-type ToastType = 'success' | 'error' | 'warn' | 'info';
+export type ToastType = "success" | "error" | "warn" | "info";
 
 interface Toast {
   id: number;
@@ -27,21 +27,21 @@ interface UseToastReturn {
 export const useToast = (): UseToastReturn => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = useCallback((msg: string, type: ToastType = 'success', duration = 3000) => {
+  const showToast = useCallback((msg: string, type: ToastType = "success", duration = 3000) => {
     const id = ++toastId;
     const newToast: Toast = { id, msg, type };
 
-    setToasts(prev => [...prev, newToast]);
+    setToasts((prev) => [...prev, newToast]);
 
     setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
+      setToasts((prev) => prev.filter((t) => t.id !== id));
     }, duration);
 
     return id;
   }, []);
 
   const hideToast = useCallback((id: number) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   const clearAll = useCallback(() => {
@@ -53,9 +53,9 @@ export const useToast = (): UseToastReturn => {
     showToast,
     hideToast,
     clearAll,
-    success: (msg: string) => showToast(msg, 'success'),
-    error: (msg: string) => showToast(msg, 'error'),
-    warn: (msg: string) => showToast(msg, 'warn'),
-    info: (msg: string) => showToast(msg, 'info')
+    success: (msg: string) => showToast(msg, "success"),
+    error: (msg: string) => showToast(msg, "error"),
+    warn: (msg: string) => showToast(msg, "warn"),
+    info: (msg: string) => showToast(msg, "info"),
   };
 };

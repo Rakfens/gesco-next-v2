@@ -1,14 +1,33 @@
 // ui/index.ts - Export centralise du design system
-export { Button } from './Button';
-export { Input, Select } from './Input';
-export { Badge } from './Badge';
-export type { BadgeVariant } from './Badge';
-export { Card, CardHeader, CardTitle, CardContent, CardFooter, SectionHeader } from './Card';
-export { Table, TableHead, TableHeader, TableBody, TableRow, TableCell, TableEmpty, TableFooter } from './Table';
-export { Modal, ModalHeader, ModalTitle, ModalBody, ModalFooter } from './Modal';
-export { ConfirmDialog } from './ConfirmDialog';
-export { StatusBadge } from './StatusBadge';
-export { StatCard } from './StatCard';
-export { Skeleton, SkeletonCard, SkeletonTable, SkeletonGrid } from './Skeleton';
-export { NavIcons, MoonIcon, SunIcon, LogoutIcon, ChevronDownIcon, MenuIcon, LockIcon, CheckIcon } from './Icons';
-export type { NavIconKey } from './Icons';
+
+export type { BadgeVariant } from "./Badge";
+export { Badge } from "./Badge";
+export { Button } from "./Button";
+export { Card, CardContent, CardFooter, CardHeader, CardTitle, SectionHeader } from "./Card";
+export { ConfirmDialog } from "./ConfirmDialog";
+export type { NavIconKey } from "./Icons";
+export {
+  CheckIcon,
+  ChevronDownIcon,
+  LockIcon,
+  LogoutIcon,
+  MenuIcon,
+  MoonIcon,
+  NavIcons,
+  SunIcon,
+} from "./Icons";
+export { Input, Select } from "./Input";
+export { Modal, ModalBody, ModalFooter, ModalHeader, ModalTitle } from "./Modal";
+export { Skeleton, SkeletonCard, SkeletonGrid, SkeletonTable } from "./Skeleton";
+export { StatCard } from "./StatCard";
+export { StatusBadge } from "./StatusBadge";
+export {
+  Table,
+  TableBody,
+  TableCell,
+  TableEmpty,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./Table";

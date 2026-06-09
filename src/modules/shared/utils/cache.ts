@@ -34,8 +34,8 @@ class CacheService {
 export const cache = new CacheService();
 
 // Listen to Realtime events and invalidate cache
-if (typeof window !== 'undefined') {
-  window.addEventListener('supabase_realtime', (e: Event) => {
+if (typeof window !== "undefined") {
+  window.addEventListener("supabase_realtime", (e: Event) => {
     const detail = (e as CustomEvent<{ table?: string }>).detail;
     const { table } = detail || {};
     if (table) {

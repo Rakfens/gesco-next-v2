@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from "react";
 
 interface ConfirmOptions {
   title: string;

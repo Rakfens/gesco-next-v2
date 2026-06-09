@@ -1,6 +1,3 @@
-// templates/printStyles.ts — Styles communs pour l'impression
-import { formatAr } from "@/modules/shared/utils/constants";
-
 export const THERMAL_CSS = `
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
@@ -34,9 +31,9 @@ export const THERMAL_CSS = `
 `;
 
 export const COMPANY_CONFIG: Record<string, { name: string; footer: string }> = {
-  pomanay:   { name: "Pomanay",   footer: "Boutique accessoires téléphones - Merci de votre visite" },
+  pomanay: { name: "Pomanay", footer: "Boutique accessoires téléphones - Merci de votre visite" },
   zazatiana: { name: "Zazatiana", footer: "Boutique articles bébé - Merci de votre visite" },
-  aterinay:  { name: "Aterinay",  footer: "Service livraison - Merci pour votre confiance" },
+  aterinay: { name: "Aterinay", footer: "Service livraison - Merci pour votre confiance" },
 };
 
 export const getCompanyConfig = (slug: string) => COMPANY_CONFIG[slug] || COMPANY_CONFIG.aterinay;
@@ -44,7 +41,12 @@ export const getCompanyConfig = (slug: string) => COMPANY_CONFIG[slug] || COMPAN
 // Ouvre une fenêtre d'impression avec le HTML fourni
 export const openPrintWindow = (html: string, title = "Impression") => {
   const w = window.open("", "_blank");
-  if (!w) { alert("Veuillez autoriser les popups pour imprimer"); return; }
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title></head><body>${html}</body></html>`);
+  if (!w) {
+    alert("Veuillez autoriser les popups pour imprimer");
+    return;
+  }
+  w.document.write(
+    `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title></head><body>${html}</body></html>`,
+  );
   w.document.close();
 };

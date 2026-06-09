@@ -1,9 +1,24 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { getSupabase, getCurrentCompany } from '@/lib/supabase';
-import { type Company } from '@/modules/shared/types';
-import { Button, Input, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalTitle, ModalBody, Table, TableHead, TableBody, TableRow, TableCell } from "@/modules/shared/components/ui";
+import { useCallback, useEffect, useState } from "react";
+import { getCurrentCompany, getSupabase } from "@/lib/supabase";
+import {
+  Button,
+  Card,
+  CardHeader,
+  ConfirmDialog,
+  Input,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/modules/shared/components/ui";
 
 interface Category {
   id: string;
@@ -16,39 +31,36 @@ export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ nom: "", description: "" });
 
-  useEffect(() => {
-    const company = getCurrentCompany();
-    if (company) {
-      setCurrentCompany(company);
-      fetchCategories();
-    }
-  }, []);
-
   const fetchCategories = useCallback(async () => {
-    if (!currentCompany) return;
+    const company = getCurrentCompany();
+    if (!company) return;
     setLoading(true);
     setError(null);
     try {
       const { data, error } = await getSupabase()
-        .from('categories')
-        .select('*')
-        .eq('company_id', currentCompany.id)
-        .order('nom');
+        .from("categories")
+        .select("*")
+        .eq("company_id", company.id)
+        .order("nom");
       if (error) throw error;
       setCategories(data || []);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erreur lors du chargement des catégories");
+      const msg = err instanceof Error ? err.message : "Erreur lors du chargement des catégories";
+      setError(msg);
       setCategories([]);
     } finally {
       setLoading(false);
     }
-  }, [currentCompany]);
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const resetForm = () => {
     setFormData({ nom: "", description: "" });
@@ -58,21 +70,35 @@ export default function CategoriesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.nom) { setError("Le nom est requis"); return; }
+    const company = getCurrentCompany();
+    if (!company) return;
+    if (!formData.nom) {
+      setError("Le nom est requis");
+      return;
+    }
     try {
-      const payload = { nom: formData.nom, description: formData.description || null, company_id: currentCompany?.id };
+      const payload = {
+        nom: formData.nom,
+        description: formData.description || null,
+        company_id: company.id,
+      };
       if (isEditing && editingId) {
-        const { error } = await getSupabase().from('categories').update(payload).eq('id', editingId).eq('company_id', currentCompany?.id);
+        const { error } = await getSupabase()
+          .from("categories")
+          .update(payload)
+          .eq("id", editingId)
+          .eq("company_id", company.id);
         if (error) throw error;
       } else {
-        const { error } = await getSupabase().from('categories').insert(payload);
+        const { error } = await getSupabase().from("categories").insert(payload);
         if (error) throw error;
       }
       resetForm();
       setShowModal(false);
       fetchCategories();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erreur lors de l'enregistrement");
+      const msg = err instanceof Error ? err.message : "Erreur lors de l'enregistrement";
+      setError(msg);
     }
   };
 
@@ -83,86 +109,163 @@ export default function CategoriesPage() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Supprimer cette catégorie ?")) return;
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    const id = confirmDelete;
+    setConfirmDelete(null);
     try {
-      const { error } = await getSupabase().from('categories').delete().eq('id', id).eq('company_id', currentCompany?.id);
+      const company = getCurrentCompany();
+      if (!company) return;
+      const { error } = await getSupabase()
+        .from("categories")
+        .delete()
+        .eq("id", id)
+        .eq("company_id", company.id);
       if (error) throw error;
       fetchCategories();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erreur lors de la suppression");
+      const msg = err instanceof Error ? err.message : "Erreur lors de la suppression";
+      setError(msg);
     }
   };
 
   return (
-    <>
-      <div className="mb-6">
-        <Card className="p-4">
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle className="text-xl font-bold">Gestion des Catégories</CardTitle>
-            <Button onClick={() => { resetForm(); setShowModal(true); }} className="ml-auto">
-              + Nouvelle Catégorie
-            </Button>
-          </CardHeader>
-          {error && <div className="mt-3 p-3 bg-red-50 border border-red-200 text-red-800 rounded">{error}</div>}
-        </Card>
-      </div>
+    <div style={{ paddingBottom: 24 }}>
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Supprimer la catégorie ?"
+        message="Cette action est irréversible."
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(null)}
+        variant="danger"
+      />
 
-      <Modal open={showModal} onOpenChange={setShowModal}>
-        <ModalHeader title={isEditing ? "Modifier la catégorie" : "Nouvelle Catégorie"} />
-        <ModalBody>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Nom *</label>
-              <Input type="text" value={formData.nom} onChange={(e) => setFormData(p => ({ ...p, nom: e.target.value }))} required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Description</label>
-              <Input type="text" value={formData.description} onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))} placeholder="Optionnel" />
-            </div>
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => { resetForm(); setShowModal(false); }}>Annuler</Button>
-              <Button type="submit">{isEditing ? "Mettre à jour" : "Enregistrer"}</Button>
-            </div>
-          </form>
-        </ModalBody>
+      <Card style={{ marginBottom: 20 }}>
+        <CardHeader>
+          <div>
+            <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--text)" }}>
+              Gestion des Catégories
+            </h1>
+            <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
+              {categories.length} catégorie(s)
+            </p>
+          </div>
+          <Button
+            variant="primary"
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
+          >
+            + Nouvelle Catégorie
+          </Button>
+        </CardHeader>
+        {error && (
+          <div
+            style={{
+              background: "var(--danger-light)",
+              border: "1px solid var(--danger)",
+              color: "var(--danger)",
+              borderRadius: 8,
+              padding: "10px 14px",
+              fontSize: 13,
+              marginTop: 12,
+            }}
+          >
+            {error}
+          </div>
+        )}
+      </Card>
+
+      <Modal
+        open={showModal}
+        onClose={() => {
+          resetForm();
+          setShowModal(false);
+        }}
+      >
+        <ModalHeader
+          title={isEditing ? "Modifier la catégorie" : "Nouvelle Catégorie"}
+          onClose={() => {
+            resetForm();
+            setShowModal(false);
+          }}
+        />
+        <form onSubmit={handleSubmit}>
+          <ModalBody>
+            <Input
+              label="Nom *"
+              value={formData.nom}
+              onChange={(e) => setFormData((p) => ({ ...p, nom: e.target.value }))}
+              required
+            />
+            <Input
+              label="Description"
+              value={formData.description}
+              onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
+              placeholder="Optionnel"
+            />
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                resetForm();
+                setShowModal(false);
+              }}
+            >
+              Annuler
+            </Button>
+            <Button type="submit">{isEditing ? "Mettre à jour" : "Enregistrer"}</Button>
+          </ModalFooter>
+        </form>
       </Modal>
 
-      <div className="mt-6">
-        <Card className="p-4">
-          {loading ? (
-            <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full border-4 border-primary border-t-transparent h-8 w-8"></div>
-              <p className="mt-2 text-muted-foreground">Chargement des catégories...</p>
-            </div>
-          ) : categories.length === 0 ? (
-            <div className="text-center py-8"><p className="text-muted-foreground">Aucune catégorie trouvée.</p></div>
-          ) : (
-            <Table className="w-full">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Nom</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell className="text-right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {categories.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.nom}</TableCell>
-                    <TableCell>{c.description || "—"}</TableCell>
-                    <TableCell className="flex gap-2 justify-end">
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(c)}>Modifier</Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(c.id)}>Supprimer</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+      {loading ? (
+        <Card padding={48}>
+          <div style={{ textAlign: "center", color: "var(--muted)" }}>Chargement...</div>
         </Card>
-      </div>
-    </>
+      ) : categories.length === 0 ? (
+        <Card padding={48}>
+          <div style={{ textAlign: "center", color: "var(--muted)" }}>
+            Aucune catégorie trouvée.
+          </div>
+        </Card>
+      ) : (
+        <Card padding={0}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Nom</TableHeader>
+                <TableHeader>Description</TableHeader>
+                <TableHeader align="right">Actions</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {categories.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell style={{ fontWeight: 600 }}>{c.nom}</TableCell>
+                  <TableCell>{c.description || "—"}</TableCell>
+                  <TableCell align="right">
+                    <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                      <Button variant="secondary" size="sm" onClick={() => handleEdit(c)}>
+                        Modifier
+                      </Button>
+                      <Button variant="danger" size="sm" onClick={() => setConfirmDelete(c.id)}>
+                        Supprimer
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
+    </div>
   );
 }
 

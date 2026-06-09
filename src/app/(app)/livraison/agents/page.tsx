@@ -2,10 +2,12 @@
 
 import dynamic from "next/dynamic";
 
-const PageComponent = dynamic(() => import("@/modules/livraison/pages/Agents") as any, {
+const PageComponent = dynamic(() => import("@/modules/livraison/pages/Agents"), {
   ssr: false,
   loading: () => (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+    <div
+      style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}
+    >
       <div>Chargement...</div>
     </div>
   ),

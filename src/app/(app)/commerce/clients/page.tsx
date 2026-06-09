@@ -1,9 +1,24 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { getSupabase, getCurrentCompany } from '@/lib/supabase';
-import { type Company } from '@/modules/shared/types';
-import { Button, Input, Card, CardHeader, CardTitle, Modal, ModalHeader, ModalTitle, ModalBody, Table, TableHead, TableBody, TableRow, TableCell } from "@/modules/shared/components/ui";
+import { useCallback, useEffect, useState } from "react";
+import { getCurrentCompany, getSupabase } from "@/lib/supabase";
+import {
+  Button,
+  Card,
+  CardHeader,
+  ConfirmDialog,
+  Input,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/modules/shared/components/ui";
 
 interface Client {
   id: string;
@@ -18,39 +33,41 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ nom: "", telephone: "", email: "", adresse: "" });
-
-  useEffect(() => {
-    const company = getCurrentCompany();
-    if (company) {
-      setCurrentCompany(company);
-      fetchClients();
-    }
-  }, []);
+  const [formData, setFormData] = useState({
+    nom: "",
+    telephone: "",
+    email: "",
+    adresse: "",
+  });
 
   const fetchClients = useCallback(async () => {
-    if (!currentCompany) return;
+    const company = getCurrentCompany();
+    if (!company) return;
     setLoading(true);
     setError(null);
     try {
       const { data, error } = await getSupabase()
-        .from('clients')
-        .select('*')
-        .eq('company_id', currentCompany.id)
-        .order('nom');
+        .from("clients")
+        .select("*")
+        .eq("company_id", company.id)
+        .order("nom");
       if (error) throw error;
       setClients(data || []);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erreur lors du chargement des clients");
+      const msg = err instanceof Error ? err.message : "Erreur lors du chargement des clients";
+      setError(msg);
       setClients([]);
     } finally {
       setLoading(false);
     }
-  }, [currentCompany]);
+  }, []);
+
+  useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);
 
   const resetForm = () => {
     setFormData({ nom: "", telephone: "", email: "", adresse: "" });
@@ -60,27 +77,37 @@ export default function ClientsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.nom) { setError("Le nom est requis"); return; }
+    const company = getCurrentCompany();
+    if (!company) return;
+    if (!formData.nom) {
+      setError("Le nom est requis");
+      return;
+    }
     try {
       const payload = {
         nom: formData.nom,
         telephone: formData.telephone || null,
         email: formData.email || null,
         adresse: formData.adresse || null,
-        company_id: currentCompany?.id,
+        company_id: company.id,
       };
       if (isEditing && editingId) {
-        const { error } = await getSupabase().from('clients').update(payload).eq('id', editingId).eq('company_id', currentCompany?.id);
+        const { error } = await getSupabase()
+          .from("clients")
+          .update(payload)
+          .eq("id", editingId)
+          .eq("company_id", company.id);
         if (error) throw error;
       } else {
-        const { error } = await getSupabase().from('clients').insert(payload);
+        const { error } = await getSupabase().from("clients").insert(payload);
         if (error) throw error;
       }
       resetForm();
       setShowModal(false);
       fetchClients();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erreur lors de l'enregistrement");
+      const msg = err instanceof Error ? err.message : "Erreur lors de l'enregistrement";
+      setError(msg);
     }
   };
 
@@ -96,100 +123,187 @@ export default function ClientsPage() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Supprimer ce client ?")) return;
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    const id = confirmDelete;
+    setConfirmDelete(null);
     try {
-      const { error } = await getSupabase().from('clients').delete().eq('id', id).eq('company_id', currentCompany?.id);
+      const company = getCurrentCompany();
+      if (!company) return;
+      const { error } = await getSupabase()
+        .from("clients")
+        .delete()
+        .eq("id", id)
+        .eq("company_id", company.id);
       if (error) throw error;
       fetchClients();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erreur lors de la suppression");
+      const msg = err instanceof Error ? err.message : "Erreur lors de la suppression";
+      setError(msg);
     }
   };
 
   return (
-    <>
-      <div className="mb-6">
-        <Card className="p-4">
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle className="text-xl font-bold">Gestion des Clients</CardTitle>
-            <Button onClick={() => { resetForm(); setShowModal(true); }} className="ml-auto">
-              + Nouveau Client
-            </Button>
-          </CardHeader>
-          {error && <div className="mt-3 p-3 bg-red-50 border border-red-200 text-red-800 rounded">{error}</div>}
-        </Card>
-      </div>
+    <div style={{ paddingBottom: 24 }}>
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Supprimer le client ?"
+        message="Cette action est irréversible."
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(null)}
+        variant="danger"
+      />
 
-      <Modal open={showModal} onOpenChange={setShowModal}>
-        <ModalHeader title={isEditing ? "Modifier le client" : "Nouveau Client"} />
-        <ModalBody>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Nom *</label>
-              <Input type="text" value={formData.nom} onChange={(e) => setFormData(p => ({ ...p, nom: e.target.value }))} required />
+      <Card style={{ marginBottom: 20 }}>
+        <CardHeader>
+          <div>
+            <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--text)" }}>
+              Gestion des Clients
+            </h1>
+            <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
+              {clients.length} client(s)
+            </p>
+          </div>
+          <Button
+            variant="primary"
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
+          >
+            + Nouveau Client
+          </Button>
+        </CardHeader>
+        {error && (
+          <div
+            style={{
+              background: "var(--danger-light)",
+              border: "1px solid var(--danger)",
+              color: "var(--danger)",
+              borderRadius: 8,
+              padding: "10px 14px",
+              fontSize: 13,
+              marginTop: 12,
+            }}
+          >
+            {error}
+          </div>
+        )}
+      </Card>
+
+      <Modal
+        open={showModal}
+        onClose={() => {
+          resetForm();
+          setShowModal(false);
+        }}
+      >
+        <ModalHeader
+          title={isEditing ? "Modifier le client" : "Nouveau Client"}
+          onClose={() => {
+            resetForm();
+            setShowModal(false);
+          }}
+        />
+        <form onSubmit={handleSubmit}>
+          <ModalBody>
+            <Input
+              label="Nom *"
+              value={formData.nom}
+              onChange={(e) => setFormData((p) => ({ ...p, nom: e.target.value }))}
+              required
+            />
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 12,
+              }}
+            >
+              <Input
+                label="Téléphone"
+                type="tel"
+                value={formData.telephone}
+                onChange={(e) => setFormData((p) => ({ ...p, telephone: e.target.value }))}
+                placeholder="034..."
+              />
+              <Input
+                label="Email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
+                placeholder="client@email.com"
+              />
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium mb-2">Téléphone</label>
-                <Input type="tel" value={formData.telephone} onChange={(e) => setFormData(p => ({ ...p, telephone: e.target.value }))} placeholder="034..." />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
-                <Input type="email" value={formData.email} onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))} placeholder="client@email.com" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Adresse</label>
-              <Input type="text" value={formData.adresse} onChange={(e) => setFormData(p => ({ ...p, adresse: e.target.value }))} placeholder="Adresse complète" />
-            </div>
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => { resetForm(); setShowModal(false); }}>Annuler</Button>
-              <Button type="submit">{isEditing ? "Mettre à jour" : "Enregistrer"}</Button>
-            </div>
-          </form>
-        </ModalBody>
+            <Input
+              label="Adresse"
+              value={formData.adresse}
+              onChange={(e) => setFormData((p) => ({ ...p, adresse: e.target.value }))}
+              placeholder="Adresse complète"
+            />
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                resetForm();
+                setShowModal(false);
+              }}
+            >
+              Annuler
+            </Button>
+            <Button type="submit">{isEditing ? "Mettre à jour" : "Enregistrer"}</Button>
+          </ModalFooter>
+        </form>
       </Modal>
 
-      <div className="mt-6">
-        <Card className="p-4">
-          {loading ? (
-            <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full border-4 border-primary border-t-transparent h-8 w-8"></div>
-              <p className="mt-2 text-muted-foreground">Chargement des clients...</p>
-            </div>
-          ) : clients.length === 0 ? (
-            <div className="text-center py-8"><p className="text-muted-foreground">Aucun client trouvé.</p></div>
-          ) : (
-            <Table className="w-full">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Nom</TableCell>
-                  <TableCell>Téléphone</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Adresse</TableCell>
-                  <TableCell className="text-right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {clients.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.nom}</TableCell>
-                    <TableCell>{c.telephone || "—"}</TableCell>
-                    <TableCell>{c.email || "—"}</TableCell>
-                    <TableCell>{c.adresse || "—"}</TableCell>
-                    <TableCell className="flex gap-2 justify-end">
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(c)}>Modifier</Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDelete(c.id)}>Supprimer</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+      {loading ? (
+        <Card padding={48}>
+          <div style={{ textAlign: "center", color: "var(--muted)" }}>Chargement...</div>
         </Card>
-      </div>
-    </>
+      ) : clients.length === 0 ? (
+        <Card padding={48}>
+          <div style={{ textAlign: "center", color: "var(--muted)" }}>Aucun client trouvé.</div>
+        </Card>
+      ) : (
+        <Card padding={0}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Nom</TableHeader>
+                <TableHeader>Téléphone</TableHeader>
+                <TableHeader>Email</TableHeader>
+                <TableHeader>Adresse</TableHeader>
+                <TableHeader align="right">Actions</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {clients.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell style={{ fontWeight: 600 }}>{c.nom}</TableCell>
+                  <TableCell>{c.telephone || "—"}</TableCell>
+                  <TableCell>{c.email || "—"}</TableCell>
+                  <TableCell>{c.adresse || "—"}</TableCell>
+                  <TableCell align="right">
+                    <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                      <Button variant="secondary" size="sm" onClick={() => handleEdit(c)}>
+                        Modifier
+                      </Button>
+                      <Button variant="danger" size="sm" onClick={() => setConfirmDelete(c.id)}>
+                        Supprimer
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
+    </div>
   );
 }
 

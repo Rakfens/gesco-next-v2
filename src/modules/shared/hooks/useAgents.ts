@@ -1,10 +1,15 @@
-'use client';
+"use client";
 
 // useAgents.ts — v2 : companyId passé au service, plus de race condition
-import { useState, useEffect, useCallback } from 'react';
-import { fetchAgents, addAgent, updateAgent, deleteAgent } from '../../livraison/services/agentService';
-import { useCompany } from '../context/CompanyContext';
-import type { Agent } from '@/modules/shared/types';
+import { useCallback, useEffect, useState } from "react";
+import type { Agent } from "@/modules/shared/types";
+import {
+  addAgent,
+  deleteAgent,
+  fetchAgents,
+  updateAgent,
+} from "../../livraison/services/agentService";
+import { useCompany } from "../context/CompanyContext";
 
 interface UseAgentsReturn {
   agents: Agent[];
@@ -17,57 +22,67 @@ interface UseAgentsReturn {
 }
 
 export const useAgents = (): UseAgentsReturn => {
-  const [agents,  setAgents]  = useState<Agent[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { currentCompany } = useCompany();
 
   const loadAgents = useCallback(async () => {
-    if (!currentCompany?.id) { setAgents([]); setLoading(false); return; }
+    if (!currentCompany?.id) {
+      setAgents([]);
+      setLoading(false);
+      return;
+    }
     try {
       setError(null);
       const data = await fetchAgents(currentCompany.id);
       setAgents(data);
-    } catch (err) {
+    } catch (err: unknown) {
       setError((err as Error).message);
     } finally {
       setLoading(false);
     }
   }, [currentCompany?.id]);
 
-  useEffect(() => { loadAgents(); }, [loadAgents]);
+  useEffect(() => {
+    loadAgents();
+  }, [loadAgents]);
 
   useEffect(() => {
-    const handler = (e: Event) => { if ((e as CustomEvent).detail?.table === 'agents') loadAgents(); };
-    window.addEventListener('supabase_realtime', handler);
-    return () => window.removeEventListener('supabase_realtime', handler);
+    const handler = (e: Event) => {
+      if ((e as CustomEvent).detail?.table === "agents") loadAgents();
+    };
+    window.addEventListener("supabase_realtime", handler);
+    return () => window.removeEventListener("supabase_realtime", handler);
   }, [loadAgents]);
 
   const handleAddAgent = async (nom: string, salaire: number) => {
     const companyId = currentCompany?.id;
-    if (!companyId) throw new Error('Société non sélectionnée');
+    if (!companyId) throw new Error("Société non sélectionnée");
     const a = await addAgent(nom, salaire, companyId);
-    setAgents(prev => [...prev, a]);
+    setAgents((prev) => [...prev, a]);
     return a;
   };
 
   const handleUpdateAgent = async (id: string, updates: Partial<Agent>) => {
     const companyId = currentCompany?.id;
-    if (!companyId) throw new Error('Société non sélectionnée');
+    if (!companyId) throw new Error("Société non sélectionnée");
     await updateAgent(id, updates, companyId);
-    setAgents(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+    setAgents((prev) => prev.map((a) => (a.id === id ? { ...a, ...updates } : a)));
   };
 
   const handleDeleteAgent = async (id: string) => {
     const companyId = currentCompany?.id;
-    if (!companyId) throw new Error('Société non sélectionnée');
+    if (!companyId) throw new Error("Société non sélectionnée");
     await deleteAgent(id, companyId);
-    setAgents(prev => prev.filter(a => a.id !== id));
+    setAgents((prev) => prev.filter((a) => a.id !== id));
   };
 
   return {
-    agents, loading, error,
-    addAgent:    handleAddAgent,
+    agents,
+    loading,
+    error,
+    addAgent: handleAddAgent,
     updateAgent: handleUpdateAgent,
     deleteAgent: handleDeleteAgent,
     reloadAgents: loadAgents,
