@@ -13,11 +13,21 @@ interface Suggestions {
   lieux: string[];
 }
 
+const StatusIcon = ({ name, size = 16, color = "currentColor" }: { name: string; size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    {name === "clock" && <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>}
+    {name === "check" && <polyline points="20 6 9 17 4 12" />}
+    {name === "rotate-left" && <><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 10.49-3.74" /></>}
+    {name === "xmark" && <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>}
+  </svg>
+);
+
 /* ─── Status Button Component ─── */
 const STATUS_OPTIONS = [
-  { key: "en_cours", label: "En cours", color: "var(--warning)", bg: "rgba(251,191,36,0.1)", activeBg: "rgba(251,191,36,0.2)" },
-  { key: "livre", label: "Livré", color: "var(--success)", bg: "rgba(52,211,153,0.1)", activeBg: "rgba(52,211,153,0.2)" },
-  { key: "reporte", label: "Reporté", color: "var(--accent2)", bg: "rgba(139,92,246,0.1)", activeBg: "rgba(139,92,246,0.2)" },
+  { key: "en_cours", label: "En cours", color: "var(--warning)", bg: "rgba(251,191,36,0.1)", activeBg: "rgba(251,191,36,0.2)", icon: "clock" },
+  { key: "livre", label: "Livré", color: "var(--success)", bg: "rgba(52,211,153,0.1)", activeBg: "rgba(52,211,153,0.2)", icon: "check" },
+  { key: "retourne", label: "Retourné", color: "var(--danger)", bg: "rgba(248,113,113,0.1)", activeBg: "rgba(248,113,113,0.2)", icon: "rotate-left" },
+  { key: "reporte", label: "Reporté", color: "var(--accent2)", bg: "rgba(139,92,246,0.1)", activeBg: "rgba(139,92,246,0.2)", icon: "xmark" },
 ];
 
 function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate: (id: string, statut: string) => void }) {
@@ -29,16 +39,19 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
           <button
             key={opt.key}
             onClick={() => onUpdate(livraison.id, opt.key)}
+            title={opt.label}
             style={{
-              padding: "5px 12px", borderRadius: "var(--radius-full)", fontSize: 11, fontWeight: 600,
-              border: isActive ? `1px solid ${opt.color}` : "1px solid var(--border)",
-              background: isActive ? opt.activeBg : "transparent",
+              width: 36, height: 36, borderRadius: "var(--radius-md)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              border: isActive ? `1.5px solid ${opt.color}` : "1.5px solid var(--border)",
+              background: isActive ? opt.activeBg : "var(--card)",
               color: isActive ? opt.color : "var(--text-muted)",
               cursor: "pointer", transition: "all var(--transition-fast)",
-              letterSpacing: "0.02em",
+              boxShadow: isActive ? `0 0 12px ${opt.color}33` : "none",
+              fontSize: 14,
             }}
           >
-            {opt.label}
+            <StatusIcon name={opt.icon} size={16} color={isActive ? opt.color : "var(--text-muted)"} />
           </button>
         );
       })}

@@ -6,6 +6,7 @@ export interface StatutEntry {
   label: string;
   color: string;
   bg: string;
+  icon?: string;
 }
 
 export interface StatutVenteEntry {
@@ -78,9 +79,10 @@ export const formatDateTime = (dateStr: string | undefined | null): string => {
 
 // ==================== STATUTS DES LIVRAISONS ====================
 export const STATUTS: Record<string, StatutEntry> = {
-  en_cours: { label: "En cours", color: "#fbbf24", bg: "rgba(251,191,36,0.15)" },
-  livre: { label: "Livré", color: "#34d399", bg: "rgba(52,211,153,0.15)" },
-  reporte: { label: "Reporté", color: "#a78bfa", bg: "rgba(167,139,250,0.15)" },
+  en_cours: { label: "En cours", color: "#fbbf24", bg: "rgba(251,191,36,0.15)", icon: "clock" },
+  livre: { label: "Livré", color: "#34d399", bg: "rgba(52,211,153,0.15)", icon: "check" },
+  retourne: { label: "Retourné", color: "#f87171", bg: "rgba(248,113,113,0.15)", icon: "rotate-left" },
+  reporte: { label: "Reporté", color: "#a78bfa", bg: "rgba(167,139,250,0.15)", icon: "calendar-xmark" },
 };
 
 // Liste des statuts pour les sélecteurs
