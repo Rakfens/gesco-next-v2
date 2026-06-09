@@ -9,7 +9,6 @@ import { getCompanyMeta } from "@/modules/shared/components/layout/company";
 import { NAV_CONFIG } from "@/modules/shared/components/layout/navConfig";
 import { AppProvider } from "@/modules/shared/context/AppContext";
 import { CompanyProvider, useCompany } from "@/modules/shared/context/CompanyContext";
-import { ThemeProvider } from "@/modules/shared/context/ThemeContext";
 
 export const dynamic = "force-dynamic";
 
@@ -290,12 +289,10 @@ function LayoutContent({ children }: { children: ReactNode }) {
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider>
-      <CompanyProvider>
-        <AppProvider>
-          <LayoutContent>{children}</LayoutContent>
-        </AppProvider>
-      </CompanyProvider>
-    </ThemeProvider>
+    <CompanyProvider>
+      <AppProvider>
+        <LayoutContent>{children}</LayoutContent>
+      </AppProvider>
+    </CompanyProvider>
   );
 }

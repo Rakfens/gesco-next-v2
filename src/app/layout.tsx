@@ -1,13 +1,19 @@
 "use client";
 
-import { useTheme } from "@/modules/shared/context/ThemeContext";
+import { ThemeProvider } from "@/modules/shared/context/ThemeContext";
 import { type ReactNode } from "react";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const { theme } = useTheme();
-
   return (
-    <html lang="fr" data-theme={theme} style={{ height: "100%" }}>
+    <ThemeProvider>
+      <RootLayoutInner>{children}</RootLayoutInner>
+    </ThemeProvider>
+  );
+}
+
+function RootLayoutInner({ children }: { children: ReactNode }) {
+  return (
+    <html lang="fr" style={{ height: "100%" }}>
       <body
         style={{
           minHeight: "100%",
