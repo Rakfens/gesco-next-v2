@@ -78,11 +78,9 @@ export const formatDateTime = (dateStr: string | undefined | null): string => {
 
 // ==================== STATUTS DES LIVRAISONS ====================
 export const STATUTS: Record<string, StatutEntry> = {
-  en_cours: { label: "En cours", color: "#f59e0b", bg: "#451a03" },
-  livre: { label: "Livré", color: "#34d399", bg: "#14532d" },
-  retourne: { label: "Retourné", color: "#f87171", bg: "#450a0a" },
-  reporte: { label: "Reporté", color: "#a78bfa", bg: "#2e1065" },
-  province: { label: "Province", color: "#a78bfa", bg: "#1e3a5f" },
+  en_cours: { label: "En cours", color: "#fbbf24", bg: "rgba(251,191,36,0.15)" },
+  livre: { label: "Livré", color: "#34d399", bg: "rgba(52,211,153,0.15)" },
+  reporte: { label: "Reporté", color: "#a78bfa", bg: "rgba(167,139,250,0.15)" },
 };
 
 // Liste des statuts pour les sélecteurs

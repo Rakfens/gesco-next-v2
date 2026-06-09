@@ -353,8 +353,8 @@ export const LivraisonForm = ({
           />
         </div>
 
-        {/* Remarque motif — visible si retourné ou reporté */}
-        {(form.statut === "retourne" || form.statut === "reporte") && (
+        {/* Remarque motif — visible si reporté */}
+        {form.statut === "reporte" && (
           <div style={{ marginTop: 12 }}>
             <label
               style={{
@@ -365,7 +365,7 @@ export const LivraisonForm = ({
                 marginBottom: 6,
               }}
             >
-              {form.statut === "retourne" ? "Motif du retour *" : "Motif du report"}
+              Motif du report
             </label>
             <textarea
               style={{
@@ -384,11 +384,7 @@ export const LivraisonForm = ({
               }}
               value={form.remarque || ""}
               onChange={(e) => setForm({ ...form, remarque: e.target.value })}
-              placeholder={
-                form.statut === "retourne"
-                  ? "Ex: Destinataire absent, adresse incorrecte..."
-                  : "Ex: Reporté au lendemain..."
-              }
+                placeholder="Ex: Reporté au lendemain..."
             />
           </div>
         )}
