@@ -169,6 +169,7 @@ export default function Dashboard() {
   const commissionGerant = COMMISSION_DEFAUT;
   const isMobile = useIsMobile();
   const [selectedDate, setSelectedDate] = useState<string>(TODAY());
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth());
   const [recuperationsJour, setRecuperationsJour] = useState<Recuperation[]>([]);
   const [loadingRecup, setLoadingRecup] = useState(false);
   const [errorRecup, setErrorRecup] = useState<string | null>(null);
@@ -195,6 +196,20 @@ export default function Dashboard() {
     const fm = currentMonth();
     return safeLivraisons.filter((l) => l.date && l.date.startsWith(fm));
   }, [safeLivraisons]);
+
+  // Mois disponibles pour le sélecteur
+  const availableMonths = useMemo(() => {
+    const months = new Set(safeLivraisons.map((l) => l.date?.slice(0, 7)).filter(Boolean));
+    months.add(currentMonth());
+    return [...months].sort().reverse() as string[];
+  }, [safeLivraisons]);
+
+  // Livraisons du mois sélectionné
+  const selectedMonthLivraisons = useMemo(() => {
+    return safeLivraisons
+      .filter((l) => l.date && l.date.startsWith(selectedMonth))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [safeLivraisons, selectedMonth]);
 
   const handleStatusUpdate = async (id: string, statut: string, remarque?: string) => {
     try {
@@ -338,31 +353,90 @@ export default function Dashboard() {
             </div>
             <CardTitle>Livraisons</CardTitle>
           </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            {(["jour", "mois"] as const).map((tab) => {
-              const isActive = activeTab === tab;
-              const count = tab === "jour" ? todayLivraisons.length : monthLivraisons.length;
-              const label = tab === "jour" ? `Aujourd'hui (${count})` : `Ce mois (${count})`;
-              return (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  style={{
-                    padding: "7px 18px", borderRadius: "var(--radius-full)", fontSize: 12, fontWeight: 600,
-                    border: isActive ? "1.5px solid var(--accent)" : "1.5px solid var(--border)",
-                    background: isActive ? "var(--accent-light)" : "transparent",
-                    color: isActive ? "var(--accent)" : "var(--text-muted)",
-                    cursor: "pointer", transition: "all var(--transition-fast)",
-                    boxShadow: isActive ? "0 0 12px rgba(201,169,110,0.15)" : "none",
-                  }}
-                >
-                  {label}
-                </button>
-              );
-            })}
+          {/* Sélecteur de mois */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              onClick={() => {
+                const prev = new Date(selectedMonth + "-01");
+                prev.setMonth(prev.getMonth() - 1);
+                setSelectedMonth(prev.toISOString().slice(0, 7));
+                setActiveTab("mois");
+              }}
+              style={{
+                width: 32, height: 32, borderRadius: "var(--radius-md)",
+                background: "var(--bg-secondary)", border: "1px solid var(--border)",
+                color: "var(--text)", cursor: "pointer", display: "flex",
+                alignItems: "center", justifyContent: "center", fontSize: 16,
+              }}
+            >
+              ‹
+            </button>
+            <select
+              value={selectedMonth}
+              onChange={(e) => { setSelectedMonth(e.target.value); setActiveTab("mois"); }}
+              style={{
+                padding: "7px 14px", borderRadius: "var(--radius-full)", fontSize: 13, fontWeight: 600,
+                border: "1.5px solid var(--accent)", background: "var(--accent-light)",
+                color: "var(--accent)", cursor: "pointer", outline: "none",
+                fontFamily: "var(--font)", appearance: "none",
+                textAlign: "center", minWidth: 140,
+              }}
+            >
+              {availableMonths.map((m) => (
+                <option key={m} value={m}>{monthLabel(m)}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => {
+                const next = new Date(selectedMonth + "-01");
+                next.setMonth(next.getMonth() + 1);
+                const nextStr = next.toISOString().slice(0, 7);
+                if (nextStr <= currentMonth()) {
+                  setSelectedMonth(nextStr);
+                  setActiveTab("mois");
+                }
+              }}
+              disabled={selectedMonth >= currentMonth()}
+              style={{
+                width: 32, height: 32, borderRadius: "var(--radius-md)",
+                background: selectedMonth >= currentMonth() ? "var(--bg-tertiary)" : "var(--bg-secondary)",
+                border: "1px solid var(--border)",
+                color: selectedMonth >= currentMonth() ? "var(--text-faint)" : "var(--text)",
+                cursor: selectedMonth >= currentMonth() ? "not-allowed" : "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16,
+              }}
+            >
+              ›
+            </button>
           </div>
         </CardHeader>
 
+        {/* Tabs Jour / Mois */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 16, padding: "0 20px" }}>
+          {(["jour", "mois"] as const).map((tab) => {
+            const isActive = activeTab === tab;
+            const count = tab === "jour" ? todayLivraisons.length : selectedMonthLivraisons.length;
+            const label = tab === "jour" ? `Aujourd'hui (${count})` : `${monthLabel(selectedMonth)} (${count})`;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  padding: "7px 18px", borderRadius: "var(--radius-full)", fontSize: 12, fontWeight: 600,
+                  border: isActive ? "1.5px solid var(--accent)" : "1.5px solid var(--border)",
+                  background: isActive ? "var(--accent-light)" : "transparent",
+                  color: isActive ? "var(--accent)" : "var(--text-muted)",
+                  cursor: "pointer", transition: "all var(--transition-fast)",
+                  boxShadow: isActive ? "0 0 12px rgba(201,169,110,0.15)" : "none",
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Contenu */}
         {activeTab === "jour" ? (
           todayLivraisons.length === 0 ? (
             <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "40px 0", fontSize: 13 }}>
@@ -370,7 +444,7 @@ export default function Dashboard() {
               Aucune livraison aujourd'hui.
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "0 20px 20px" }}>
               {todayLivraisons.map((l) => (
                 <div key={l.id} style={{
                   display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
@@ -378,7 +452,6 @@ export default function Dashboard() {
                   border: "1px solid var(--border)", flexWrap: "wrap",
                   transition: "all var(--transition-fast)",
                 }}>
-                  {/* Colis icon */}
                   <div style={{
                     width: 40, height: 40, borderRadius: "var(--radius-md)",
                     background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center",
@@ -405,38 +478,77 @@ export default function Dashboard() {
             </div>
           )
         ) : (
-          monthLivraisons.length === 0 ? (
+          selectedMonthLivraisons.length === 0 ? (
             <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "40px 0", fontSize: 13 }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>📦</div>
-              Aucune livraison ce mois-ci.
+              Aucune livraison en {monthLabel(selectedMonth)}.
             </div>
           ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeader>Colis</TableHeader>
-                  <TableHeader>Donneur</TableHeader>
-                  <TableHeader>Destinataire</TableHeader>
-                  <TableHeader>Date</TableHeader>
-                  <TableHeader align="right">Montant</TableHeader>
-                  <TableHeader align="center">Statut</TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {monthLivraisons.map((l) => (
-                  <TableRow key={l.id}>
-                    <TableCell style={{ fontWeight: 600 }}>{l.colis}</TableCell>
-                    <TableCell>{l.client_donneur || "—"}</TableCell>
-                    <TableCell>{l.destinataire}</TableCell>
-                    <TableCell style={{ color: "var(--text-muted)", fontSize: 12 }}>{l.date}</TableCell>
-                    <TableCell align="right" style={{ color: "var(--accent)", fontWeight: 600 }}>{l.montant ? formatAr(l.montant) : "—"}</TableCell>
-                    <TableCell align="center">
-                      <StatusButtons livraison={l} onUpdate={handleStatusUpdate} />
-                    </TableCell>
-                  </TableRow>
+            <div style={{ padding: "0 20px 20px" }}>
+              {/* Stats du mois */}
+              <div style={{
+                display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
+                gap: 10, marginBottom: 16,
+              }}>
+                {[
+                  { label: "Total", value: selectedMonthLivraisons.length, color: "var(--accent)" },
+                  { label: "Livrés", value: selectedMonthLivraisons.filter((l) => l.statut === "livre").length, color: "var(--success)" },
+                  { label: "En cours", value: selectedMonthLivraisons.filter((l) => l.statut === "en_cours").length, color: "var(--warning)" },
+                  { label: "Retournés", value: selectedMonthLivraisons.filter((l) => l.statut === "retourne").length, color: "var(--danger)" },
+                ].map((s) => (
+                  <div key={s.label} style={{
+                    textAlign: "center", padding: "10px 6px",
+                    background: "var(--bg-secondary)", borderRadius: "var(--radius-md)",
+                    border: "1px solid var(--border)",
+                  }}>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: s.color }}>{s.value}</div>
+                    <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 2, textTransform: "uppercase", letterSpacing: "0.04em" }}>{s.label}</div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+
+              {/* Liste des livraisons du mois */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {selectedMonthLivraisons.map((l) => (
+                  <div key={l.id} style={{
+                    display: "flex", alignItems: "center", gap: 12, padding: "12px 16px",
+                    background: "var(--bg-secondary)", borderRadius: "var(--radius-lg)",
+                    border: "1px solid var(--border)", flexWrap: "wrap",
+                  }}>
+                    {/* Date badge */}
+                    <div style={{
+                      width: 46, height: 46, borderRadius: "var(--radius-md)",
+                      background: "var(--accent-dim)", display: "flex", flexDirection: "column",
+                      alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    }}>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: "var(--accent)", lineHeight: 1 }}>
+                        {l.date.split("-")[2]}
+                      </span>
+                      <span style={{ fontSize: 9, color: "var(--text-muted)", textTransform: "uppercase" }}>
+                        {["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"][parseInt(l.date.split("-")[1]) - 1]}
+                      </span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 140 }}>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text)" }}>{l.colis}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>
+                        {l.client_donneur || "—"} → {l.destinataire || "—"}
+                      </div>
+                      {l.agent_nom && (
+                        <div style={{ fontSize: 10, color: "var(--accent)", marginTop: 1 }}>🚚 {l.agent_nom}</div>
+                      )}
+                    </div>
+                    <div style={{
+                      fontSize: 12, fontWeight: 700, color: "var(--accent)",
+                      whiteSpace: "nowrap", padding: "3px 8px",
+                      background: "var(--accent-dim)", borderRadius: "var(--radius-full)",
+                    }}>
+                      {l.montant ? formatAr(l.montant) : "—"}
+                    </div>
+                    <StatusButtons livraison={l} onUpdate={handleStatusUpdate} />
+                  </div>
+                ))}
+              </div>
+            </div>
           )
         )}
       </Card>
