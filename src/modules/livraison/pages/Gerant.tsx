@@ -1,546 +1,274 @@
-// Gerant.tsx — Refactorisé avec design system professionnel - Amélioré
 import { useEffect, useMemo, useState } from "react";
 import { logger } from "@/lib/logger";
 import {
-  Badge,
-  type BadgeVariant,
-  Button,
-  Card,
-  Input,
-  Select,
-  StatCard,
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Badge, Button, Card, CardHeader, CardTitle,
+  Input, Select, StatCard, Table, TableBody, TableCell,
+  TableFooter, TableHead, TableHeader, TableRow,
 } from "@/modules/shared/components/ui";
 import { useApp } from "@/modules/shared/context/AppContext";
 import { useIsMobile } from "@/modules/shared/hooks/useIsMobile";
 import type { Livraison } from "@/modules/shared/types";
 import {
-  CURRENT_MONTH,
-  EXCLUDED_CLIENTS,
-  formatAr,
-  monthLabel,
-  shouldCountGerantCommission,
+  CURRENT_MONTH, EXCLUDED_CLIENTS, formatAr, monthLabel,
+  shouldCountGerantCommission, TODAY,
 } from "@/modules/shared/utils/constants";
+
+/* ─── Colors ─── */
+const C = {
+  gold: "#c9a96e", goldDim: "rgba(201,169,110,0.1)",
+  success: "#34d399", successDim: "rgba(52,211,153,0.1)",
+  warning: "#fbbf24", warningDim: "rgba(251,191,36,0.1)",
+  danger: "#f87171", dangerDim: "rgba(248,113,113,0.1)",
+  violet: "#8b5cf6", violetDim: "rgba(139,92,246,0.1)",
+  pink: "#f472b6", pinkDim: "rgba(244,114,182,0.1)",
+};
+
+const Icon = ({ d, size = 16, color = "currentColor" }: { d: string; size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d={d} />
+  </svg>
+);
 
 type TabKey = "jour" | "mois";
 
 export default function Gerant() {
-  const {
-    livraisons,
-    commissionGerant: globalCommissionGerant,
-    updateCommission: onUpdateCommission,
-    showToast,
-  } = useApp(); // Supposons updateCommission
-  // Suppression de la gestion locale de la commission
-  // const [localCommission, setLocalCommission] = useState<number>(commissionGerant);
-
+  const { livraisons, commissionGerant: globalCommissionGerant, updateCommission: onUpdateCommission, showToast } = useApp();
   const isMobile = useIsMobile();
   const [editCommission, setEditCommission] = useState(false);
-  const [tmpCommission, setTmpCommission] = useState<number>(globalCommissionGerant); // Etat temporaire pendant l'édition
-
+  const [tmpCommission, setTmpCommission] = useState<number>(globalCommissionGerant);
   const [gerantTab, setGerantTab] = useState<TabKey>("jour");
-  const [gerantDate, setGerantDate] = useState<string>(new Date().toISOString().split("T")[0]);
+  const [gerantDate, setGerantDate] = useState<string>(TODAY());
   const [gerantMonth, setGerantMonth] = useState<string>(CURRENT_MONTH());
 
-  // Mise à jour de tmpCommission si la commission globale change pendant l'édition
   useEffect(() => {
-    if (!editCommission) {
-      setTmpCommission(globalCommissionGerant);
-    }
+    if (!editCommission) setTmpCommission(globalCommissionGerant);
   }, [globalCommissionGerant, editCommission]);
 
-  // Fonction pour calculer les livraisons du gérant
+  const safeLivraisons = Array.isArray(livraisons) ? livraisons : [];
+
   const livsGerant = (arr: Livraison[]) => arr.filter((l) => shouldCountGerantCommission(l));
 
-  // Calculs pour la vue "jour"
-  const { dayLivs, dayCount, dayGain, dayFraisTotal, dayNet, dayExcluded } = useMemo(() => {
-    const dayLivs = livsGerant(livraisons.filter((l) => l.date === gerantDate));
-    const dayCount = dayLivs.length;
-    const dayGain = dayCount * globalCommissionGerant; // Utiliser la commission globale
-    const dayFraisTotal = dayLivs.reduce(
-      (s, l: Livraison) =>
-        s + (typeof l.frais === "number" ? l.frais : parseFloat(String(l.frais || 0))),
-      0,
-    );
-    const dayNet = dayFraisTotal - dayGain;
+  // Jour
+  const dayLivs = useMemo(() => livsGerant(safeLivraisons.filter((l) => l.date === gerantDate)), [safeLivraisons, gerantDate]);
+  const dayCount = dayLivs.length;
+  const dayGain = dayCount * globalCommissionGerant;
+  const dayFraisTotal = dayLivs.reduce((s, l) => s + (Number(l.frais) || 0), 0);
+  const dayNet = dayFraisTotal - dayGain;
+  const dayExcluded = safeLivraisons.filter((l) => l.date === gerantDate && EXCLUDED_CLIENTS.includes((l.client_donneur || "").toUpperCase()) && (Number(l.frais) || 0) > 0);
 
-    const dayExcluded = livraisons.filter(
-      (l) =>
-        l.date === gerantDate &&
-        EXCLUDED_CLIENTS.includes((l.client_donneur || "").toUpperCase()) &&
-        (typeof l.frais === "number" ? l.frais : parseFloat(String(l.frais || 0))) > 0,
-    );
-
-    return { dayLivs, dayCount, dayGain, dayFraisTotal, dayNet, dayExcluded };
-  }, [livraisons, gerantDate, globalCommissionGerant, livsGerant]);
-
-  // Calculs pour la vue "mois"
-  const { monthLivs, monthCount, monthGain, monthFrais, monthByDay } = useMemo(() => {
-    const monthLivs = livsGerant(livraisons.filter((l) => l.date?.startsWith(gerantMonth)));
-    const monthCount = monthLivs.length;
-    const monthGain = monthCount * globalCommissionGerant; // Utiliser la commission globale
-    const monthFrais = monthLivs.reduce(
-      (s, l: Livraison) =>
-        s + (typeof l.frais === "number" ? l.frais : parseFloat(String(l.frais || 0))),
-      0,
-    );
-
-    const monthByDay = monthLivs.reduce(
-      (acc: Record<string, { date: string; count: number; gain: number }>, l) => {
-        if (!acc[l.date]) acc[l.date] = { date: l.date, count: 0, gain: 0 };
-        acc[l.date].count++;
-        acc[l.date].gain += globalCommissionGerant; // Utiliser la commission globale
-        return acc;
-      },
-      {},
-    );
-    const sortedDays = Object.values(monthByDay).sort((a, b) => b.date.localeCompare(a.date));
-
-    return { monthLivs, monthCount, monthGain, monthFrais, monthByDay: sortedDays };
-  }, [livraisons, gerantMonth, globalCommissionGerant, livsGerant]);
-
-  // Calcul des mois disponibles
-  const months = useMemo(() => {
-    const s = new Set(livraisons.map((l) => l.date?.slice(0, 7)).filter(Boolean));
-    s.add(CURRENT_MONTH());
-    return [...s].sort().reverse();
-  }, [livraisons]);
+  // Mois
+  const monthLivs = useMemo(() => livsGerant(safeLivraisons.filter((l) => l.date?.startsWith(gerantMonth))), [safeLivraisons, gerantMonth]);
+  const monthCount = monthLivs.length;
+  const monthGain = monthCount * globalCommissionGerant;
+  const monthFrais = monthLivs.reduce((s, l) => s + (Number(l.frais) || 0), 0);
+  const monthByDay = useMemo(() => {
+    const map: Record<string, { date: string; count: number; gain: number; frais: number }> = {};
+    monthLivs.forEach((l) => {
+      if (!map[l.date]) map[l.date] = { date: l.date, count: 0, gain: 0, frais: 0 };
+      map[l.date].count++;
+      map[l.date].gain += globalCommissionGerant;
+      map[l.date].frais += Number(l.frais) || 0;
+    });
+    return Object.values(map).sort((a, b) => b.date.localeCompare(a.date));
+  }, [monthLivs, globalCommissionGerant]);
 
   const handleUpdateCommission = async () => {
-    // Appeler la fonction de mise à jour dans useApp
-    if (onUpdateCommission) {
-      try {
-        await onUpdateCommission(tmpCommission);
-        showToast("Commission mise à jour");
-      } catch (error: unknown) {
-        logger.error("Erreur lors de la mise à jour de la commission:", error);
-        showToast("Erreur lors de la mise à jour de la commission.", "error");
-      }
-    }
+    try {
+      if (onUpdateCommission) await onUpdateCommission(tmpCommission);
+      showToast("Commission mise à jour");
+    } catch (e: unknown) { logger.error("Erreur commission:", e); showToast("Erreur", "error"); }
     setEditCommission(false);
   };
 
-  const statutBadge = (statut: string) => {
-    const variants: Record<string, BadgeVariant> = {
-      livre: "success",
-      en_cours: "primary",
-      retourne: "danger",
-      reporte: "default",
-      livre_partiel: "warning",
-    };
-    const labels: Record<string, string> = {
-      livre: "Livré",
-      en_cours: "En cours",
-      retourne: "Retourné",
-      reporte: "Reporté",
-      livre_partiel: "Partiel",
-    };
-    return <Badge variant={variants[statut] || "default"}>{labels[statut] || statut}</Badge>;
-  };
-
-  const monthOptions = useMemo(
-    () => months.map((m) => ({ value: m, label: monthLabel(m) })),
-    [months],
-  );
-
-  const tabs: { key: TabKey; label: string }[] = [
-    { key: "jour", label: "Par jour" },
-    { key: "mois", label: "Par mois" },
-  ];
+  const months = useMemo(() => {
+    const s = new Set(safeLivraisons.map((l) => l.date?.slice(0, 7)).filter(Boolean));
+    s.add(CURRENT_MONTH());
+    return [...s].sort().reverse() as string[];
+  }, [safeLivraisons]);
 
   return (
-    <div data-testid="gerant-page">
-      {/* Header */}
+    <div className="fadeUp" style={{ animation: "fadeUp 0.4s ease both", paddingBottom: 24 }}>
+
+      {/* ══ HEADER ══ */}
       <div style={{ marginBottom: 20 }}>
-        <h1
-          style={{ fontSize: 22, fontWeight: 800, color: "var(--text)", letterSpacing: "-0.02em" }}
-        >
-          Gérant
-        </h1>
-        <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
-          Commission : {formatAr(globalCommissionGerant)} par livraison (dès que les frais sont
-          payés) {/* Utiliser la commission globale */}
-        </p>
-        {EXCLUDED_CLIENTS.length > 0 && (
-          <p style={{ fontSize: 12, color: "var(--orange)", marginTop: 4 }}>
-            Clients exclus : {EXCLUDED_CLIENTS.join(", ")} (pas de commission)
-          </p>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: C.pinkDim, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={18} color={C.pink} />
+          </div>
+          <div>
+            <h1 style={{ fontSize: isMobile ? 20 : 24, fontWeight: 800, color: "var(--text)", margin: 0 }}>Gérant</h1>
+            <p style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 1 }}>
+              Commission : {formatAr(globalCommissionGerant)} par livraison
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Commission card */}
+      {/* ══ COMMISSION CARD ══ */}
       <Card style={{ marginBottom: 20 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 12,
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <div>
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: "var(--muted)",
-                textTransform: "uppercase",
-                marginBottom: 4,
-              }}
-            >
+            <div style={{ fontSize: 10, fontWeight: 700, color: C.pink, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
               Commission par livraison
             </div>
             {editCommission ? (
-              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <Input
-                  type="number"
-                  value={String(tmpCommission)} // Utiliser l'état temporaire
-                  onChange={(e) => setTmpCommission(parseFloat(e.target.value) || 0)}
-                  style={{ width: 140 }}
-                  aria-label="Entrez la nouvelle commission du gérant"
-                />
-                <Button variant="success" size="sm" onClick={handleUpdateCommission}>
-                  Sauver
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setEditCommission(false)}>
-                  Annuler
-                </Button>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <Input type="number" value={String(tmpCommission)} onChange={(e) => setTmpCommission(parseFloat(e.target.value) || 0)} style={{ width: 120 }} />
+                <Button variant="success" size="sm" onClick={handleUpdateCommission}>Sauver</Button>
+                <Button variant="ghost" size="sm" onClick={() => setEditCommission(false)}>Annuler</Button>
               </div>
             ) : (
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ fontSize: 22, fontWeight: 900, color: "var(--pink)" }}>
-                  {formatAr(globalCommissionGerant)}
-                </span>{" "}
-                {/* Utiliser la commission globale */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setTmpCommission(globalCommissionGerant);
-                    setEditCommission(true);
-                  }}
-                >
-                  {" "}
-                  {/* Initialiser tmp avec la globale */}
-                  Modifier
-                </Button>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 24, fontWeight: 900, color: C.pink }}>{formatAr(globalCommissionGerant)}</span>
+                <Button variant="ghost" size="sm" onClick={() => { setTmpCommission(globalCommissionGerant); setEditCommission(true); }}>Modifier</Button>
               </div>
             )}
           </div>
-          <div style={{ fontSize: 12, color: "var(--muted)", textAlign: "right" }}>
+          <div style={{ fontSize: 11, color: "var(--text-muted)", textAlign: "right" }}>
             <div>Commission sur toutes les livraisons</div>
-            <div>Dès que les frais sont payés (montant &gt; 0)</div>
-            <div>Sauf pour les clients : {EXCLUDED_CLIENTS.join(", ")}</div>
+            <div>Dès que les frais sont payés</div>
+            {EXCLUDED_CLIENTS.length > 0 && <div style={{ color: C.warning, marginTop: 2 }}>Exclus : {EXCLUDED_CLIENTS.join(", ")}</div>}
           </div>
         </div>
       </Card>
 
-      {/* Tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: 4,
-          marginBottom: 20,
-          background: "var(--card)",
-          borderRadius: 12,
-          padding: 4,
-          border: "1px solid var(--border)",
-        }}
-      >
-        {tabs.map((tab) => (
-          <Button
-            key={tab.key}
-            variant={gerantTab === tab.key ? "primary" : "ghost"}
-            size="sm"
-            onClick={() => setGerantTab(tab.key)}
-            style={{ flex: 1 }}
+      {/* ══ TABS ══ */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+        {(["jour", "mois"] as const).map((tab) => (
+          <button key={tab} onClick={() => setGerantTab(tab)}
+            style={{
+              padding: "8px 20px", borderRadius: 99, fontSize: 12, fontWeight: 600,
+              border: gerantTab === tab ? `1.5px solid ${C.pink}` : "1.5px solid var(--border)",
+              background: gerantTab === tab ? C.pinkDim : "transparent",
+              color: gerantTab === tab ? C.pink : "var(--text-muted)",
+              cursor: "pointer", transition: "all var(--transition-fast)", fontFamily: "var(--font)",
+            }}
           >
-            {tab.label}
-          </Button>
+            {tab === "jour" ? "Par jour" : "Par mois"}
+          </button>
         ))}
       </div>
 
-      {/* ====== TAB JOUR ====== */}
+      {/* ══ TAB JOUR ══ */}
       {gerantTab === "jour" && (
         <div>
           <div style={{ marginBottom: 16 }}>
-            <Input
-              label="Sélectionner une date"
-              type="date"
-              value={gerantDate}
-              onChange={(e) => setGerantDate(e.target.value)}
-              style={isMobile ? undefined : { maxWidth: 220 }}
-              aria-label="Sélectionnez une date pour voir les détails du gérant"
-            />
+            <Input label="Sélectionner une date" type="date" value={gerantDate} onChange={(e) => setGerantDate(e.target.value)}
+              style={isMobile ? undefined : { maxWidth: 220 }} />
           </div>
 
           {dayExcluded.length > 0 && (
-            <Card
-              style={{
-                marginBottom: 16,
-                background: "var(--orange-dim)",
-                borderColor: "var(--orange)",
-              }}
-            >
-              <div style={{ fontSize: 11, color: "var(--orange)", fontWeight: 600 }}>
-                {dayExcluded.length} livraison(s) exclue(s) de la commission (clients{" "}
-                {EXCLUDED_CLIENTS.join(", ")})
+            <Card style={{ marginBottom: 14, background: C.warningDim, border: `1px solid ${C.warning}30` }}>
+              <div style={{ fontSize: 11, color: C.warning, fontWeight: 600 }}>
+                ⚠️ {dayExcluded.length} livraison(s) exclue(s) — clients {EXCLUDED_CLIENTS.join(", ")}
               </div>
             </Card>
           )}
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(2,1fr)",
-              gap: 10,
-              marginBottom: 20,
-            }}
-          >
-            <Card
-              style={{
-                background: "linear-gradient(135deg, var(--card2), var(--bg))",
-                border: "1px solid var(--purple)",
-                gridColumn: "1/-1",
-              }}
-            >
-              <div
-                style={{ fontSize: 11, color: "var(--purple)", fontWeight: 700, marginBottom: 6 }}
-              >
-                GAIN DU GÉRANT — {gerantDate}
-              </div>
-              <div style={{ fontSize: 32, fontWeight: 900, color: "var(--text)" }}>
-                {formatAr(dayGain)}
-              </div>{" "}
-              {/* Utiliser le gain calculé */}
-              <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
-                {dayCount} livraisons × {formatAr(globalCommissionGerant)}
-              </div>{" "}
-              {/* Utiliser la commission globale */}
-            </Card>
-            <StatCard value={dayCount} label="Livraisons avec commission" color="blue" />
-            <StatCard value={formatAr(dayGain)} label="Gain gérant" color="purple" />
-            <StatCard value={formatAr(dayFraisTotal)} label="Frais collectés" color="orange" />
-            <StatCard
-              value={formatAr(dayNet)}
-              label="Frais nets (frais - commission)"
-              color={dayNet >= 0 ? "green" : "red"}
-            />
+          {/* Stats jour */}
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 10, marginBottom: 16 }}>
+            <StatCard label="Gain du jour" value={formatAr(dayGain)} color={C.pink} icon={<Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={18} color={C.pink} />} />
+            <StatCard label="Livraisons" value={dayCount} color={C.gold} icon={<Icon d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" size={18} color={C.gold} />} />
+            <StatCard label="Frais collectés" value={formatAr(dayFraisTotal)} color={C.violet} icon={<Icon d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" size={18} color={C.violet} />} />
+            <StatCard label="Frais nets" value={formatAr(dayNet)} color={dayNet >= 0 ? C.success : C.danger} icon={<Icon d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" size={18} color={dayNet >= 0 ? C.success : C.danger} />} />
           </div>
 
-          {dayLivs.length > 0 && (
-            <div>
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "var(--muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  marginBottom: 12,
-                }}
-              >
-                Détail des livraisons avec commission — {gerantDate}
-              </div>
-              <Table>
-                <TableHead>
+          {dayLivs.length > 0 ? (
+            <Table>
+              <TableHead>
+                <TableRow>
                   <TableHeader>#</TableHeader>
                   <TableHeader>Colis</TableHeader>
                   <TableHeader>Client donneur</TableHeader>
                   <TableHeader>Destinataire</TableHeader>
                   <TableHeader>Agent</TableHeader>
-                  <TableHeader>Statut</TableHeader>
                   <TableHeader align="right">Frais</TableHeader>
                   <TableHeader align="right">Commission</TableHeader>
-                </TableHead>
-                <TableBody>
-                  {dayLivs.map((l, i) => (
-                    <TableRow key={l.id}>
-                      <TableCell>{i + 1}</TableCell>
-                      <TableCell style={{ fontWeight: 600 }}>{l.colis}</TableCell>
-                      <TableCell>{l.client_donneur}</TableCell>
-                      <TableCell>{l.destinataire}</TableCell>
-                      <TableCell>{l.agent_nom}</TableCell>
-                      <TableCell>{statutBadge(String(l.statut))}</TableCell>
-                      <TableCell align="right" style={{ color: "var(--orange)" }}>
-                        {formatAr(
-                          typeof l.frais === "number" ? l.frais : parseFloat(String(l.frais || 0)),
-                        )}
-                      </TableCell>
-                      <TableCell align="right">{formatAr(globalCommissionGerant)}</TableCell>{" "}
-                      {/* Utiliser la commission globale */}
-                    </TableRow>
-                  ))}
-                </TableBody>
-                <TableFooter>
-                  <td
-                    colSpan={6}
-                    style={{
-                      padding: "10px 12px",
-                      fontWeight: 700,
-                      color: "var(--muted)",
-                      fontSize: 11,
-                    }}
-                  >
-                    TOTAL
-                  </td>
-                  <td
-                    style={{
-                      padding: "10px 12px",
-                      textAlign: "right",
-                      fontWeight: 700,
-                      color: "var(--orange)",
-                    }}
-                  >
-                    {formatAr(dayFraisTotal)}
-                  </td>
-                  <td
-                    style={{
-                      padding: "10px 12px",
-                      textAlign: "right",
-                      fontWeight: 700,
-                      color: "var(--pink)",
-                    }}
-                  >
-                    {formatAr(dayGain)}
-                  </td>
-                </TableFooter>
-              </Table>
-            </div>
-          )}
-          {dayLivs.length === 0 && (
-            <Card style={{ textAlign: "center", color: "var(--muted)", padding: "40px 0" }}>
-              Aucune livraison avec commission ce jour.
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {dayLivs.map((l, i) => (
+                  <TableRow key={l.id}>
+                    <TableCell>{i + 1}</TableCell>
+                    <TableCell style={{ fontWeight: 600 }}>{l.colis}</TableCell>
+                    <TableCell>{l.client_donneur}</TableCell>
+                    <TableCell>{l.destinataire}</TableCell>
+                    <TableCell>{l.agent_nom}</TableCell>
+                    <TableCell align="right" style={{ color: C.violet, fontWeight: 600 }}>{formatAr(Number(l.frais) || 0)}</TableCell>
+                    <TableCell align="right" style={{ color: C.pink, fontWeight: 600 }}>{formatAr(globalCommissionGerant)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableCell colSpan={5} style={{ fontWeight: 700 }}>TOTAL</TableCell>
+                <TableCell align="right" style={{ fontWeight: 700, color: C.violet }}>{formatAr(dayFraisTotal)}</TableCell>
+                <TableCell align="right" style={{ fontWeight: 700, color: C.pink }}>{formatAr(dayGain)}</TableCell>
+              </TableFooter>
+            </Table>
+          ) : (
+            <Card padding={32}>
+              <div style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
+                <div style={{ fontSize: 28, marginBottom: 6 }}>💰</div>
+                Aucune livraison avec commission ce jour.
+              </div>
             </Card>
           )}
         </div>
       )}
 
-      {/* ====== TAB MOIS ====== */}
+      {/* ══ TAB MOIS ══ */}
       {gerantTab === "mois" && (
         <div>
           <div style={{ marginBottom: 16 }}>
-            <Select
-              label="Sélectionner un mois"
-              value={gerantMonth}
-              onChange={(e) => setGerantMonth(e.target.value)}
-              options={monthOptions}
+            <Select label="Sélectionner un mois" value={gerantMonth} onChange={(e) => setGerantMonth(e.target.value)}
               style={isMobile ? undefined : { maxWidth: 220 }}
-              aria-label="Sélectionnez un mois pour voir les détails du gérant"
-            />
+              options={months.map((m) => ({ value: m, label: monthLabel(m) }))} />
           </div>
 
-          <Card style={{ marginBottom: 16 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 12,
-                alignItems: "center",
-              }}
-            >
-              <div>
-                <div
-                  style={{ fontSize: 11, color: "var(--purple)", fontWeight: 700, marginBottom: 4 }}
-                >
-                  GAIN TOTAL GÉRANT — {monthLabel(gerantMonth)}
-                </div>
-                <div style={{ fontSize: 32, fontWeight: 900, color: "var(--text)" }}>
-                  {formatAr(monthGain)}
-                </div>{" "}
-                {/* Utiliser le gain calculé */}
-                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
-                  {monthCount} livraisons × {formatAr(globalCommissionGerant)}
-                </div>{" "}
-                {/* Utiliser la commission globale */}
-              </div>
-              <div style={{ textAlign: "right", fontSize: 12, color: "var(--muted)" }}>
-                <div>
-                  Frais collectés: <b style={{ color: "var(--orange)" }}>{formatAr(monthFrais)}</b>
-                </div>
-                <div>
-                  Frais nets:{" "}
-                  <b style={{ color: "var(--green)" }}>{formatAr(monthFrais - monthGain)}</b>
-                </div>
-              </div>
-            </div>
-          </Card>
+          {/* Stats mois */}
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(2, 1fr)", gap: 10, marginBottom: 16 }}>
+            <StatCard label={`Gain total — ${monthLabel(gerantMonth)}`} value={formatAr(monthGain)} color={C.pink}
+              icon={<Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={18} color={C.pink} />} />
+            <StatCard label="Frais collectés" value={formatAr(monthFrais)} color={C.violet}
+              icon={<Icon d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" size={18} color={C.violet} />} />
+          </div>
 
-          {monthByDay.length > 0 && (
-            <div>
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "var(--muted)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  marginBottom: 12,
-                }}
-              >
-                Détail jour par jour — {monthLabel(gerantMonth)}
-              </div>
-              <Table>
-                <TableHead>
+          {monthByDay.length > 0 ? (
+            <Table>
+              <TableHead>
+                <TableRow>
                   <TableHeader>Date</TableHeader>
-                  <TableHeader>Livraisons avec commission</TableHeader>
+                  <TableHeader align="center">Livraisons</TableHeader>
+                  <TableHeader align="right">Frais collectés</TableHeader>
                   <TableHeader align="right">Gain gérant</TableHeader>
-                </TableHead>
-                <TableBody>
-                  {monthByDay.map((d) => (
-                    <TableRow key={d.date}>
-                      <TableCell style={{ fontWeight: 600 }}>{d.date}</TableCell>
-                      <TableCell>
-                        <Badge variant="info">{d.count}</Badge>
-                      </TableCell>
-                      <TableCell align="right">
-                        <span style={{ fontSize: 14, fontWeight: 800, color: "var(--pink)" }}>
-                          {formatAr(d.gain)}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-                <TableFooter>
-                  <td
-                    style={{
-                      padding: "11px 14px",
-                      fontWeight: 700,
-                      color: "var(--muted)",
-                      fontSize: 11,
-                    }}
-                  >
-                    TOTAL DU MOIS
-                  </td>
-                  <td style={{ padding: "11px 14px", fontWeight: 700, color: "var(--blue)" }}>
-                    {monthCount}
-                  </td>
-                  <td
-                    style={{
-                      padding: "11px 14px",
-                      textAlign: "right",
-                      fontWeight: 900,
-                      color: "var(--pink)",
-                      fontSize: 15,
-                    }}
-                  >
-                    {formatAr(monthGain)}
-                  </td>
-                </TableFooter>
-              </Table>
-            </div>
-          )}
-          {monthByDay.length === 0 && (
-            <Card style={{ textAlign: "center", color: "var(--muted)", padding: "40px 0" }}>
-              Aucune livraison avec commission ce mois.
+                  <TableHeader align="right">Frais nets</TableHeader>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {monthByDay.map((d) => (
+                  <TableRow key={d.date}>
+                    <TableCell style={{ fontWeight: 600 }}>{d.date}</TableCell>
+                    <TableCell align="center"><Badge variant="default" size="sm">{d.count}</Badge></TableCell>
+                    <TableCell align="right" style={{ color: C.violet, fontWeight: 600 }}>{formatAr(d.frais)}</TableCell>
+                    <TableCell align="right" style={{ color: C.pink, fontWeight: 600 }}>{formatAr(d.gain)}</TableCell>
+                    <TableCell align="right" style={{ color: d.frais - d.gain >= 0 ? C.success : C.danger, fontWeight: 600 }}>{formatAr(d.frais - d.gain)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableCell style={{ fontWeight: 700 }}>TOTAL</TableCell>
+                <TableCell align="center" style={{ fontWeight: 700 }}>{monthCount}</TableCell>
+                <TableCell align="right" style={{ fontWeight: 700, color: C.violet }}>{formatAr(monthFrais)}</TableCell>
+                <TableCell align="right" style={{ fontWeight: 700, color: C.pink }}>{formatAr(monthGain)}</TableCell>
+                <TableCell align="right" style={{ fontWeight: 700, color: monthFrais - monthGain >= 0 ? C.success : C.danger }}>{formatAr(monthFrais - monthGain)}</TableCell>
+              </TableFooter>
+            </Table>
+          ) : (
+            <Card padding={32}>
+              <div style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
+                <div style={{ fontSize: 28, marginBottom: 6 }}>💰</div>
+                Aucune livraison avec commission ce mois-ci.
+              </div>
             </Card>
           )}
         </div>

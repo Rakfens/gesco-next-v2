@@ -91,6 +91,7 @@ interface TableCellProps {
   align?: React.CSSProperties["textAlign"];
   style?: React.CSSProperties;
   className?: string;
+  colSpan?: number;
 }
 
 export const TableCell: React.FC<TableCellProps> = ({
@@ -98,9 +99,11 @@ export const TableCell: React.FC<TableCellProps> = ({
   align = "left",
   style = {},
   className,
+  colSpan,
 }) => (
   <td
     className={className}
+    colSpan={colSpan}
     style={{
       padding: "10px 14px",
       textAlign: align,
