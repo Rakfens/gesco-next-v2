@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { logger } from "@/lib/logger";
 import {
   Badge, Button, Card, CardHeader, CardTitle, Input,
@@ -81,6 +82,7 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
 
 /* ─── Dashboard ─── */
 export default function Dashboard() {
+  const router = useRouter();
   const { agents = [], livraisons = [], showToast, updateLivraison: onUpdateLivraison } = useApp();
   const { currentCompany } = useCompany();
   const commissionGerant = COMMISSION_DEFAUT;
@@ -459,7 +461,7 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-        <Button variant="primary" onClick={() => {}} style={{ position: "relative", zIndex: 1 }}>
+        <Button variant="primary" onClick={() => router.push("/livraison/gerant")} style={{ position: "relative", zIndex: 1 }}>
           Voir détails →
         </Button>
       </div>
