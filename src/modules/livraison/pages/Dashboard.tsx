@@ -766,122 +766,111 @@ export default function Dashboard() {
       </div>
 
       {/* ══ RÉCAP PAR AGENT ══ */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: "var(--radius-md)",
-            background: "var(--accent2-light)", display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z" size={15} color="var(--accent2)" />
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: "var(--radius-md)",
+              background: "var(--accent2-light)", display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z" size={15} color="var(--accent2)" />
+            </div>
+            <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>Récap par agent</h2>
           </div>
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>Récap par agent</h2>
+          <Badge variant="default" size="sm">Tous temps</Badge>
         </div>
-        <Badge variant="default" size="sm">Tous temps</Badge>
-      </div>
 
-      {isMobile ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {safeAgents.length === 0 ? (
-            <Card padding={24}>
-              <div style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Aucun agent enregistré.</div>
-            </Card>
-          ) : (
-            agentStats.map(({ agent, ls, totalFrais, livres, retournes, reportes, taux }) => (
-              <Card key={agent.id} padding={16}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-                  <div style={{
-                    width: 44, height: 44, borderRadius: "50%",
-                    background: "linear-gradient(135deg, var(--accent), var(--accent2))",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontWeight: 800, fontSize: 18, color: "#08080c",
-                    boxShadow: "0 4px 12px rgba(201,169,110,0.2)",
-                  }}>
-                    {agent.nom?.charAt(0) || "?"}
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text)" }}>{agent.nom}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{ls.length} livraisons</div>
-                  </div>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 12 }}>
-                  {[
-                    { label: "Livrés", value: livres, color: "var(--success)" },
-                    { label: "Retournés", value: retournes, color: "var(--danger)" },
-                    { label: "Reportés", value: reportes, color: "var(--accent2)" },
-                    { label: "Frais", value: formatAr(totalFrais), color: "var(--accent)" },
-                  ].map((item) => (
-                    <div key={item.label} style={{
-                      textAlign: "center", background: "var(--bg-secondary)",
-                      borderRadius: "var(--radius-md)", padding: "10px 4px",
-                    }}>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: item.color }}>{item.value}</div>
-                      <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 2 }}>{item.label}</div>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ height: 4, background: "var(--border)", borderRadius: 2, overflow: "hidden" }}>
-                  <div style={{
-                    width: `${taux}%`, height: "100%",
-                    background: taux >= 70 ? "var(--success)" : taux >= 40 ? "var(--warning)" : "var(--danger)",
-                    borderRadius: 2, transition: "width 0.5s ease",
-                  }} />
-                </div>
-                <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4, textAlign: "right" }}>{taux}% réussite</div>
-              </Card>
-            ))
-          )}
-        </div>
-      ) : (
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableHeader>Agent</TableHeader>
-              <TableHeader align="center">Total</TableHeader>
-              <TableHeader align="center">Livrés</TableHeader>
-              <TableHeader align="center">Retournés</TableHeader>
-              <TableHeader align="center">Reportés</TableHeader>
-              <TableHeader align="right">Frais</TableHeader>
-              <TableHeader align="center">Taux</TableHeader>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+        {safeAgents.length === 0 ? (
+          <Card padding={32}>
+            <div style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>👥</div>
+              Aucun agent enregistré.
+            </div>
+          </Card>
+        ) : (
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(340px, 1fr))",
+            gap: 14,
+          }}>
             {agentStats.map(({ agent, ls, totalFrais, livres, retournes, reportes, taux }) => (
-              <TableRow key={agent.id}>
-                <TableCell>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <Card key={agent.id} padding={0} style={{ overflow: "hidden" }}>
+                {/* Header avec gradient */}
+                <div style={{
+                  background: "linear-gradient(135deg, rgba(201,169,110,0.08) 0%, rgba(139,92,246,0.05) 100%)",
+                  padding: "16px 18px",
+                  borderBottom: "1px solid var(--border)",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <div style={{
-                      width: 32, height: 32, borderRadius: "50%",
+                      width: 48, height: 48, borderRadius: "50%",
                       background: "linear-gradient(135deg, var(--accent), var(--accent2))",
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      fontWeight: 700, fontSize: 14, color: "#08080c", flexShrink: 0,
+                      fontWeight: 800, fontSize: 20, color: "#08080c",
+                      boxShadow: "0 4px 16px rgba(201,169,110,0.25)",
+                      flexShrink: 0,
                     }}>
                       {agent.nom?.charAt(0) || "?"}
                     </div>
-                    <span style={{ fontWeight: 600 }}>{agent.nom}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 16, color: "var(--text)" }}>{agent.nom}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>
+                        {ls.length} livraison{ls.length !== 1 ? "s" : ""}
+                      </div>
+                    </div>
+                    {/* Taux badge */}
+                    <div style={{
+                      padding: "4px 10px", borderRadius: "var(--radius-full)",
+                      background: taux >= 70 ? "var(--success-light)" : taux >= 40 ? "var(--warning-light)" : "var(--danger-light)",
+                      color: taux >= 70 ? "var(--success)" : taux >= 40 ? "var(--warning)" : "var(--danger)",
+                      fontSize: 12, fontWeight: 700,
+                    }}>
+                      {taux}%
+                    </div>
                   </div>
-                </TableCell>
-                <TableCell align="center" style={{ fontWeight: 700 }}>{ls.length}</TableCell>
-                <TableCell align="center"><Badge variant="success" size="sm">{livres}</Badge></TableCell>
-                <TableCell align="center"><Badge variant="danger" size="sm">{retournes}</Badge></TableCell>
-                <TableCell align="center"><Badge variant="purple" size="sm">{reportes}</Badge></TableCell>
-                <TableCell align="right" style={{ color: "var(--accent)", fontWeight: 600 }}>{formatAr(totalFrais)}</TableCell>
-                <TableCell align="center">
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
-                    <div style={{ width: 40, height: 4, background: "var(--border)", borderRadius: 2, overflow: "hidden" }}>
+                </div>
+
+                {/* Stats */}
+                <div style={{ padding: "14px 18px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 12 }}>
+                    {[
+                      { label: "Livrés", value: livres, color: "var(--success)", icon: "✓" },
+                      { label: "Retournés", value: retournes, color: "var(--danger)", icon: "↩" },
+                      { label: "Reportés", value: reportes, color: "var(--accent2)", icon: "⏰" },
+                      { label: "Frais", value: formatAr(totalFrais), color: "var(--accent)", icon: "💰" },
+                    ].map((item) => (
+                      <div key={item.label} style={{
+                        textAlign: "center", padding: "10px 4px",
+                        background: "var(--bg-secondary)", borderRadius: "var(--radius-md)",
+                        border: "1px solid var(--border)",
+                      }}>
+                        <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 4 }}>{item.icon}</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: item.color, lineHeight: 1 }}>{item.value}</div>
+                        <div style={{ fontSize: 9, color: "var(--text-muted)", marginTop: 3, textTransform: "uppercase", letterSpacing: "0.04em" }}>{item.label}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Barre de progression */}
+                  <div style={{ marginBottom: 4 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                      <span style={{ fontSize: 10, color: "var(--text-muted)" }}>Taux de réussite</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: taux >= 70 ? "var(--success)" : taux >= 40 ? "var(--warning)" : "var(--danger)" }}>{taux}%</span>
+                    </div>
+                    <div style={{ height: 6, background: "var(--border)", borderRadius: 3, overflow: "hidden" }}>
                       <div style={{
                         width: `${taux}%`, height: "100%",
-                        background: taux >= 70 ? "var(--success)" : taux >= 40 ? "var(--warning)" : "var(--danger)",
-                        borderRadius: 2, transition: "width 0.5s ease",
+                        background: taux >= 70 ? "linear-gradient(90deg, #34d399, #10b981)" : taux >= 40 ? "linear-gradient(90deg, #fbbf24, #f59e0b)" : "linear-gradient(90deg, #f87171, #ef4444)",
+                        borderRadius: 3, transition: "width 0.6s ease",
                       }} />
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 600 }}>{taux}%</span>
                   </div>
-                </TableCell>
-              </TableRow>
+                </div>
+              </Card>
             ))}
-          </TableBody>
-        </Table>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
