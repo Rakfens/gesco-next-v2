@@ -52,36 +52,61 @@ const STATUS_OPTIONS = [
   { key: "reporte", label: "Reporté", color: "var(--accent2)", bg: "var(--accent2-light)", activeBg: "rgba(139,92,246,0.2)", icon: "xmark" },
 ];
 
-function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate: (id: string, statut: string, remarque?: string) => void }) {
+function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate: (id: string, updates: Record<string, unknown>) => void }) {
   const [showRemarque, setShowRemarque] = useState(false);
   const [remarque, setRemarque] = useState(livraison.remarque || "");
+  const [editingMontant, setEditingMontant] = useState(false);
+  const [montant, setMontant] = useState(String(livraison.montant || ""));
+  const [saving, setSaving] = useState(false);
   const needsRemarque = livraison.statut === "retourne" || livraison.statut === "reporte";
 
-  const handleClick = (key: string) => {
-    if (key === "retourne" || key === "reporte") {
-      setShowRemarque(true);
-      onUpdate(livraison.id, key, remarque);
-    } else {
-      setShowRemarque(false);
-      onUpdate(livraison.id, key);
+  const handleStatusChange = async (key: string) => {
+    setSaving(true);
+    try {
+      if (key === "retourne" || key === "reporte") {
+        setShowRemarque(true);
+        await onUpdate(livraison.id, { statut: key, remarque });
+      } else {
+        setShowRemarque(false);
+        await onUpdate(livraison.id, { statut: key });
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleRemarqueSubmit = () => {
-    if (needsRemarque && remarque.trim()) {
-      onUpdate(livraison.id, livraison.statut || "retourne", remarque);
+  const handleSaveRemarque = async () => {
+    if (!remarque.trim()) return;
+    setSaving(true);
+    try {
+      await onUpdate(livraison.id, { statut: livraison.statut || "retourne", remarque });
+      setShowRemarque(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveMontant = async () => {
+    setSaving(true);
+    try {
+      await onUpdate(livraison.id, { montant: parseFloat(montant) || 0 });
+      setEditingMontant(false);
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
+      {/* Boutons de statut */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {STATUS_OPTIONS.map((opt) => {
           const isActive = livraison.statut === opt.key;
           return (
             <button
               key={opt.key}
-              onClick={() => handleClick(opt.key)}
+              onClick={() => handleStatusChange(opt.key)}
+              disabled={saving}
               title={opt.label}
               style={{
                 width: 36, height: 36, borderRadius: "var(--radius-md)",
@@ -89,8 +114,10 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
                 border: isActive ? `1.5px solid ${opt.color}` : "1.5px solid var(--border)",
                 background: isActive ? opt.activeBg : "var(--card)",
                 color: isActive ? opt.color : "var(--text-muted)",
-                cursor: "pointer", transition: "all var(--transition-fast)",
+                cursor: saving ? "wait" : "pointer",
+                transition: "all var(--transition-fast)",
                 boxShadow: isActive ? `0 0 12px ${opt.color}33` : "none",
+                opacity: saving ? 0.6 : 1,
               }}
             >
               <StatusIcon name={opt.icon} size={15} color={isActive ? opt.color : "var(--text-muted)"} />
@@ -105,7 +132,7 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
           width: "100%",
           background: "var(--bg-secondary)",
           borderRadius: "var(--radius-md)",
-          padding: 10,
+          padding: 12,
           border: "1px solid var(--border)",
           animation: "fadeUp 0.2s ease",
         }}>
@@ -113,7 +140,7 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
             fontSize: 10, fontWeight: 700, color: "var(--text-muted)",
             textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6,
           }}>
-            {livraison.statut === "retourne" ? "Motif du retour" : "Motif du report"}
+            {livraison.statut === "retourne" ? "⚠️ Motif du retour" : "📅 Motif du report"}
           </div>
           <textarea
             value={remarque}
@@ -126,29 +153,30 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
               fontSize: 12, fontFamily: "var(--font)", outline: "none",
               resize: "vertical", boxSizing: "border-box",
             }}
-            onBlur={handleRemarqueSubmit}
+            autoFocus
           />
-          <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
             <button
-              onClick={() => {
-                onUpdate(livraison.id, livraison.statut || "retourne", remarque);
-                setShowRemarque(false);
-              }}
+              onClick={handleSaveRemarque}
+              disabled={saving || !remarque.trim()}
               style={{
-                flex: 1, padding: "6px 12px", borderRadius: "var(--radius-sm)",
-                background: "var(--accent)", color: "#08080c",
-                border: "none", fontSize: 11, fontWeight: 600,
-                cursor: "pointer", fontFamily: "var(--font)",
+                flex: 1, padding: "8px 14px", borderRadius: "var(--radius-sm)",
+                background: remarque.trim() ? "var(--accent)" : "var(--bg-tertiary)",
+                color: remarque.trim() ? "#08080c" : "var(--text-faint)",
+                border: "none", fontSize: 12, fontWeight: 700,
+                cursor: remarque.trim() && !saving ? "pointer" : "not-allowed",
+                fontFamily: "var(--font)", transition: "all var(--transition-fast)",
               }}
             >
-              Enregistrer
+              {saving ? "..." : "✓ Enregistrer"}
             </button>
             <button
-              onClick={() => setShowRemarque(false)}
+              onClick={() => { setShowRemarque(false); setRemarque(livraison.remarque || ""); }}
+              disabled={saving}
               style={{
-                padding: "6px 12px", borderRadius: "var(--radius-sm)",
+                padding: "8px 14px", borderRadius: "var(--radius-sm)",
                 background: "transparent", color: "var(--text-muted)",
-                border: "1px solid var(--border)", fontSize: 11, fontWeight: 600,
+                border: "1px solid var(--border)", fontSize: 12, fontWeight: 600,
                 cursor: "pointer", fontFamily: "var(--font)",
               }}
             >
@@ -156,6 +184,79 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
             </button>
           </div>
         </div>
+      )}
+
+      {/* Modification du montant */}
+      {editingMontant ? (
+        <div style={{
+          width: "100%",
+          background: "var(--bg-secondary)",
+          borderRadius: "var(--radius-md)",
+          padding: 12,
+          border: "1px solid var(--accent)",
+          animation: "fadeUp 0.2s ease",
+        }}>
+          <div style={{
+            fontSize: 10, fontWeight: 700, color: "var(--accent)",
+            textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6,
+          }}>
+            💰 Modifier le montant
+          </div>
+          <input
+            type="number"
+            value={montant}
+            onChange={(e) => setMontant(e.target.value)}
+            placeholder="Montant en Ar"
+            style={{
+              width: "100%", padding: "8px 10px",
+              background: "var(--card)", border: "1px solid var(--border)",
+              borderRadius: "var(--radius-sm)", color: "var(--text)",
+              fontSize: 13, fontFamily: "var(--font)", outline: "none",
+              boxSizing: "border-box",
+            }}
+            autoFocus
+          />
+          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+            <button
+              onClick={handleSaveMontant}
+              disabled={saving}
+              style={{
+                flex: 1, padding: "8px 14px", borderRadius: "var(--radius-sm)",
+                background: "var(--accent)", color: "#08080c",
+                border: "none", fontSize: 12, fontWeight: 700,
+                cursor: saving ? "wait" : "pointer",
+                fontFamily: "var(--font)",
+              }}
+            >
+              {saving ? "..." : "✓ Enregistrer"}
+            </button>
+            <button
+              onClick={() => { setEditingMontant(false); setMontant(String(livraison.montant || "")); }}
+              disabled={saving}
+              style={{
+                padding: "8px 14px", borderRadius: "var(--radius-sm)",
+                background: "transparent", color: "var(--text-muted)",
+                border: "1px solid var(--border)", fontSize: 12, fontWeight: 600,
+                cursor: "pointer", fontFamily: "var(--font)",
+              }}
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setEditingMontant(true)}
+          style={{
+            padding: "4px 10px", borderRadius: "var(--radius-sm)",
+            background: "transparent", color: "var(--text-muted)",
+            border: "1px solid var(--border)", fontSize: 11, fontWeight: 500,
+            cursor: "pointer", fontFamily: "var(--font)",
+            display: "flex", alignItems: "center", gap: 4,
+          }}
+        >
+          ✏️ Modifier montant
+        </button>
       )}
     </div>
   );
@@ -211,13 +312,15 @@ export default function Dashboard() {
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [safeLivraisons, selectedMonth]);
 
-  const handleStatusUpdate = async (id: string, statut: string, remarque?: string) => {
+  const handleStatusUpdate = async (id: string, updates: Record<string, unknown>) => {
     try {
-      const updates: Record<string, unknown> = { statut };
-      if (remarque !== undefined) updates.remarque = remarque;
       await onUpdateLivraison(id, updates);
-      const label = STATUS_OPTIONS.find((s) => s.key === statut)?.label || statut;
-      showToast(remarque ? `${label} — motif enregistré` : `Statut: ${label}`);
+      if (updates.statut) {
+        const label = STATUS_OPTIONS.find((s) => s.key === updates.statut)?.label || String(updates.statut);
+        showToast(updates.remarque ? `${label} — motif enregistré` : `Statut: ${label}`);
+      } else if (updates.montant !== undefined) {
+        showToast("Montant modifié");
+      }
     } catch {
       showToast("Erreur mise à jour", "error");
     }
