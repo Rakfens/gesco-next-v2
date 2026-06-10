@@ -47,6 +47,8 @@ const STATUS_OPTIONS = [
   { key: "reporte", label: "Reporté", color: C.violet, icon: "xmark" },
 ];
 
+type SortKey = "date" | "montant" | "statut";
+
 export default function LivraisonsPage() {
   const { currentCompany } = useCompany();
   const { livraisons = [], loading, addLivraison, updateLivraison, deleteLivraison } = useLivraisons();
@@ -63,29 +65,17 @@ export default function LivraisonsPage() {
   const [editMontant, setEditMontant] = useState("");
   const [editRemarque, setEditRemarque] = useState("");
   const [saving, setSaving] = useState(false);
+  const [sortBy, setSortBy] = useState<SortKey>("date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const safeLivraisons = Array.isArray(livraisons) ? livraisons : [];
 
   // Filtrer les livraisons
   const filtered = useMemo(() => {
     let result = safeLivraisons;
-
-    // Par date
-    if (filterDate) {
-      result = result.filter((l) => l.date === filterDate);
-    }
-
-    // Par statut
-    if (filterStatut !== "tous") {
-      result = result.filter((l) => l.statut === filterStatut);
-    }
-
-    // Par agent
-    if (filterAgent !== "tous") {
-      result = result.filter((l) => l.agent_nom === filterAgent || l.agent_id === filterAgent);
-    }
-
-    // Recherche
+    if (filterDate) result = result.filter((l) => l.date === filterDate);
+    if (filterStatut !== "tous") result = result.filter((l) => l.statut === filterStatut);
+    if (filterAgent !== "tous") result = result.filter((l) => l.agent_nom === filterAgent || l.agent_id === filterAgent);
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((l) =>
@@ -95,9 +85,40 @@ export default function LivraisonsPage() {
         l.agent_nom?.toLowerCase().includes(q)
       );
     }
-
-    return result.sort((a, b) => b.date.localeCompare(a.date));
+    return result;
   }, [safeLivraisons, filterDate, filterStatut, filterAgent, search]);
+
+  // Trier
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    arr.sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === "date") cmp = a.date.localeCompare(b.date);
+      else if (sortBy === "montant") cmp = (Number(a.montant) || 0) - (Number(b.montant) || 0);
+      else if (sortBy === "statut") cmp = (a.statut || "").localeCompare(b.statut || "");
+      return sortDir === "desc" ? -cmp : cmp;
+    });
+    return arr;
+  }, [filtered, sortBy, sortDir]);
+
+  // Export CSV
+  const handleExportCSV = () => {
+    const headers = ["Date", "Colis", "Donneur", "Destinataire", "Agent", "Montant", "Frais", "Statut", "Paiement"];
+    const rows = sorted.map((l) => [
+      l.date, l.colis, l.client_donneur, l.destinataire, l.agent_nom || "",
+      l.montant || 0, l.frais || 0, STATUTS[l.statut || ""]?.label || l.statut || "",
+      PAIE_MODES[l.paiement || ""]?.label || l.paiement || "",
+    ]);
+    const csv = [headers.join(";"), ...rows.map((r) => r.join(";"))].join("\n");
+    const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `livraisons_${filterDate || "export"}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("Export CSV téléchargé");
+  };
 
   // Stats
   const stats = useMemo(() => ({
@@ -262,112 +283,182 @@ export default function LivraisonsPage() {
           </div>
         </Card>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {filtered.map((l) => {
-            const isEditing = editingId === l.id;
-            const statutColor = statusBarColor(l.statut);
-            const statutIcon = STATUS_OPTIONS.find((s) => s.key === l.statut)?.icon || "clock";
+        <>
+          {/* Actions bar */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10, flexWrap: "wrap", gap: 8 }}>
+            <div style={{ display: "flex", gap: 6 }}>
+              {[
+                { key: "date", label: "📅 Date" },
+                { key: "montant", label: "💰 Montant" },
+                { key: "statut", label: "📊 Statut" },
+              ].map((s) => (
+                <button key={s.key} onClick={() => {
+                  if (sortBy === s.key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+                  else { setSortBy(s.key as SortKey); setSortDir("desc"); }
+                }}
+                  style={{
+                    padding: "5px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600,
+                    border: sortBy === s.key ? `1.5px solid ${C.gold}` : "1px solid var(--border)",
+                    background: sortBy === s.key ? C.goldDim : "transparent",
+                    color: sortBy === s.key ? C.gold : "var(--text-muted)",
+                    cursor: "pointer", fontFamily: "var(--font)",
+                  }}
+                >
+                  {s.label} {sortBy === s.key && (sortDir === "asc" ? "↑" : "↓")}
+                </button>
+              ))}
+            </div>
+            <button onClick={handleExportCSV}
+              style={{
+                padding: "5px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600,
+                border: "1px solid var(--border)", background: "transparent",
+                color: "var(--text-muted)", cursor: "pointer", fontFamily: "var(--font)",
+                display: "flex", alignItems: "center", gap: 4,
+              }}
+            >
+              📥 Exporter CSV
+            </button>
+          </div>
 
-            return (
-              <Card key={l.id} padding={0} style={{ overflow: "hidden", borderLeft: `4px solid ${statutColor}` }}>
-                <div style={{ padding: isMobile ? "12px" : "14px 16px" }}>
-                  {/* Ligne principale */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                    {/* Icône statut */}
-                    <div style={{
-                      width: 40, height: 40, borderRadius: 10,
-                      background: `${statutColor}15`,
-                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    }}>
-                      <StatusIcon name={statutIcon} size={18} color={statutColor} />
-                    </div>
+          {/* Liste */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {sorted.map((l) => {
+              const isEditing = editingId === l.id;
+              const statutColor = statusBarColor(l.statut);
+              const statutIcon = STATUS_OPTIONS.find((s) => s.key === l.statut)?.icon || "clock";
+              const paiementLabel = PAIE_MODES[l.paiement || ""]?.label || l.paiement || "—";
+              const paiementIcon = l.paiement === "espece" ? "💵" : l.paiement === "mobile_money" ? "📱" : l.paiement === "client" ? "🤝" : "💵";
 
-                    {/* Infos */}
-                    <div style={{ flex: 1, minWidth: 140 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                        <span style={{ fontWeight: 700, fontSize: 14, color: "var(--text)" }}>{l.colis}</span>
-                        <span style={{
-                          fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 99,
-                          background: `${statutColor}15`, color: statutColor, textTransform: "uppercase", letterSpacing: "0.04em",
-                        }}>
-                          {STATUTS[l.statut || ""]?.label || l.statut || "—"}
-                        </span>
+              return (
+                <Card key={l.id} padding={0} style={{ overflow: "hidden", borderLeft: `4px solid ${statutColor}` }}>
+                  <div style={{ padding: isMobile ? "12px" : "14px 16px" }}>
+                    {/* Ligne principale */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                      {/* Icône statut */}
+                      <div style={{
+                        width: 40, height: 40, borderRadius: 10,
+                        background: `${statutColor}15`,
+                        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                      }}>
+                        <StatusIcon name={statutIcon} size={18} color={statutColor} />
                       </div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
-                        {l.client_donneur || "—"} → {l.destinataire || "—"}
-                        {l.agent_nom ? <span style={{ color: C.gold }}> · 🚚 {l.agent_nom}</span> : ""}
-                      </div>
-                      <div style={{ fontSize: 10, color: "var(--text-faint)", marginTop: 1 }}>
-                        {l.date} {l.destinataire_lieu ? `· 📍 ${l.destinataire_lieu}` : ""}
-                      </div>
-                    </div>
 
-                    {/* Montant */}
-                    <div style={{ textAlign: "right" }}>
-                      {isEditing ? (
-                        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                          <input type="number" value={editMontant} onChange={(e) => setEditMontant(e.target.value)}
-                            style={{ width: 90, padding: "5px 8px", background: "var(--card)", border: `1px solid ${C.gold}`, borderRadius: 8, color: "var(--text)", fontSize: 12, fontFamily: "var(--font)", outline: "none" }}
-                            autoFocus
-                          />
-                          <button onClick={() => handleEditMontant(l.id)} disabled={saving}
-                            style={{ padding: "5px 10px", borderRadius: 8, background: C.gold, color: "#08080c", border: "none", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>✓</button>
-                          <button onClick={() => setEditingId(null)}
-                            style={{ padding: "5px 10px", borderRadius: 8, background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)", fontSize: 11, cursor: "pointer" }}>✕</button>
+                      {/* Infos */}
+                      <div style={{ flex: 1, minWidth: 140 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                          <span style={{ fontWeight: 700, fontSize: 14, color: "var(--text)" }}>{l.colis}</span>
+                          <span style={{
+                            fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 99,
+                            background: `${statutColor}15`, color: statutColor, textTransform: "uppercase", letterSpacing: "0.04em",
+                          }}>
+                            {STATUTS[l.statut || ""]?.label || l.statut || "—"}
+                          </span>
+                          <span style={{
+                            fontSize: 9, padding: "2px 6px", borderRadius: 99,
+                            background: "var(--bg-tertiary)", color: "var(--text-muted)",
+                          }}>
+                            {paiementIcon} {paiementLabel}
+                          </span>
                         </div>
-                      ) : (
-                        <>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: C.gold }}>{l.montant ? formatAr(l.montant) : "—"}</div>
-                          {l.frais ? <div style={{ fontSize: 10, color: "var(--text-muted)" }}>Frais: {formatAr(l.frais)}</div> : null}
-                        </>
-                      )}
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                          {l.client_donneur || "—"} → {l.destinataire || "—"}
+                          {l.agent_nom ? <span style={{ color: C.gold }}> · 🚚 {l.agent_nom}</span> : ""}
+                        </div>
+                        <div style={{ fontSize: 10, color: "var(--text-faint)", marginTop: 1 }}>
+                          {l.date} {l.destinataire_lieu ? `· 📍 ${l.destinataire_lieu}` : ""}
+                        </div>
+                      </div>
+
+                      {/* Montant */}
+                      <div style={{ textAlign: "right" }}>
+                        {isEditing ? (
+                          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                            <input type="number" value={editMontant} onChange={(e) => setEditMontant(e.target.value)}
+                              style={{ width: 90, padding: "5px 8px", background: "var(--card)", border: `1px solid ${C.gold}`, borderRadius: 8, color: "var(--text)", fontSize: 12, fontFamily: "var(--font)", outline: "none" }}
+                              autoFocus
+                            />
+                            <button onClick={() => handleEditMontant(l.id)} disabled={saving}
+                              style={{ padding: "5px 10px", borderRadius: 8, background: C.gold, color: "#08080c", border: "none", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>✓</button>
+                            <button onClick={() => setEditingId(null)}
+                              style={{ padding: "5px 10px", borderRadius: 8, background: "transparent", color: "var(--text-muted)", border: "1px solid var(--border)", fontSize: 11, cursor: "pointer" }}>✕</button>
+                          </div>
+                        ) : (
+                          <>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: C.gold }}>{l.montant ? formatAr(l.montant) : "—"}</div>
+                            {l.frais ? <div style={{ fontSize: 10, color: "var(--text-muted)" }}>Frais: {formatAr(l.frais)}</div> : null}
+                          </>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button onClick={() => startEdit(l)} title="Modifier"
+                          style={{ width: 32, height: 32, borderRadius: 8, background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>✏️</button>
+                        <button onClick={() => handleDelete(l.id)} title="Supprimer"
+                          style={{ width: 32, height: 32, borderRadius: 8, background: C.dangerDim, border: "1px solid rgba(248,113,113,0.2)", color: C.danger, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🗑</button>
+                      </div>
                     </div>
 
-                    {/* Actions */}
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <button onClick={() => startEdit(l)} title="Modifier"
-                        style={{ width: 32, height: 32, borderRadius: 8, background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>✏️</button>
-                      <button onClick={() => handleDelete(l.id)} title="Supprimer"
-                        style={{ width: 32, height: 32, borderRadius: 8, background: C.dangerDim, border: "1px solid rgba(248,113,113,0.2)", color: C.danger, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🗑</button>
+                    {/* Remarque si présente */}
+                    {l.remarque && (
+                      <div style={{ marginTop: 8, padding: "6px 10px", background: "var(--bg)", borderRadius: 8, fontSize: 11, color: "var(--text-secondary)", borderLeft: `2px solid ${C.warning}` }}>
+                        📝 {l.remarque}
+                      </div>
+                    )}
+
+                    {/* Boutons de changement de statut */}
+                    <div style={{ display: "flex", gap: 6, marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+                      {STATUS_OPTIONS.map((opt) => {
+                        const isActive = l.statut === opt.key;
+                        return (
+                          <button key={opt.key} onClick={() => handleStatusUpdate(l.id, opt.key)} disabled={saving || isActive}
+                            style={{
+                              flex: 1, padding: "7px 4px", borderRadius: 8,
+                              border: isActive ? `2px solid ${opt.color}` : "1px solid var(--border)",
+                              background: isActive ? `${opt.color}15` : "transparent",
+                              color: isActive ? opt.color : "var(--text-muted)",
+                              fontSize: 10, fontWeight: isActive ? 700 : 500,
+                              cursor: isActive ? "default" : "pointer",
+                              display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+                              fontFamily: "var(--font)", transition: "all var(--transition-fast)",
+                              opacity: isActive ? 1 : 0.7,
+                            }}
+                          >
+                            <StatusIcon name={opt.icon} size={12} color={isActive ? opt.color : "var(--text-muted)"} />
+                            {opt.label}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
+                </Card>
+              );
+            })}
+          </div>
 
-                  {/* Remarque si présente */}
-                  {l.remarque && (
-                    <div style={{ marginTop: 8, padding: "6px 10px", background: "var(--bg)", borderRadius: 8, fontSize: 11, color: "var(--text-secondary)", borderLeft: `2px solid ${C.warning}` }}>
-                      📝 {l.remarque}
-                    </div>
-                  )}
-
-                  {/* Boutons de changement de statut */}
-                  <div style={{ display: "flex", gap: 6, marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
-                    {STATUS_OPTIONS.map((opt) => {
-                      const isActive = l.statut === opt.key;
-                      return (
-                        <button key={opt.key} onClick={() => handleStatusUpdate(l.id, opt.key)} disabled={saving || isActive}
-                          style={{
-                            flex: 1, padding: "7px 4px", borderRadius: 8,
-                            border: isActive ? `2px solid ${opt.color}` : "1px solid var(--border)",
-                            background: isActive ? `${opt.color}15` : "transparent",
-                            color: isActive ? opt.color : "var(--text-muted)",
-                            fontSize: 10, fontWeight: isActive ? 700 : 500,
-                            cursor: isActive ? "default" : "pointer",
-                            display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
-                            fontFamily: "var(--font)", transition: "all var(--transition-fast)",
-                            opacity: isActive ? 1 : 0.7,
-                          }}
-                        >
-                          <StatusIcon name={opt.icon} size={12} color={isActive ? opt.color : "var(--text-muted)"} />
-                          {opt.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+          {/* Totaux en bas */}
+          <Card style={{ marginTop: 16, padding: "14px 16px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                <div>
+                  <span style={{ fontSize: 10, color: "var(--text-muted)" }}>Montant total</span>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: C.gold }}>{formatAr(stats.montant)}</div>
                 </div>
-              </Card>
-            );
-          })}
-        </div>
+                <div>
+                  <span style={{ fontSize: 10, color: "var(--text-muted)" }}>Frais total</span>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: C.violet }}>{formatAr(stats.frais)}</div>
+                </div>
+                <div>
+                  <span style={{ fontSize: 10, color: "var(--text-muted)" }}>Livrés / Total</span>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: C.success }}>{stats.livres} / {stats.total}</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                {filtered.length} résultat{filtered.length !== 1 ? "s" : ""}
+              </div>
+            </div>
+          </Card>
+        </>
       )}
     </div>
   );
