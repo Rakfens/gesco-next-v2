@@ -13,7 +13,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
 function RootLayoutInner({ children }: { children: ReactNode }) {
   return (
-    <html lang="fr" style={{ height: "100%" }}>
+    <html lang="fr" style={{ height: "100%", colorScheme: "dark" }}>
+      <head>
+        <meta name="color-scheme" content="dark" />
+        <meta name="theme-color" content="#08080c" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+      </head>
       <body
         style={{
           minHeight: "100%",

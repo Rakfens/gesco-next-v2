@@ -373,7 +373,7 @@ export default function Dashboard() {
   const todayLivres = todayLivraisons.filter((l) => l.statut === "livre").length;
 
   return (
-    <div>
+    <div className="fadeUp" style={{ animation: "fadeUp 0.4s ease both" }}>
       {/* ══ HEADER ══ */}
       <div style={{
         background: "linear-gradient(135deg, rgba(201,169,110,0.08) 0%, rgba(139,92,246,0.05) 100%)",
