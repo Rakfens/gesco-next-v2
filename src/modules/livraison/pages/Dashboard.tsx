@@ -28,7 +28,13 @@ interface RecupParLivreur {
   details: { client: string; frais: number }[];
 }
 
-/* ─── Status Icon ─── */
+/* ─── SVG Icons ─── */
+const Icon = ({ d, size = 18, color = "currentColor" }: { d: string; size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d={d} />
+  </svg>
+);
+
 const StatusIcon = ({ name, size = 14, color = "currentColor" }: { name: string; size?: number; color?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     {name === "clock" && <><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></>}
@@ -39,10 +45,10 @@ const StatusIcon = ({ name, size = 14, color = "currentColor" }: { name: string;
 );
 
 const STATUS_OPTIONS = [
-  { key: "en_cours", label: "En cours", color: "var(--warning-dark)", bg: "var(--warning-light)", activeBg: "rgba(253,235,113,0.25)", icon: "clock" },
-  { key: "livre", label: "Livré", color: "var(--success-dark)", bg: "var(--success-light)", activeBg: "rgba(85,239,196,0.25)", icon: "check" },
-  { key: "retourne", label: "Retourné", color: "var(--danger-dark)", bg: "var(--danger-light)", activeBg: "rgba(255,107,107,0.25)", icon: "rotate-left" },
-  { key: "reporte", label: "Reporté", color: "var(--accent2-hover)", bg: "var(--accent2-light)", activeBg: "rgba(232,160,144,0.25)", icon: "xmark" },
+  { key: "en_cours", label: "En cours", color: "var(--warning)", bg: "var(--warning-light)", activeBg: "rgba(251,191,36,0.2)", icon: "clock" },
+  { key: "livre", label: "Livré", color: "var(--success)", bg: "var(--success-light)", activeBg: "rgba(52,211,153,0.2)", icon: "check" },
+  { key: "retourne", label: "Retourné", color: "var(--danger)", bg: "var(--danger-light)", activeBg: "rgba(248,113,113,0.2)", icon: "rotate-left" },
+  { key: "reporte", label: "Reporté", color: "var(--accent2)", bg: "var(--accent2-light)", activeBg: "rgba(139,92,246,0.2)", icon: "xmark" },
 ];
 
 function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate: (id: string, statut: string) => void }) {
@@ -56,7 +62,7 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
             onClick={() => onUpdate(livraison.id, opt.key)}
             title={opt.label}
             style={{
-              width: 34, height: 34, borderRadius: "var(--radius-md)",
+              width: 36, height: 36, borderRadius: "var(--radius-md)",
               display: "flex", alignItems: "center", justifyContent: "center",
               border: isActive ? `1.5px solid ${opt.color}` : "1.5px solid var(--border)",
               background: isActive ? opt.activeBg : "var(--card)",
@@ -65,7 +71,7 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
               boxShadow: isActive ? `0 0 12px ${opt.color}33` : "none",
             }}
           >
-            <StatusIcon name={opt.icon} size={14} color={isActive ? opt.color : "var(--text-muted)"} />
+            <StatusIcon name={opt.icon} size={15} color={isActive ? opt.color : "var(--text-muted)"} />
           </button>
         );
       })}
@@ -73,6 +79,7 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
   );
 }
 
+/* ─── Dashboard ─── */
 export default function Dashboard() {
   const { agents = [], livraisons = [], showToast, updateLivraison: onUpdateLivraison } = useApp();
   const { currentCompany } = useCompany();
@@ -159,82 +166,152 @@ export default function Dashboard() {
 
   const totalLivraisons = safeLivraisons.length;
   const totalLivres = safeLivraisons.filter((l) => l.statut === "livre").length;
+  const todayLivres = todayLivraisons.filter((l) => l.statut === "livre").length;
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", letterSpacing: "-0.02em" }}>
-          Tableau de bord
-        </h1>
-        <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 4 }}>
-          {currentCompany?.name || "HT-GesCom"} · Aperçu de l'activité · {TODAY()}
-        </p>
+      {/* ══ HEADER ══ */}
+      <div style={{
+        background: "linear-gradient(135deg, rgba(201,169,110,0.08) 0%, rgba(139,92,246,0.05) 100%)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-xl)",
+        padding: isMobile ? "20px 16px" : "28px 32px",
+        marginBottom: 28,
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        {/* Decorative glow */}
+        <div style={{
+          position: "absolute", top: -40, right: -40, width: 160, height: 160,
+          background: "radial-gradient(circle, rgba(201,169,110,0.12) 0%, transparent 70%)",
+          borderRadius: "50%", pointerEvents: "none",
+        }} />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 8 }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: "var(--radius-lg)",
+              background: "linear-gradient(135deg, var(--accent), var(--accent2))",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 20px rgba(201,169,110,0.2)",
+            }}>
+              <Icon d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" size={22} color="#08080c" />
+            </div>
+            <div>
+              <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 800, color: "var(--text)", letterSpacing: "-0.02em", margin: 0 }}>
+                Tableau de bord
+              </h1>
+              <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 2 }}>
+                {currentCompany?.name || "HT-GesCom"} · {TODAY()}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 14, marginBottom: 28 }}>
-        <StatCard label="Total livraisons" value={totalLivraisons} color="var(--cyan-dark)" />
-        <StatCard label="En cours" value={enCours} color="var(--warning-dark)" />
-        <StatCard label="Livrés aujourd'hui" value={todayLivraisons.filter((l) => l.statut === "livre").length} color="var(--success-dark)" />
-        <StatCard label="Taux réussite" value={`${totalLivraisons ? Math.round((totalLivres / totalLivraisons) * 100) : 0}%`} color="var(--success-dark)" />
+      {/* ══ STATS GRID ══ */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
+        gap: 14, marginBottom: 28,
+      }}>
+        <StatCard
+          label="Total livraisons"
+          value={totalLivraisons}
+          color="var(--accent)"
+          icon={<Icon d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" size={18} color="var(--accent)" />}
+        />
+        <StatCard
+          label="En cours"
+          value={enCours}
+          color="var(--warning)"
+          icon={<Icon d="M12 2a10 10 0 100 20 10 10 0 000-20zM12 6v6l4 2" size={18} color="var(--warning)" />}
+        />
+        <StatCard
+          label="Livrés aujourd'hui"
+          value={todayLivres}
+          color="var(--success)"
+          icon={<Icon d="M20 6L9 17l-5-5" size={18} color="var(--success)" />}
+        />
+        <StatCard
+          label="Taux réussite"
+          value={`${totalLivraisons ? Math.round((totalLivres / totalLivraisons) * 100) : 0}%`}
+          color="var(--success)"
+          icon={<Icon d="M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3" size={18} color="var(--success)" />}
+        />
       </div>
 
-      {/* ══ LIVRAISONS PAR JOUR / PAR MOIS ══ */}
+      {/* ══ LIVRAISONS ══ */}
       <Card style={{ marginBottom: 24 }}>
         <CardHeader>
-          <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: "var(--radius-md)",
+              background: "var(--accent-light)", display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Icon d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" size={15} color="var(--accent)" />
+            </div>
             <CardTitle>Livraisons</CardTitle>
           </div>
           <div style={{ display: "flex", gap: 6 }}>
-            <button
-              onClick={() => setActiveTab("jour")}
-              style={{
-                padding: "6px 16px", borderRadius: "var(--radius-full)", fontSize: 12, fontWeight: 600,
-                border: activeTab === "jour" ? "1.5px solid var(--cyan)" : "1.5px solid var(--border)",
-                background: activeTab === "jour" ? "var(--cyan-light)" : "transparent",
-                color: activeTab === "jour" ? "var(--cyan-dark)" : "var(--text-muted)",
-                cursor: "pointer", transition: "all var(--transition-fast)",
-              }}
-            >
-              Aujourd'hui ({todayLivraisons.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("mois")}
-              style={{
-                padding: "6px 16px", borderRadius: "var(--radius-full)", fontSize: 12, fontWeight: 600,
-                border: activeTab === "mois" ? "1.5px solid var(--rose-dark)" : "1.5px solid var(--border)",
-                background: activeTab === "mois" ? "var(--rose-light)" : "transparent",
-                color: activeTab === "mois" ? "var(--rose-deep)" : "var(--text-muted)",
-                cursor: "pointer", transition: "all var(--transition-fast)",
-              }}
-            >
-              Ce mois ({monthLivraisons.length})
-            </button>
+            {(["jour", "mois"] as const).map((tab) => {
+              const isActive = activeTab === tab;
+              const count = tab === "jour" ? todayLivraisons.length : monthLivraisons.length;
+              const label = tab === "jour" ? `Aujourd'hui (${count})` : `Ce mois (${count})`;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  style={{
+                    padding: "7px 18px", borderRadius: "var(--radius-full)", fontSize: 12, fontWeight: 600,
+                    border: isActive ? "1.5px solid var(--accent)" : "1.5px solid var(--border)",
+                    background: isActive ? "var(--accent-light)" : "transparent",
+                    color: isActive ? "var(--accent)" : "var(--text-muted)",
+                    cursor: "pointer", transition: "all var(--transition-fast)",
+                    boxShadow: isActive ? "0 0 12px rgba(201,169,110,0.15)" : "none",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         </CardHeader>
 
         {activeTab === "jour" ? (
           todayLivraisons.length === 0 ? (
-            <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px 0", fontSize: 13 }}>
+            <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "40px 0", fontSize: 13 }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>📦</div>
               Aucune livraison aujourd'hui.
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {todayLivraisons.map((l) => (
                 <div key={l.id} style={{
-                  display: "flex", alignItems: "center", gap: 12, padding: "12px 16px",
-                  background: "var(--bg-secondary)", borderRadius: "var(--radius-md)",
+                  display: "flex", alignItems: "center", gap: 14, padding: "14px 18px",
+                  background: "var(--bg-secondary)", borderRadius: "var(--radius-lg)",
                   border: "1px solid var(--border)", flexWrap: "wrap",
+                  transition: "all var(--transition-fast)",
                 }}>
-                  <div style={{ flex: 1, minWidth: 180 }}>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text)" }}>{l.colis}</div>
+                  {/* Colis icon */}
+                  <div style={{
+                    width: 40, height: 40, borderRadius: "var(--radius-md)",
+                    background: "var(--accent-dim)", display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0,
+                  }}>
+                    <Icon d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" size={16} color="var(--accent)" />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 160 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text)" }}>{l.colis}</div>
                     <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
                       {l.client_donneur || "—"} → {l.destinataire || "—"} {l.agent_nom ? `· ${l.agent_nom}` : ""}
                     </div>
                   </div>
-                  <div style={{ fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap" }}>
-                    {l.montant ? formatAr(l.montant) : ""}
+                  <div style={{
+                    fontSize: 13, fontWeight: 700, color: "var(--accent)",
+                    whiteSpace: "nowrap", padding: "4px 10px",
+                    background: "var(--accent-dim)", borderRadius: "var(--radius-full)",
+                  }}>
+                    {l.montant ? formatAr(l.montant) : "—"}
                   </div>
                   <StatusButtons livraison={l} onUpdate={handleStatusUpdate} />
                 </div>
@@ -243,7 +320,8 @@ export default function Dashboard() {
           )
         ) : (
           monthLivraisons.length === 0 ? (
-            <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "32px 0", fontSize: 13 }}>
+            <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "40px 0", fontSize: 13 }}>
+              <div style={{ fontSize: 32, marginBottom: 8 }}>📦</div>
               Aucune livraison ce mois-ci.
             </div>
           ) : (
@@ -265,7 +343,7 @@ export default function Dashboard() {
                     <TableCell>{l.client_donneur || "—"}</TableCell>
                     <TableCell>{l.destinataire}</TableCell>
                     <TableCell style={{ color: "var(--text-muted)", fontSize: 12 }}>{l.date}</TableCell>
-                    <TableCell align="right" style={{ color: "var(--cyan-dark)", fontWeight: 600 }}>{l.montant ? formatAr(l.montant) : "—"}</TableCell>
+                    <TableCell align="right" style={{ color: "var(--accent)", fontWeight: 600 }}>{l.montant ? formatAr(l.montant) : "—"}</TableCell>
                     <TableCell align="center">
                       <StatusButtons livraison={l} onUpdate={handleStatusUpdate} />
                     </TableCell>
@@ -277,35 +355,53 @@ export default function Dashboard() {
         )}
       </Card>
 
-      {/* Récupérations */}
+      {/* ══ RÉCUPÉRATIONS ══ */}
       <Card style={{ marginBottom: 24 }}>
         <CardHeader>
-          <div>
-            <CardTitle>Récupérations matinales</CardTitle>
-            <div style={{ fontSize: 30, fontWeight: 800, color: "var(--cyan)", marginTop: 4 }}>
-              {formatAr(totalRecuperationsJour)}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: "var(--radius-md)",
+              background: "var(--success-light)", display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Icon d="M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 1015.24 4.76L23 9" size={15} color="var(--success)" />
             </div>
-            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
-              {nbRecuperationsJour} récupération(s)
+            <div>
+              <CardTitle>Récupérations matinales</CardTitle>
+              <div style={{ fontSize: 28, fontWeight: 800, color: "var(--success)", marginTop: 2 }}>
+                {formatAr(totalRecuperationsJour)}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                {nbRecuperationsJour} récupération(s)
+              </div>
             </div>
           </div>
           <Input type="date" label="Date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
         </CardHeader>
 
         {loadingRecup && <SkeletonGrid cols={isMobile ? 1 : 2} rows={2} />}
-        {errorRecup && <div style={{ padding: 16, color: "var(--danger)", textAlign: "center" }}>{errorRecup}</div>}
+        {errorRecup && (
+          <div style={{ padding: 16, color: "var(--danger)", textAlign: "center", background: "var(--danger-light)", borderRadius: "var(--radius-md)", margin: "0 16px 16px" }}>
+            {errorRecup}
+          </div>
+        )}
 
         {!loadingRecup && !errorRecup && Object.keys(recuperationsParLivreur).length > 0 ? (
           <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16 }}>
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 14 }}>
               {Object.values(recuperationsParLivreur).map((rl) => (
-                <div key={rl.livreur} style={{ background: "var(--bg-secondary)", borderRadius: "var(--radius-lg)", padding: 16, border: "1px solid var(--border)" }}>
+                <div key={rl.livreur} style={{
+                  background: "var(--bg-secondary)", borderRadius: "var(--radius-lg)", padding: 16,
+                  border: "1px solid var(--border)",
+                }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
                     <span style={{ fontWeight: 700, color: "var(--text)", fontSize: 14 }}>{rl.livreur}</span>
-                    <span style={{ color: "var(--cyan)", fontWeight: 700, fontSize: 13 }}>{rl.nb} récup. · {formatAr(rl.total)}</span>
+                    <span style={{ color: "var(--success)", fontWeight: 700, fontSize: 13 }}>{rl.nb} récup. · {formatAr(rl.total)}</span>
                   </div>
                   {rl.details.map((d, idx) => (
-                    <div key={idx} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: idx < rl.details.length - 1 ? "1px solid var(--border)" : "none", fontSize: 12 }}>
+                    <div key={idx} style={{
+                      display: "flex", justifyContent: "space-between", padding: "6px 0",
+                      borderBottom: idx < rl.details.length - 1 ? "1px solid var(--border)" : "none", fontSize: 12,
+                    }}>
                       <span style={{ color: "var(--text-secondary)" }}>{d.client}</span>
                       <span style={{ color: "var(--success)", fontWeight: 600 }}>{formatAr(d.frais)}</span>
                     </div>
@@ -316,38 +412,69 @@ export default function Dashboard() {
           </div>
         ) : (
           !loadingRecup && !errorRecup && (
-            <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "20px 0", fontSize: 13 }}>
+            <div style={{ textAlign: "center", color: "var(--text-muted)", padding: "24px 0", fontSize: 13 }}>
               Aucune récupération pour cette date.
             </div>
           )
         )}
       </Card>
 
-      {/* Commission gérant */}
+      {/* ══ COMMISSION GÉRANT ══ */}
       <div style={{
-        background: "linear-gradient(135deg, rgba(127,232,254,0.08), rgba(232,160,144,0.08))",
-        border: "1px solid rgba(127,232,254,0.15)", borderRadius: "var(--radius-lg)",
-        padding: "24px 28px", marginBottom: 24,
+        background: "linear-gradient(135deg, rgba(201,169,110,0.06) 0%, rgba(139,92,246,0.04) 100%)",
+        border: "1px solid rgba(201,169,110,0.12)", borderRadius: "var(--radius-xl)",
+        padding: isMobile ? "20px" : "24px 28px", marginBottom: 28,
         display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16,
+        position: "relative", overflow: "hidden",
       }}>
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "var(--cyan)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
-            Gérant — Aujourd'hui
+        <div style={{
+          position: "absolute", top: -30, right: -30, width: 120, height: 120,
+          background: "radial-gradient(circle, rgba(201,169,110,0.1) 0%, transparent 70%)",
+          borderRadius: "50%", pointerEvents: "none",
+        }} />
+        <div style={{ position: "relative", zIndex: 1 }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8, marginBottom: 8,
+          }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: "var(--radius-sm)",
+              background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={14} color="#08080c" />
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              Gérant — Aujourd'hui
+            </span>
           </div>
-          <div style={{ fontSize: 32, fontWeight: 900, color: "var(--text)" }}>{formatAr(gerantGain)}</div>
+          <div style={{ fontSize: isMobile ? 28 : 36, fontWeight: 900, color: "var(--text)", letterSpacing: "-0.02em" }}>
+            {formatAr(gerantGain)}
+          </div>
           <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
             {livsGerant.length} livraisons × {formatAr(commissionGerant)}
           </div>
           {excludedToday.length > 0 && (
-            <div style={{ fontSize: 11, color: "var(--warning-dark)", marginTop: 4 }}>{excludedToday.length} livraison(s) exclue(s)</div>
+            <div style={{ fontSize: 11, color: "var(--warning)", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
+              <Icon d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" size={12} color="var(--warning)" />
+              {excludedToday.length} livraison(s) exclue(s)
+            </div>
           )}
         </div>
-        <Button variant="primary" onClick={() => {}}>Voir détails →</Button>
+        <Button variant="primary" onClick={() => {}} style={{ position: "relative", zIndex: 1 }}>
+          Voir détails →
+        </Button>
       </div>
 
-      {/* Récap par agent */}
+      {/* ══ RÉCAP PAR AGENT ══ */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>Récap par agent</h2>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: "var(--radius-md)",
+            background: "var(--accent2-light)", display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z" size={15} color="var(--accent2)" />
+          </div>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>Récap par agent</h2>
+        </div>
         <Badge variant="default" size="sm">Tous temps</Badge>
       </div>
 
@@ -361,7 +488,13 @@ export default function Dashboard() {
             agentStats.map(({ agent, ls, totalFrais, livres, retournes, reportes, taux }) => (
               <Card key={agent.id} padding={16}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-                  <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, var(--cyan), var(--rose))", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 16, color: "#fff" }}>
+                  <div style={{
+                    width: 44, height: 44, borderRadius: "50%",
+                    background: "linear-gradient(135deg, var(--accent), var(--accent2))",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontWeight: 800, fontSize: 18, color: "#08080c",
+                    boxShadow: "0 4px 12px rgba(201,169,110,0.2)",
+                  }}>
                     {agent.nom?.charAt(0) || "?"}
                   </div>
                   <div>
@@ -374,17 +507,25 @@ export default function Dashboard() {
                     { label: "Livrés", value: livres, color: "var(--success)" },
                     { label: "Retournés", value: retournes, color: "var(--danger)" },
                     { label: "Reportés", value: reportes, color: "var(--accent2)" },
-                    { label: "Frais", value: formatAr(totalFrais), color: "var(--cyan)" },
+                    { label: "Frais", value: formatAr(totalFrais), color: "var(--accent)" },
                   ].map((item) => (
-                    <div key={item.label} style={{ textAlign: "center", background: "var(--bg-secondary)", borderRadius: "var(--radius-md)", padding: "10px 4px" }}>
+                    <div key={item.label} style={{
+                      textAlign: "center", background: "var(--bg-secondary)",
+                      borderRadius: "var(--radius-md)", padding: "10px 4px",
+                    }}>
                       <div style={{ fontSize: 16, fontWeight: 700, color: item.color }}>{item.value}</div>
                       <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 2 }}>{item.label}</div>
                     </div>
                   ))}
                 </div>
                 <div style={{ height: 4, background: "var(--border)", borderRadius: 2, overflow: "hidden" }}>
-                  <div style={{ width: `${taux}%`, height: "100%", background: taux >= 70 ? "var(--success)" : taux >= 40 ? "var(--warning)" : "var(--danger)", borderRadius: 2 }} />
+                  <div style={{
+                    width: `${taux}%`, height: "100%",
+                    background: taux >= 70 ? "var(--success)" : taux >= 40 ? "var(--warning)" : "var(--danger)",
+                    borderRadius: 2, transition: "width 0.5s ease",
+                  }} />
                 </div>
+                <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4, textAlign: "right" }}>{taux}% réussite</div>
               </Card>
             ))
           )}
@@ -405,16 +546,32 @@ export default function Dashboard() {
           <TableBody>
             {agentStats.map(({ agent, ls, totalFrais, livres, retournes, reportes, taux }) => (
               <TableRow key={agent.id}>
-                <TableCell style={{ fontWeight: 600 }}>{agent.nom}</TableCell>
+                <TableCell>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: "50%",
+                      background: "linear-gradient(135deg, var(--accent), var(--accent2))",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontWeight: 700, fontSize: 14, color: "#08080c", flexShrink: 0,
+                    }}>
+                      {agent.nom?.charAt(0) || "?"}
+                    </div>
+                    <span style={{ fontWeight: 600 }}>{agent.nom}</span>
+                  </div>
+                </TableCell>
                 <TableCell align="center" style={{ fontWeight: 700 }}>{ls.length}</TableCell>
                 <TableCell align="center"><Badge variant="success" size="sm">{livres}</Badge></TableCell>
                 <TableCell align="center"><Badge variant="danger" size="sm">{retournes}</Badge></TableCell>
                 <TableCell align="center"><Badge variant="purple" size="sm">{reportes}</Badge></TableCell>
-                <TableCell align="right" style={{ color: "var(--cyan)", fontWeight: 600 }}>{formatAr(totalFrais)}</TableCell>
+                <TableCell align="right" style={{ color: "var(--accent)", fontWeight: 600 }}>{formatAr(totalFrais)}</TableCell>
                 <TableCell align="center">
                   <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
                     <div style={{ width: 40, height: 4, background: "var(--border)", borderRadius: 2, overflow: "hidden" }}>
-                      <div style={{ width: `${taux}%`, height: "100%", background: taux >= 70 ? "var(--success)" : taux >= 40 ? "var(--warning)" : "var(--danger)" }} />
+                      <div style={{
+                        width: `${taux}%`, height: "100%",
+                        background: taux >= 70 ? "var(--success)" : taux >= 40 ? "var(--warning)" : "var(--danger)",
+                        borderRadius: 2, transition: "width 0.5s ease",
+                      }} />
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 600 }}>{taux}%</span>
                   </div>
