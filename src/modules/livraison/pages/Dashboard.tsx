@@ -46,10 +46,10 @@ const StatusIcon = ({ name, size = 14, color = "currentColor" }: { name: string;
 );
 
 const STATUS_OPTIONS = [
-  { key: "en_cours", label: "En cours", color: "var(--warning)", bg: "var(--warning-light)", activeBg: "rgba(251,191,36,0.2)", icon: "clock" },
-  { key: "livre", label: "Livré", color: "var(--success)", bg: "var(--success-light)", activeBg: "rgba(52,211,153,0.2)", icon: "check" },
-  { key: "retourne", label: "Retourné", color: "var(--danger)", bg: "var(--danger-light)", activeBg: "rgba(248,113,113,0.2)", icon: "rotate-left" },
-  { key: "reporte", label: "Reporté", color: "var(--accent2)", bg: "var(--accent2-light)", activeBg: "rgba(139,92,246,0.2)", icon: "xmark" },
+  { key: "en_cours", label: "En cours", color: "#fbbf24", activeBg: "rgba(251,191,36,0.15)", icon: "clock" },
+  { key: "livre", label: "Livré", color: "#34d399", activeBg: "rgba(52,211,153,0.15)", icon: "check" },
+  { key: "retourne", label: "Retourné", color: "#f87171", activeBg: "rgba(248,113,113,0.15)", icon: "rotate-left" },
+  { key: "reporte", label: "Reporté", color: "#a78bfa", activeBg: "rgba(167,139,250,0.15)", icon: "xmark" },
 ];
 
 function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate: (id: string, updates: Record<string, unknown>) => void }) {
@@ -97,9 +97,9 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
       {/* Boutons de statut */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 8 }}>
         {STATUS_OPTIONS.map((opt) => {
           const isActive = livraison.statut === opt.key;
           return (
@@ -109,18 +109,19 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
               disabled={saving}
               title={opt.label}
               style={{
-                width: 36, height: 36, borderRadius: "var(--radius-md)",
+                width: 46, height: 46, borderRadius: "var(--radius-lg)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                border: isActive ? `1.5px solid ${opt.color}` : "1.5px solid var(--border)",
-                background: isActive ? opt.activeBg : "var(--card)",
+                border: isActive ? `2px solid ${opt.color}` : "2px solid var(--border2)",
+                background: isActive ? opt.activeBg : "var(--bg-secondary)",
                 color: isActive ? opt.color : "var(--text-muted)",
                 cursor: saving ? "wait" : "pointer",
                 transition: "all var(--transition-fast)",
-                boxShadow: isActive ? `0 0 12px ${opt.color}33` : "none",
-                opacity: saving ? 0.6 : 1,
+                boxShadow: isActive ? `0 0 16px ${opt.color}44` : "var(--shadow-xs)",
+                opacity: saving ? 0.5 : 1,
+                transform: isActive ? "scale(1.08)" : "scale(1)",
               }}
             >
-              <StatusIcon name={opt.icon} size={15} color={isActive ? opt.color : "var(--text-muted)"} />
+              <StatusIcon name={opt.icon} size={18} color={isActive ? opt.color : "var(--text-muted)"} />
             </button>
           );
         })}
@@ -157,7 +158,10 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
           />
           <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
             <button
-              onClick={handleSaveRemarque}
+              onClick={() => {
+                onUpdate(livraison.id, { statut: livraison.statut || "retourne", remarque });
+                setShowRemarque(false);
+              }}
               disabled={saving || !remarque.trim()}
               style={{
                 flex: 1, padding: "8px 14px", borderRadius: "var(--radius-sm)",
@@ -225,7 +229,7 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
                 background: "var(--accent)", color: "#08080c",
                 border: "none", fontSize: 12, fontWeight: 700,
                 cursor: saving ? "wait" : "pointer",
-                fontFamily: "var(--font)",
+                fontFamily: "var(",
               }}
             >
               {saving ? "..." : "✓ Enregistrer"}
