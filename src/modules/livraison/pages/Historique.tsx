@@ -109,7 +109,7 @@ export default function Historique() {
   const statsByClient: ClientStat[] = useMemo(() => {
     const map: Record<string, ClientStat> = {};
     livsFiltered.forEach((l) => {
-      const client = l.client_donneur;
+      const client = l.client_donneur || "—";
       if (!map[client]) map[client] = { client, livs: [], totalMontant: 0, totalFrais: 0 };
       map[client].livs.push(l);
       if (l.paiement !== "client") map[client].totalMontant += Number(l.montant) || 0;
