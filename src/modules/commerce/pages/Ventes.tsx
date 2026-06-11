@@ -53,8 +53,7 @@ const PAIEMENT_OPTIONS = [
 ];
 
 export default function Ventes() {
-  const { currentCompany } = useApp();
-  const { success: toastSuccess, error: toastError, warn: toastWarn } = useApp();
+  const { currentCompany, success: toastSuccess, error: toastError, warn: toastWarn } = useApp();
   const isMobile = useIsMobile();
 
   const [ventes, setVentes] = useState<Vente[]>([]);
@@ -207,7 +206,7 @@ export default function Ventes() {
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text)" }}>{v.numero_facture || "—"}</div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>{v.client_nom || "—"} · {new Date(v.date_vente ?? "").toLocaleDateString("fr-FR")}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>{v.client_nom || "—"} · {v.date_vente ? new Date(v.date_vente).toLocaleDateString("fr-FR") : "—"}</div>
                     </div>
                     <StatusBadge status={v.statut ?? "en_attente"} />
                   </div>
@@ -269,7 +268,7 @@ export default function Ventes() {
                     <TableRow key={v.id}>
                       <TableCell style={{ fontWeight: 600, fontFamily: "var(--font-mono)", fontSize: 12 }}>{v.numero_facture || "—"}</TableCell>
                       <TableCell>{v.client_nom || "—"}</TableCell>
-                      <TableCell style={{ color: "var(--text-muted)", fontSize: 11 }}>{new Date(v.date_vente ?? "").toLocaleDateString("fr-FR")}</TableCell>
+                      <TableCell style={{ color: "var(--text-muted)", fontSize: 11 }}>{v.date_vente ? new Date(v.date_vente).toLocaleDateString("fr-FR") : "—"}</TableCell>
                       <TableCell align="right" style={{ fontWeight: 600, color: C.gold }}>{formatAr(v.montant_total)}</TableCell>
                       <TableCell align="right" style={{ color: C.success }}>{formatAr(v.montant_paye)}</TableCell>
                       <TableCell align="right" style={{ color: solde > 0 ? C.orange : C.success, fontWeight: 600 }}>{solde > 0 ? formatAr(solde) : "Payé"}</TableCell>
