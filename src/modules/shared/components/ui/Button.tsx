@@ -1,14 +1,7 @@
 // ui/Button.tsx — Bouton moderne et élégant
 import type React from "react";
 
-type ButtonVariant =
-  | "primary"
-  | "success"
-  | "danger"
-  | "warning"
-  | "secondary"
-  | "ghost"
-  | "outline";
+type ButtonVariant = "primary" | "success" | "danger" | "warning" | "secondary" | "ghost" | "outline";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps {
@@ -28,28 +21,28 @@ interface ButtonProps {
 
 const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
   primary: {
-    background: "var(--accent)",
-    color: "#fff",
+    background: "#c9a96e",
+    color: "#08080c",
     border: "1px solid transparent",
-    boxShadow: "0 2px 8px rgba(127,232,254,0.25)",
+    boxShadow: "0 2px 8px rgba(201,169,110,0.25)",
   },
   success: {
-    background: "var(--success)",
-    color: "#fff",
+    background: "#34d399",
+    color: "#08080c",
     border: "1px solid transparent",
-    boxShadow: "0 2px 8px rgba(85,239,196,0.25)",
+    boxShadow: "0 2px 8px rgba(52,211,153,0.25)",
   },
   danger: {
-    background: "var(--danger)",
+    background: "#f87171",
     color: "#fff",
     border: "1px solid transparent",
-    boxShadow: "0 2px 8px rgba(255,107,107,0.25)",
+    boxShadow: "0 2px 8px rgba(248,113,113,0.25)",
   },
   warning: {
-    background: "var(--warning)",
-    color: "var(--text)",
+    background: "#fbbf24",
+    color: "#08080c",
     border: "1px solid transparent",
-    boxShadow: "0 2px 8px rgba(253,235,113,0.25)",
+    boxShadow: "0 2px 8px rgba(251,191,36,0.25)",
   },
   secondary: {
     background: "var(--bg-tertiary)",
@@ -63,90 +56,58 @@ const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
   },
   outline: {
     background: "transparent",
-    color: "var(--cyan-dark)",
+    color: "#c9a96e",
     border: "1.5px solid var(--border)",
   },
 };
 
-const sizeStyles: Record<
-  ButtonSize,
-  { padding: string; fontSize: number; borderRadius: number; height?: number }
-> = {
-  sm: { padding: "6px 12px", fontSize: 12, borderRadius: 6, height: 30 },
-  md: { padding: "8px 16px", fontSize: 13, borderRadius: 8, height: 36 },
-  lg: { padding: "10px 20px", fontSize: 14, borderRadius: 10, height: 42 },
+const sizeStyles: Record<ButtonSize, { padding: string; fontSize: number; borderRadius: number; height?: number }> = {
+  sm: { padding: "6px 12px", fontSize: 12, borderRadius: 8, height: 32 },
+  md: { padding: "8px 16px", fontSize: 13, borderRadius: 10, height: 38 },
+  lg: { padding: "10px 20px", fontSize: 14, borderRadius: 12, height: 44 },
 };
 
 export const Button: React.FC<ButtonProps> = ({
-  children,
-  variant = "primary",
-  size = "md",
-  disabled = false,
-  loading = false,
-  icon = null,
-  iconRight = null,
-  fullWidth = false,
-  onClick,
-  type = "button",
-  style = {},
-  className,
+  children, variant = "primary", size = "md", disabled = false, loading = false,
+  icon = null, iconRight = null, fullWidth = false, onClick, type = "button", style = {}, className,
 }) => {
   const v = variantStyles[variant];
   const s = sizeStyles[size];
 
   return (
-    <button
-      type={type}
-      onClick={onClick}
-      disabled={disabled || loading}
-      className={className}
+    <button type={type} onClick={onClick} disabled={disabled || loading} className={className}
       style={{
-        ...v,
-        ...s,
-        fontWeight: 600,
-        fontFamily: "var(--font)",
+        ...v, ...s, fontWeight: 600, fontFamily: "var(--font)",
         cursor: disabled || loading ? "not-allowed" : "pointer",
-        opacity: disabled || loading ? 0.55 : 1,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 7,
+        opacity: disabled || loading ? 0.5 : 1,
+        display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7,
         transition: "all var(--transition-fast)",
-        width: fullWidth ? "100%" : "auto",
-        whiteSpace: "nowrap",
-        ...style,
+        width: fullWidth ? "100%" : "auto", whiteSpace: "nowrap", ...style,
       }}
       onMouseEnter={(e) => {
         if (!disabled && !loading) {
-          if (variant === "primary")
-            (e.currentTarget as HTMLElement).style.background = "var(--accent-hover)";
-          if (variant === "ghost")
-            (e.currentTarget as HTMLElement).style.background = "var(--bg-tertiary)";
-          if (variant === "secondary")
-            (e.currentTarget as HTMLElement).style.background = "var(--border)";
+          if (variant === "primary") (e.currentTarget as HTMLElement).style.background = "#d4b77a";
+          if (variant === "success") (e.currentTarget as HTMLElement).style.background = "#10b981";
+          if (variant === "danger") (e.currentTarget as HTMLElement).style.background = "#ef4444";
+          if (variant === "warning") (e.currentTarget as HTMLElement).style.background = "#f59e0b";
+          if (variant === "ghost") (e.currentTarget as HTMLElement).style.background = "var(--bg-tertiary)";
+          if (variant === "secondary") (e.currentTarget as HTMLElement).style.background = "var(--border)";
+          if (variant === "outline") (e.currentTarget as HTMLElement).style.borderColor = "#c9a96e";
         }
       }}
       onMouseLeave={(e) => {
         if (!disabled && !loading) {
           (e.currentTarget as HTMLElement).style.background = v.background as string;
+          if (variant === "outline") (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
         }
       }}
     >
       {loading ? (
-        <span
-          style={{
-            width: 14,
-            height: 14,
-            border: "2px solid rgba(255,255,255,0.3)",
-            borderTopColor: "#fff",
-            borderRadius: "50%",
-            animation: "spin 0.6s linear infinite",
-            display: "inline-block",
-          }}
-        />
-      ) : (
-        icon
-      )}
+        <span style={{
+          width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)",
+          borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block",
+        }} />
+      ) : icon}
       {children}
       {iconRight}
     </button>
