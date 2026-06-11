@@ -1,6 +1,6 @@
 import { CheckIcon } from "@/modules/shared/components/ui/Icons";
 import type { Company } from "@/modules/shared/context/CompanyContext";
-import { getCompanyMeta } from "./company";
+import { getCompanyMeta, getLogoSrc } from "./company";
 
 interface CompanySheetProps {
   companies: Company[];
@@ -47,7 +47,7 @@ export function CompanySheet({ companies, currentCompany, onSelect, onClose }: C
         <div
           style={{ padding: "16px 20px 8px", fontSize: 13, fontWeight: 600, color: "var(--muted)" }}
         >
-          Choisir une societe
+          Choisir une société
         </div>
         {companies.map((company) => {
           const meta = getCompanyMeta(company);
@@ -82,13 +82,11 @@ export function CompanySheet({ companies, currentCompany, onSelect, onClose }: C
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 12,
-                  fontWeight: 800,
-                  color: meta.color,
                   flexShrink: 0,
+                  overflow: "hidden",
                 }}
               >
-                {meta.icon}
+                <img src={getLogoSrc(company)} alt={company.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
               </div>
               <div style={{ flex: 1, textAlign: "left" }}>
                 <div

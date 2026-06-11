@@ -80,16 +80,6 @@ export const Sidebar = ({ page, onNavigate, enCours }: SidebarProps) => {
       {/* En-tête avec le nom de la société */}
       <div
         style={{
-          fontSize: 14,
-          fontWeight: 700,
-          color: "#f1f5f9",
-          marginTop: 4,
-        }}
-      >
-        {currentCompany?.name}
-      </div>
-      <div
-        style={{
           padding: "14px 16px",
           borderBottom: "1px solid var(--border)",
           marginBottom: 8,
@@ -149,6 +139,18 @@ export const Sidebar = ({ page, onNavigate, enCours }: SidebarProps) => {
               cursor: "pointer",
               textAlign: "left",
               transition: "all 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              if (page !== item.key) {
+                (e.currentTarget as HTMLElement).style.background = "var(--bg-tertiary)";
+                (e.currentTarget as HTMLElement).style.color = "var(--text)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (page !== item.key) {
+                (e.currentTarget as HTMLElement).style.background = "transparent";
+                (e.currentTarget as HTMLElement).style.color = "var(--text2)";
+              }
             }}
           >
             <span style={{ fontSize: 16, width: 24, textAlign: "center" }}>{item.icon}</span>
