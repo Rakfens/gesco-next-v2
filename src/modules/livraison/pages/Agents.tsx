@@ -73,10 +73,10 @@ export default function Agents() {
   useEffect(() => { loadRecuperations(); }, [loadRecuperations]);
 
   const uniqueMonths = useMemo(() => {
-    const s = new Set(safeAgents.map(() => currentMonth()));
+    const s = new Set<string>();
     s.add(currentMonth());
     return [...s].sort().reverse();
-  }, [safeAgents]);
+  }, []);
 
   const handleAdd = async () => {
     if (!newNom.trim() || !newSalaire) { showToast("Nom et salaire requis", "error"); return; }
@@ -198,7 +198,7 @@ export default function Agents() {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text)" }}>{a.nom}</div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{formatAr(Number(a.salaire) || 0)} / mois</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{formatAr(a.salaire)} / mois</div>
                     </div>
                     <div style={{ display: "flex", gap: 4 }}>
                       <button onClick={() => startEdit(a)} title="Modifier"
