@@ -8,7 +8,6 @@ import {
   Select, SkeletonTable, StatCard, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow,
 } from "@/modules/shared/components/ui";
 import { useApp } from "@/modules/shared/context/AppContext";
-import { useCompany } from "@/modules/shared/context/CompanyContext";
 import { useIsMobile } from "@/modules/shared/hooks/useIsMobile";
 import type { Produit } from "@/modules/shared/types";
 import { UNITES } from "@/modules/shared/utils/constants";
@@ -86,8 +85,7 @@ function ProduitCard({ p, onEdit, onMovement, onHistory, onDelete }: {
 
 /* ─── Composant principal ─── */
 export default function Stock() {
-  const { currentCompany } = useCompany();
-  const { success: toastSuccess, error: toastError, warn: toastWarn } = useApp();
+  const { currentCompany, success: toastSuccess, error: toastError, warn: toastWarn } = useApp();
   const isMobile = useIsMobile();
 
   const [produits, setProduits] = useState<Produit[]>([]);
