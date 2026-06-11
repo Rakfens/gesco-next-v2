@@ -61,19 +61,10 @@ export default function CommerceDashboard() {
       const caJour = ventesJour.reduce((s, v) => s + (v.montant_total || 0), 0);
       const caMois = ventesMois.reduce((s, v) => s + (v.montant_total || 0), 0);
       const totalAchats = achats.reduce((s, a) => s + (a.montant_total || 0), 0);
-      let depensesJour = 0, depensesMois = 0;
-      if (currentCompany.slug === "pomanay") {
-        const [{ data: dj }, { data: dm }] = await Promise.all([
-          fetch("depenses").then(() => ({ data: [] })), // placeholder
-          fetch("depenses").then(() => ({ data: [] })),
-        ]);
-        depensesJour = 0;
-        depensesMois = 0;
-      }
       setStats({
         ventesJour: ventesJour.length, ventesMois: ventesMois.length, caJour, caMois,
         nbProduits: produits.length, stockBas: alertesData.length, valeurStock,
-        achatsMois: totalAchats, depensesJour, depensesMois,
+        achatsMois: totalAchats, depensesJour: 0, depensesMois: 0,
       });
       setRecentVentes(toutesVentes.slice(0, 5));
       setAlertes(alertesData.slice(0, 5));
@@ -221,7 +212,7 @@ export default function CommerceDashboard() {
                     {p.quantite_stock} / min {p.stock_minimum}
                   </span>
                   <span style={{ fontSize: 10, color: "var(--text-muted)" }}>
-                    {p.prix_vente ? formatAr(p.prix_vente) : ""}
+                    {p.prix_vente != null ? formatAr(p.prix_vente) : ""}
                   </span>
                 </div>
               </div>
