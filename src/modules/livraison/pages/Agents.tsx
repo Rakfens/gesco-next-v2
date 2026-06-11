@@ -1,146 +1,103 @@
+"use client";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { logger } from "@/lib/logger";
 import {
-  Button,
-  Card,
-  CardHeader,
-  CardTitle,
-  Input,
-  Modal,
-  ModalBody,
-  ModalFooter,
-  ModalHeader,
-  Select,
+  Button, Card, CardHeader, CardTitle, Input, Modal, ModalBody, ModalFooter, ModalHeader, Select, StatCard,
 } from "@/modules/shared/components/ui";
 import { useApp } from "@/modules/shared/context/AppContext";
 import { useIsMobile } from "@/modules/shared/hooks/useIsMobile";
 import type { Agent, Recuperation } from "@/modules/shared/types";
 import { currentMonth, formatAr, monthLabel } from "@/modules/shared/utils/constants";
-import {
-  getRecuperationsByLivreurNom,
-  getTotalRecuperationsByLivreurNom,
-} from "../services/recuperationService";
+import { getRecuperationsByLivreurNom, getTotalRecuperationsByLivreurNom } from "../services/recuperationService";
 
-interface RecupMois {
-  total: number;
-  count: number;
-  details: Recuperation[];
-}
+/* ─── Colors ─── */
+const C = {
+  gold: "#c9a96e", goldDim: "rgba(201,169,110,0.1)",
+  success: "#34d399", successDim: "rgba(52,211,153,0.1)",
+  warning: "#fbbf24", warningDim: "rgba(251,191,36,0.1)",
+  danger: "#f87171", dangerDim: "rgba(248,113,113,0.1)",
+  violet: "#8b5cf6", violetDim: "rgba(139,92,246,0.1)",
+};
 
-interface RecupCumul {
-  total: number;
-  count: number;
-}
+const Icon = ({ d, size = 16, color = "currentColor" }: { d: string; size?: number; color?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d={d} />
+  </svg>
+);
 
-interface ConfirmDeleteData {
-  id: string;
-  name: string;
-}
+interface RecupMois { total: number; count: number; details: Recuperation[]; }
+interface RecupCumul { total: number; count: number; }
 
 export default function Agents() {
-  const {
-    agents,
-    addAgent: onAddAgent,
-    updateAgent: onUpdateAgent,
-    deleteAgent: onDeleteAgent,
-    showToast,
-  } = useApp();
+  const { agents, addAgent: onAddAgent, updateAgent: onUpdateAgent, deleteAgent: onDeleteAgent, showToast } = useApp();
   const isMobile = useIsMobile();
 
-  const [newNom, setNewNom] = useState<string>("");
-  const [newSalaire, setNewSalaire] = useState<string>("");
+  const [newNom, setNewNom] = useState("");
+  const [newSalaire, setNewSalaire] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<{ nom: string; salaire: string }>({
-    nom: "",
-    salaire: "",
-  });
-  const [month, setMonth] = useState<string>(currentMonth());
+  const [editData, setEditData] = useState<{ nom: string; salaire: string }>({ nom: "", salaire: "" });
+  const [month, setMonth] = useState(currentMonth());
   const [recupsMois, setRecupsMois] = useState<Record<string, RecupMois>>({});
   const [recupsCumul, setRecupsCumul] = useState<Record<string, RecupCumul>>({});
   const [loading, setLoading] = useState(false);
-  const [confirmDel, setConfirmDel] = useState<ConfirmDeleteData | null>(null);
+  const [confirmDel, setConfirmDel] = useState<{ id: string; name: string } | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const uniqueMonths = useMemo(() => {
-    const s = new Set(agents.map(() => currentMonth()));
-    s.add(currentMonth());
-    return [...s].sort().reverse();
-  }, [agents]);
-
-  const monthOptions = useMemo(
-    () => uniqueMonths.map((m) => ({ value: m, label: monthLabel(m) })),
-    [uniqueMonths],
-  );
+  const safeAgents = Array.isArray(agents) ? agents : [];
 
   const loadRecuperations = useCallback(async () => {
-    if (!agents.length) return;
+    if (!safeAgents.length) return;
     setLoading(true);
     try {
-      const promises = agents.map(async (agent: Agent) => {
+      const results = await Promise.all(safeAgents.map(async (agent) => {
         const [dataMois, { total: totalCumul, count: countCumul }] = await Promise.all([
           getRecuperationsByLivreurNom(agent.nom, month),
           getTotalRecuperationsByLivreurNom(agent.nom),
         ]);
         return {
           id: agent.id,
-          mois: {
-            total: dataMois.reduce(
-              (s: number, r: Recuperation) => s + (r.frais_recuperation || 0),
-              0,
-            ),
-            count: dataMois.length,
-            details: dataMois,
-          },
+          mois: { total: dataMois.reduce((s: number, r: Recuperation) => s + (r.frais_recuperation || 0), 0), count: dataMois.length, details: dataMois },
           cumul: { total: totalCumul, count: countCumul },
         };
-      });
-
-      const results = await Promise.all(promises);
+      }));
       const moisMap: Record<string, RecupMois> = {};
       const cumulMap: Record<string, RecupCumul> = {};
-      results.forEach((r: { id: string; mois: RecupMois; cumul: RecupCumul }) => {
-        moisMap[r.id] = r.mois;
-        cumulMap[r.id] = r.cumul;
-      });
+      results.forEach((r) => { moisMap[r.id] = r.mois; cumulMap[r.id] = r.cumul; });
       setRecupsMois(moisMap);
       setRecupsCumul(cumulMap);
-    } catch (error: unknown) {
-      logger.error("Erreur lors du chargement des récupérations:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [agents, month]);
+    } catch (error: unknown) { logger.error("Erreur récupérations:", error); }
+    finally { setLoading(false); }
+  }, [safeAgents, month]);
 
-  useEffect(() => {
-    loadRecuperations();
-  }, [loadRecuperations]);
+  useEffect(() => { loadRecuperations(); }, [loadRecuperations]);
+
+  const uniqueMonths = useMemo(() => {
+    const s = new Set(safeAgents.map(() => currentMonth()));
+    s.add(currentMonth());
+    return [...s].sort().reverse();
+  }, [safeAgents]);
 
   const handleAdd = async () => {
-    if (!newNom.trim() || !newSalaire) {
-      showToast("Nom et salaire requis", "error");
-      return;
-    }
+    if (!newNom.trim() || !newSalaire) { showToast("Nom et salaire requis", "error"); return; }
+    setSaving(true);
     try {
       await onAddAgent(newNom, newSalaire);
-      setNewNom("");
-      setNewSalaire("");
+      setNewNom(""); setNewSalaire("");
       showToast("Agent ajouté");
-    } catch (err: unknown) {
-      logger.error("Erreur lors de l'ajout de l'agent:", err);
-      showToast("Erreur lors de l'ajout de l'agent.", "error");
-    }
+    } catch (err: unknown) { logger.error("Erreur ajout:", err); showToast("Erreur lors de l'ajout.", "error"); }
+    finally { setSaving(false); }
   };
 
   const handleUpdate = async () => {
     if (!editId || !editData.nom || !editData.salaire) return;
+    setSaving(true);
     try {
       await onUpdateAgent(editId, { nom: editData.nom, salaire: parseFloat(editData.salaire) });
-      setEditId(null);
-      setEditData({ nom: "", salaire: "" });
+      setEditId(null); setEditData({ nom: "", salaire: "" });
       showToast("Agent modifié");
-    } catch (err: unknown) {
-      logger.error("Erreur lors de la modification de l'agent:", err);
-      showToast("Erreur lors de la modification de l'agent.", "error");
-    }
+    } catch (err: unknown) { logger.error("Erreur modif:", err); showToast("Erreur lors de la modification.", "error"); }
+    finally { setSaving(false); }
   };
 
   const startEdit = (agent: Agent) => {
@@ -148,304 +105,181 @@ export default function Agents() {
     setEditData({ nom: agent.nom, salaire: String(agent.salaire ?? 0) });
   };
 
-  const handleDelete = (agent: Agent) => {
-    setConfirmDel({ id: agent.id, name: agent.nom });
-  };
-
   const executeDelete = async () => {
     if (!confirmDel) return;
     const { id } = confirmDel;
     setConfirmDel(null);
-    try {
-      await onDeleteAgent(id);
-      showToast("Agent supprimé", "warn");
-    } catch (err: unknown) {
-      logger.error("Erreur lors de la suppression de l'agent:", err);
-      showToast("Erreur lors de la suppression de l'agent.", "error");
-    }
+    setSaving(true);
+    try { await onDeleteAgent(id); showToast("Agent supprimé", "warn"); }
+    catch (err: unknown) { logger.error("Erreur suppression:", err); showToast("Erreur lors de la suppression.", "error"); }
+    finally { setSaving(false); }
   };
 
-  return (
-    <div style={{ paddingBottom: 24 }}>
-      <Modal open={!!confirmDel} onClose={() => setConfirmDel(null)}>
-        <ModalHeader title="Supprimer l'agent ?" onClose={() => setConfirmDel(null)} />
-        <ModalBody>
-          <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
-            {confirmDel?.name} et toutes ses données seront supprimés définitivement.
-          </p>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="secondary" onClick={() => setConfirmDel(null)}>
-            Annuler
-          </Button>
-          <Button variant="danger" onClick={executeDelete}>
-            Supprimer
-          </Button>
-        </ModalFooter>
-      </Modal>
+  // Stats
+  const totalSalaire = safeAgents.reduce((s, a) => s + (Number(a.salaire) || 0), 0);
+  const totalRecupMois = Object.values(recupsMois).reduce((s, r) => s + r.total, 0);
 
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 20,
-          flexWrap: "wrap",
-          gap: 12,
-        }}
-      >
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: "var(--text)" }}>Agents</h1>
-          <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
-            {agents.length} agent(s) enregistré(s)
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <Select value={month} onChange={(e) => setMonth(e.target.value)} options={monthOptions} />
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={loadRecuperations}
-            loading={loading}
-            disabled={loading}
-          >
-            Actualiser
-          </Button>
+  return (
+    <div className="fadeUp" style={{ animation: "fadeUp 0.4s ease both", paddingBottom: 24 }}>
+
+      {/* ══ HEADER ══ */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: C.successDim, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z" size={18} color={C.success} />
+          </div>
+          <div>
+            <h1 style={{ fontSize: isMobile ? 20 : 24, fontWeight: 800, color: "var(--text)", margin: 0 }}>Agents</h1>
+            <p style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 1 }}>{safeAgents.length} agent(s) enregistré(s)</p>
+          </div>
         </div>
       </div>
 
-      {/* Formulaire ajout */}
-      <Card style={{ marginBottom: 20 }}>
+      {/* ══ STATS ══ */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(3, 1fr)", gap: 10, marginBottom: 16 }}>
+        <StatCard label="Total agents" value={safeAgents.length} color={C.success} icon={<Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z" size={18} color={C.success} />} />
+        <StatCard label="Salaires mensuels" value={formatAr(totalSalaire)} color={C.gold} icon={<Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={18} color={C.gold} />} />
+        <StatCard label="Récup. du mois" value={formatAr(totalRecupMois)} color={C.violet} icon={<Icon d="M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 1015.24 4.76L23 9" size={18} color={C.violet} />} />
+      </div>
+
+      {/* ══ FORMULAIRE AJOUT ══ */}
+      <Card style={{ marginBottom: 16 }}>
         <CardHeader>
           <CardTitle>Ajouter un agent</CardTitle>
         </CardHeader>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-            gap: 12,
-            marginBottom: 12,
-          }}
-        >
-          <Input
-            placeholder="Nom complet"
-            value={newNom}
-            onChange={(e) => setNewNom(e.target.value)}
-          />
-          <Input
-            type="number"
-            placeholder="250000"
-            value={newSalaire}
-            onChange={(e) => setNewSalaire(e.target.value)}
-          />
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr auto", gap: 10, alignItems: "end" }}>
+          <Input placeholder="Nom complet" value={newNom} onChange={(e) => setNewNom(e.target.value)} />
+          <Input type="number" placeholder="Salaire (Ar)" value={newSalaire} onChange={(e) => setNewSalaire(e.target.value)} />
+          <Button variant="primary" onClick={handleAdd} loading={saving} disabled={saving}>Ajouter</Button>
         </div>
-        <Button variant="primary" fullWidth onClick={handleAdd}>
-          Ajouter l'agent
-        </Button>
       </Card>
 
-      {loading && (
-        <div style={{ textAlign: "center", color: "var(--muted)", padding: 10, marginBottom: 10 }}>
-          Chargement des récupérations...
-        </div>
-      )}
-
-      {/* Liste des agents */}
-      <div
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          color: "var(--muted)",
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          marginBottom: 12,
-        }}
-      >
-        Liste des agents ({agents.length})
+      {/* ══ SÉLECTEUR MOIS ══ */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+        <Select value={month} onChange={(e) => setMonth(e.target.value)}
+          options={uniqueMonths.map((m) => ({ value: m, label: monthLabel(m) }))}
+          style={{ maxWidth: 180 }} />
+        <Button variant="secondary" size="sm" onClick={loadRecuperations} loading={loading} disabled={loading}>
+          Actualiser
+        </Button>
       </div>
 
-      {agents.map((a) => {
-        const rm = recupsMois[a.id] || { total: 0, count: 0, details: [] };
-        const rc = recupsCumul[a.id] || { total: 0, count: 0 };
-        return (
-          <Card key={a.id} style={{ marginBottom: 10 }}>
-            {editId === a.id ? (
-              <div>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-                    gap: 12,
-                    marginBottom: 12,
-                  }}
-                >
-                  <Input
-                    value={editData.nom}
-                    onChange={(e) => setEditData({ ...editData, nom: e.target.value })}
-                  />
-                  <Input
-                    type="number"
-                    value={editData.salaire}
-                    onChange={(e) => setEditData({ ...editData, salaire: e.target.value })}
-                  />
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Button variant="success" onClick={handleUpdate} style={{ flex: 1 }}>
-                    Sauver
-                  </Button>
-                  <Button variant="secondary" onClick={() => setEditId(null)}>
-                    Annuler
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div>
-                {/* Ligne principale */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    marginBottom: 12,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: "50%",
-                      background: "linear-gradient(135deg, var(--accent), #6366f1)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontWeight: 800,
-                      fontSize: 18,
-                      color: "#fff",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {a.nom.charAt(0)}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text)" }}>
-                      {a.nom}
+      {/* ══ LISTE DES AGENTS ══ */}
+      {safeAgents.length === 0 ? (
+        <Card padding={40}>
+          <div style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>👥</div>
+            Aucun agent enregistré.
+          </div>
+        </Card>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(380px, 1fr))", gap: 12 }}>
+          {safeAgents.map((a) => {
+            const rm = recupsMois[a.id] || { total: 0, count: 0, details: [] };
+            const rc = recupsCumul[a.id] || { total: 0, count: 0 };
+            const isEditing = editId === a.id;
+
+            return (
+              <Card key={a.id} padding={0} style={{ overflow: "hidden" }}>
+                {/* Header */}
+                <div style={{
+                  background: "linear-gradient(135deg, rgba(52,211,153,0.06) 0%, rgba(201,169,110,0.04) 100%)",
+                  padding: "14px 16px", borderBottom: "1px solid var(--border)",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: "50%",
+                      background: "linear-gradient(135deg, #34d399, #c9a96e)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontWeight: 800, fontSize: 18, color: "#08080c",
+                      boxShadow: "0 4px 12px rgba(52,211,153,0.2)", flexShrink: 0,
+                    }}>
+                      {a.nom?.charAt(0) || "?"}
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                      {formatAr(Number(a.salaire) || 0)} / mois
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text)" }}>{a.nom}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{formatAr(Number(a.salaire) || 0)} / mois</div>
                     </div>
-                  </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <Button variant="ghost" size="sm" onClick={() => startEdit(a)}>
-                      Modifier
-                    </Button>
-                    <Button variant="danger" size="sm" onClick={() => handleDelete(a)}>
-                      Supprimer
-                    </Button>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <button onClick={() => startEdit(a)} title="Modifier"
+                        style={{ width: 30, height: 30, borderRadius: 8, background: "var(--bg-secondary)", border: "1px solid var(--border)", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>✏️</button>
+                      <button onClick={() => setConfirmDel({ id: a.id, name: a.nom })} title="Supprimer"
+                        style={{ width: 30, height: 30, borderRadius: 8, background: C.dangerDim, border: "1px solid rgba(248,113,113,0.2)", color: C.danger, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>🗑</button>
+                    </div>
                   </div>
                 </div>
 
-                {/* Récupérations du mois */}
-                <div
-                  style={{
-                    background: "var(--bg)",
-                    borderRadius: "var(--radius-md)",
-                    padding: "10px 12px",
-                    marginBottom: 8,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: rm.details?.length ? 8 : 0,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: "var(--warning)",
-                      }}
-                    >
-                      {monthLabel(month)}
-                    </span>
-                    <div style={{ display: "flex", gap: 12 }}>
-                      <span style={{ fontSize: 12, color: "var(--muted)" }}>{rm.count} récup.</span>
-                      <span
-                        style={{
-                          fontSize: 13,
-                          color: "var(--success)",
-                          fontWeight: 700,
-                        }}
-                      >
-                        {formatAr(rm.total)}
-                      </span>
+                {/* Edition inline */}
+                {isEditing && (
+                  <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)", animation: "fadeUp 0.2s ease" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                      <Input value={editData.nom} onChange={(e) => setEditData({ ...editData, nom: e.target.value })} placeholder="Nom" />
+                      <Input type="number" value={editData.salaire} onChange={(e) => setEditData({ ...editData, salaire: e.target.value })} placeholder="Salaire" />
+                    </div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <Button variant="success" size="sm" onClick={handleUpdate} loading={saving} style={{ flex: 1 }}>Sauver</Button>
+                      <Button variant="secondary" size="sm" onClick={() => setEditId(null)}>Annuler</Button>
                     </div>
                   </div>
-                  {rm.details?.length > 0 && (
-                    <div style={{ borderTop: "1px solid var(--border)", paddingTop: 6 }}>
+                )}
+
+                {/* Récupérations du mois */}
+                <div style={{ padding: "12px 16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: C.warning, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      📅 {monthLabel(month)}
+                    </span>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{rm.count} récup.</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: C.success }}>{formatAr(rm.total)}</span>
+                    </div>
+                  </div>
+
+                  {rm.details.length > 0 && (
+                    <div style={{ borderTop: "1px solid var(--border)", paddingTop: 6, marginBottom: 8 }}>
                       {rm.details.map((r, i) => (
-                        <div
-                          key={i}
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            fontSize: 11,
-                            color: "var(--muted)",
-                            padding: "3px 0",
-                          }}
-                        >
-                          <span>{r.date}</span>
-                          <span>{r.client_donneur}</span>
-                          <span style={{ color: "var(--success)" }}>
-                            {formatAr(r.frais_recuperation)}
-                          </span>
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", fontSize: 10 }}>
+                          <span style={{ color: "var(--text-secondary)" }}>{r.date} · {r.client_donneur}</span>
+                          <span style={{ color: C.success, fontWeight: 600 }}>{formatAr(r.frais_recuperation)}</span>
                         </div>
                       ))}
                     </div>
                   )}
-                </div>
 
-                {/* Cumul total */}
-                <div
-                  style={{
-                    background: "var(--bg)",
-                    borderRadius: "var(--radius-md)",
-                    padding: "10px 12px",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: "var(--warning)",
-                    }}
-                  >
-                    Cumul total
-                  </span>
-                  <div style={{ display: "flex", gap: 12 }}>
-                    <span style={{ fontSize: 12, color: "var(--muted)" }}>{rc.count} récup.</span>
-                    <span
-                      style={{
-                        fontSize: 13,
-                        color: "var(--success)",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {formatAr(rc.total)}
+                  {/* Cumul total */}
+                  <div style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "8px 10px", background: "var(--bg)", borderRadius: 8,
+                    border: "1px solid var(--border)",
+                  }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: C.gold, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      💰 Cumul total
                     </span>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{rc.count} récup.</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: C.gold }}>{formatAr(rc.total)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </Card>
-        );
-      })}
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ══ MODAL SUPPRESSION ══ */}
+      <Modal open={!!confirmDel} onClose={() => setConfirmDel(null)}>
+        <ModalHeader title="Supprimer l'agent ?" onClose={() => setConfirmDel(null)} />
+        <ModalBody>
+          <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+            {confirmDel?.name} et toutes ses données seront supprimés définitivement.
+          </p>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="secondary" onClick={() => setConfirmDel(null)}>Annuler</Button>
+          <Button variant="danger" onClick={executeDelete} loading={saving}>Supprimer</Button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 }
