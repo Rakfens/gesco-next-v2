@@ -36,8 +36,7 @@ interface PanierItem {
 }
 
 export default function Achats() {
-  const { currentCompany } = useApp();
-  const { success: toastSuccess, error: toastError, warn: toastWarn } = useApp();
+  const { currentCompany, success: toastSuccess, error: toastError, warn: toastWarn } = useApp();
   const isMobile = useIsMobile();
 
   const [achats, setAchats] = useState<Achat[]>([]);
@@ -184,7 +183,7 @@ export default function Achats() {
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text)" }}>{a.numero_commande || "—"}</div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>{a.fournisseur_nom || "—"} · {new Date(a.date_achat ?? "").toLocaleDateString("fr-FR")}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>{a.fournisseur_nom || "—"} · {a.date_achat ? new Date(a.date_achat).toLocaleDateString("fr-FR") : "—"}</div>
                     </div>
                     <Badge variant={solde > 0 ? "warning" : "success"} size="sm">{solde > 0 ? "Crédit" : "Soldé"}</Badge>
                   </div>
@@ -245,7 +244,7 @@ export default function Achats() {
                     <TableRow key={a.id}>
                       <TableCell style={{ fontWeight: 600, fontFamily: "var(--font-mono)", fontSize: 12 }}>{a.numero_commande || "—"}</TableCell>
                       <TableCell>{a.fournisseur_nom || "—"}</TableCell>
-                      <TableCell style={{ color: "var(--text-muted)", fontSize: 11 }}>{new Date(a.date_achat ?? "").toLocaleDateString("fr-FR")}</TableCell>
+                      <TableCell style={{ color: "var(--text-muted)", fontSize: 11 }}>{a.date_achat ? new Date(a.date_achat).toLocaleDateString("fr-FR") : "—"}</TableCell>
                       <TableCell align="right" style={{ fontWeight: 600, color: C.orange }}>{formatAr(a.montant_total)}</TableCell>
                       <TableCell align="right" style={{ color: C.success }}>{formatAr(a.montant_paye)}</TableCell>
                       <TableCell align="right" style={{ color: solde > 0 ? C.danger : C.success, fontWeight: 600 }}>{solde > 0 ? formatAr(solde) : "Payé"}</TableCell>
