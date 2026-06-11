@@ -193,7 +193,7 @@ export default function Stock() {
     total: produits.length,
     low: produits.filter((p) => (p.quantite_stock ?? 0) > 0 && (p.quantite_stock ?? 0) <= (p.stock_minimum ?? 0)).length,
     out: produits.filter((p) => p.quantite_stock === 0).length,
-    valeur: produits.reduce((s, p) => s + (Number(p.prix_vente) || 0) * (p.quantite_stock || 0), 0),
+    valeur: produits.reduce((s, p) => s + (Number(p.prix_achat) || 0) * (p.quantite_stock || 0), 0),
   }), [produits]);
 
   const categoryOptions = useMemo(() => categories.map((c) => ({ value: c, label: c })), [categories]);
