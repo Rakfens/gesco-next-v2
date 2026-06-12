@@ -147,13 +147,13 @@ export default function Ventes() {
 
     // Ajouter une ligne "Pack" avec le prix du pack
     const packItem: PanierItem = {
-      produit_id: `pack_${pack.id}`,
+      produit_id: `pack_${String(pack.id)}`,
       nom: `📦 ${pack.nom}`,
       quantite: 1,
       prix_unitaire: pack.prix,
       sous_total: pack.prix,
       is_pack: true,
-      pack_id: pack.id,
+      pack_id: String(pack.id),
       pack_nom: pack.nom,
     };
 
@@ -519,24 +519,24 @@ export default function Ventes() {
                   </div>
                 ) : (
                   panier.map((p) => (
-                    <div key={`${p.produit_id}_${p.is_pack ? "pack" : "prod"}`} style={{
+                    <div key={`${p.produit_id}_${p.is_pack ? "pack" : "prod"}_${p.pack_nom || ""}`} style={{
                       display: "flex", alignItems: "center", gap: 6, padding: "6px 0", borderBottom: "1px solid var(--border)",
-                      background: p.is_pack && p.produit_id.startsWith("pack_") ? C.goldDim : "transparent",
-                      borderRadius: p.is_pack && p.produit_id.startsWith("pack_") ? 4 : 0,
-                      paddingLeft: p.is_pack && !p.produit_id.startsWith("pack_") ? 16 : 0,
+                      background: p.is_pack && String(p.produit_id).startsWith("pack_") ? C.goldDim : "transparent",
+                      borderRadius: p.is_pack && String(p.produit_id).startsWith("pack_") ? 4 : 0,
+                      paddingLeft: p.is_pack && !String(p.produit_id).startsWith("pack_") ? 16 : 0,
                     }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: p.is_pack && p.produit_id.startsWith("pack_") ? 700 : 600, fontSize: 11, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <div style={{ fontWeight: p.is_pack && String(p.produit_id).startsWith("pack_") ? 700 : 600, fontSize: 11, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {p.nom}
-                          {p.is_pack && !p.produit_id.startsWith("pack_") && <span style={{ fontSize: 9, color: "var(--text-muted)", marginLeft: 4 }}>(pack)</span>}
+                          {p.is_pack && !String(p.produit_id).startsWith("pack_") && <span style={{ fontSize: 9, color: "var(--text-muted)", marginLeft: 4 }}>(pack)</span>}
                         </div>
                       </div>
-                      {p.is_pack && p.produit_id.startsWith("pack_") ? (
+                      {p.is_pack && String(p.produit_id).startsWith("pack_") ? (
                         <>
                           <span style={{ fontSize: 11, fontWeight: 700, color: C.gold, minWidth: 60, textAlign: "right" }}>{formatAr(p.prix_unitaire)}</span>
                           <button onClick={() => {
                             // Supprimer le pack et ses produits
-                            const newPanier = panier.filter((item) => item.pack_id !== p.pack_id);
+                            const newPanier = panier.filter((item) => String(item.pack_id) !== String(p.pack_id));
                             setPanier(newPanier);
                           }} style={{ width: 24, height: 24, borderRadius: 6, background: C.dangerDim, border: "1px solid rgba(248,113,113,0.2)", color: C.danger, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>✕</button>
                         </>
