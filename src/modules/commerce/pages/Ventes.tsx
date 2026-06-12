@@ -179,15 +179,13 @@ export default function Ventes() {
     const packLines = panier.filter((p) => p.is_pack && String(p.produit_id).startsWith("pack_"));
     const productLines = panier.filter((p) => !p.is_pack || (p.is_pack && !String(p.produit_id).startsWith("pack_")));
 
-    // Construire les details pour la vente (seulement les produits individuels avec prix > 0)
-    const details: VenteDetailItem[] = productLines
-      .filter((p) => p.prix_unitaire > 0)
-      .map((p) => ({
-        produit_id: p.produit_id,
-        quantite: p.quantite,
-        prix_unitaire: p.prix_unitaire,
-        sous_total: p.sous_total,
-      }));
+    // Construire les details pour la vente (TOUS les produits, y compris ceux de pack à prix 0)
+    const details: VenteDetailItem[] = productLines.map((p) => ({
+      produit_id: p.produit_id,
+      quantite: p.quantite,
+      prix_unitaire: p.prix_unitaire,
+      sous_total: p.sous_total,
+    }));
 
     // Calculer le montant total : somme des prix des packs + somme des produits hors pack
     const totalPack = packLines.reduce((s, p) => s + p.sous_total, 0);
