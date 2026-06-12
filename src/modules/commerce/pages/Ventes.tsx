@@ -133,14 +133,14 @@ export default function Ventes() {
         return;
       }
       produitsIndividuels.push({
-        produit_id: produit.id,
+        produit_id: String(produit.id),
         nom: produit.nom,
         quantite: pp.quantite,
         prix_unitaire: 0,
         sous_total: 0,
         stock_max: produit.quantite_stock,
         is_pack: true,
-        pack_id: pack.id,
+        pack_id: String(pack.id),
         pack_nom: pack.nom,
       });
     }
@@ -162,12 +162,12 @@ export default function Ventes() {
   };
 
   const updateCartQty = (id: string, qty: number) => {
-    if (qty <= 0) { setPanier(panier.filter((p) => p.produit_id !== id)); return; }
-    setPanier(panier.map((p) => p.produit_id === id ? { ...p, quantite: qty, sous_total: qty * p.prix_unitaire } : p));
+    if (qty <= 0) { setPanier(panier.filter((p) => String(p.produit_id) !== String(id))); return; }
+    setPanier(panier.map((p) => String(p.produit_id) === String(id) ? { ...p, quantite: qty, sous_total: qty * p.prix_unitaire } : p));
   };
 
   const updateCartPrice = (id: string, price: number) => {
-    setPanier(panier.map((p) => p.produit_id === id ? { ...p, prix_unitaire: price, sous_total: p.quantite * price } : p));
+    setPanier(panier.map((p) => String(p.produit_id) === String(id) ? { ...p, prix_unitaire: price, sous_total: p.quantite * price } : p));
   };
 
   const resetForm = () => { setEditMode(false); setSelectedVente(null); setPanier([]); setSearchProduit(""); setForm(EMPTY_FORM); setModalTab("produits"); };
@@ -176,18 +176,18 @@ export default function Ventes() {
     if (panier.length === 0) { toastWarn("Ajoutez au moins un produit ou un pack"); return; }
 
     // Séparer les lignes de pack (prix) des produits individuels
-    const packLines = panier.filter((p) => p.is_pack && p.produit_id.startsWith("pack_"));
-    const productLines = panier.filter((p) => !p.is_pack || (p.is_pack && !p.produit_id.startsWith("pack_")));
+    const packLines = panier.filter((p) => p.is_pack && String(p.produit_id).startsWith("pack_"));
+    const productLines = panier.filter((p) => !p.is_pack || (p.is_pack && !String(p.produit_id).startsWith("pack_")));
 
-    // Construire les details pour la vente
-    // Les lignes pack contribuent au montant mais ne sont pas dans vente_details
-    // Les produits individuels (y compris ceux des packs) sont dans vente_details
-    const details: VenteDetailItem[] = productLines.map((p) => ({
-      produit_id: p.produit_id,
-      quantite: p.quantite,
-      prix_unitaire: p.prix_unitaire,
-      sous_total: p.sous_total,
-    }));
+    // Construire les details pour la vente (seulement les produits individuels avec prix > 0)
+    const details: VenteDetailItem[] = productLines
+      .filter((p) => p.prix_unitaire > 0)
+      .map((p) => ({
+        produit_id: p.produit_id,
+        quantite: p.quantite,
+        prix_unitaire: p.prix_unitaire,
+        sous_total: p.sous_total,
+      }));
 
     // Calculer le montant total : somme des prix des packs + somme des produits hors pack
     const totalPack = packLines.reduce((s, p) => s + p.sous_total, 0);
@@ -200,8 +200,8 @@ export default function Ventes() {
         await updateVente(selectedVente.id, form, details);
         toastSuccess("Vente modifiée");
       } else {
-        // Créer la vente avec le montant total incluant les packs
-        const nv = await createVente({ ...form, montant_paye: form.montant_paye }, details);
+        // Créer la vente avec les details des produits
+        const nv = await createVente({ ...form }, details);
         // Ajuster le montant total si des packs sont présents
         if (totalPack > 0) {
           const { getSupabase } = await import("@/lib/supabase");
