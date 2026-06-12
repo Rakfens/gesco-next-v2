@@ -179,6 +179,8 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         /* noop */
       }
       window.dispatchEvent(new CustomEvent("companyChanged", { detail: company }));
+      // Recharger la page pour mettre à jour le layout avec la nouvelle société
+      window.location.reload();
     },
     [setupRealtime],
   );

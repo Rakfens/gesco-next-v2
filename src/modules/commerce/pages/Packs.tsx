@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Button, Card, CardHeader, CardTitle, Input, Modal, ModalBody, ModalFooter, ModalHeader,
   Select, StatCard, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow,
@@ -40,6 +41,7 @@ interface PackProduitForm {
 export default function PacksPage() {
   const { currentCompany, success: toastSuccess, error: toastError, warn: toastWarn } = useApp();
   const isMobile = useIsMobile();
+  const router = useRouter();
 
   const [packs, setPacks] = useState<Pack[]>([]);
   const [produits, setProduits] = useState<Produit[]>([]);
@@ -60,6 +62,13 @@ export default function PacksPage() {
   const [formDescription, setFormDescription] = useState("");
   const [formPrix, setFormPrix] = useState("");
   const [formProduits, setFormProduits] = useState<PackProduitForm[]>([]);
+
+  // Rediriger vers le dashboard si société de type service (pas de packs)
+  useEffect(() => {
+    if (currentCompany?.type === "service") {
+      router.push("/livraison/dashboard");
+    }
+  }, [currentCompany, router]);
 
   const loadData = async () => {
     if (!currentCompany) return;
