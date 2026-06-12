@@ -114,6 +114,13 @@ export default function Ventes() {
   };
 
   const addPackToCart = async (pack: Pack) => {
+    // Vérifier si le pack est déjà dans le panier
+    const dejaDansPanier = panier.some((p) => p.is_pack && p.pack_id === String(pack.id) && String(p.produit_id).startsWith("pack_"));
+    if (dejaDansPanier) {
+      toastWarn(`Le pack "${pack.nom}" est déjà dans le panier`);
+      return;
+    }
+
     const packComplet = await fetchPackWithProduits(pack.id);
     if (!packComplet || !packComplet.produits || packComplet.produits.length === 0) {
       toastWarn("Ce pack ne contient aucun produit");

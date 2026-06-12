@@ -127,6 +127,8 @@ export const createVente = async (
 
   // Vérifier le stock pour TOUS les produits (y compris les produits de pack à prix 0)
   for (const item of details) {
+    if (item.quantite <= 0) continue;
+    
     const { data: produit, error: produitError } = await getSupabase()
       .from("produits")
       .select("id, nom, quantite_stock")
@@ -284,7 +286,7 @@ export const deleteVente = async (id: string): Promise<void> => {
   if (!vente) throw new Error("Vente non trouvée");
 
   for (const item of vente.details) {
-    await restoreStockAfterUpdate(item.produit_id, item.quantite, id);
+    await restoreStockAfterUpdate(String(item.produit_id), Number(item.quantite), id);
   }
 
   const { error: deleteDetailsError } = await getSupabase()
@@ -325,17 +327,26 @@ const updateStockAfterSale = async (
   const nouvelleQuantite = produit.quantite_stock - quantite;
 
   if (nouvelleQuantite < 0) {
-    throw new Error(`Stock insuffisant pour le produit ${produitId}`);
+    logger.warn(`Stock négatif détecté pour ${produitId}: ${produit.quantite_stock} - ${quantite} = ${nouvelleQuantite}. Mise à 0.`);
+    // Mettre le stock à 0 au lieu de le laisser négatif
+    await getSupabase()
+      .from("produits")
+      .update({
+        quantite_stock: 0,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", produitId)
+      .eq("company_id", company!.id);
+  } else {
+    await getSupabase()
+      .from("produits")
+      .update({
+        quantite_stock: nouvelleQuantite,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", produitId)
+      .eq("company_id", company!.id);
   }
-
-  await getSupabase()
-    .from("produits")
-    .update({
-      quantite_stock: nouvelleQuantite,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", produitId)
-    .eq("company_id", company!.id);
 
   await createMouvementStock({
     produit_id: produitId,
