@@ -206,9 +206,9 @@ export default function Ventes() {
       sous_total: p.sous_total,
     }));
 
-    logger.log("[HANDLE SUBMIT] Panier:", JSON.stringify(panier.map(p => ({ id: p.produit_id, nom: p.nom, qte: p.quantite, prix: p.prix_unitaire, is_pack: p.is_pack, pack_id: p.pack_id }))));
-    logger.log("[HANDLE SUBMIT] Details envoyés:", JSON.stringify(details));
-    logger.log("[HANDLE SUBMIT] Nombre de produits dans panier:", panier.length, "Nombre de details:", details.length);
+    console.log("[HANDLE SUBMIT] Panier:", JSON.stringify(panier.map(p => ({ id: p.produit_id, nom: p.nom, qte: p.quantite, prix: p.prix_unitaire, is_pack: p.is_pack, pack_id: p.pack_id }))));
+    console.log("[HANDLE SUBMIT] Details envoyés:", JSON.stringify(details));
+    console.log("[HANDLE SUBMIT] Nombre de produits dans panier:", panier.length, "Nombre de details:", details.length);
 
     // Calculer le montant total : somme des prix des packs + somme des produits hors pack
     const totalPack = packLines.reduce((s, p) => s + p.sous_total, 0);
