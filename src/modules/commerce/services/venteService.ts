@@ -172,6 +172,8 @@ export const createVente = async (
 
   if (venteError) throw venteError;
 
+  logger.log("[CREATE VENTE] Vente créée:", vente.id, "Details:", details.length, "produits");
+
   for (const item of details) {
     const { error: detailError } = await getSupabase()
       .from("vente_details")
@@ -251,6 +253,8 @@ export const updateVente = async (
     .eq("company_id", company.id);
 
   if (venteError) throw venteError;
+
+  logger.log("[CREATE VENTE] Vente créée:", vente.id, "Details:", details.length, "produits");
 
   for (const item of details) {
     const { error: detailError } = await getSupabase()

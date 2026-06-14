@@ -72,6 +72,8 @@ export default function Ventes() {
   const [searchProduit, setSearchProduit] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [printPending, setPrintPending] = useState<string | null>(null);
+  const [isAddingPack, setIsAddingPack] = useState(false);
+
   const [form, setForm] = useState<VenteForm>(EMPTY_FORM);
   const [modalTab, setModalTab] = useState<ModalTab>("produits");
   const [packDisponible, setPackDisponible] = useState<Record<string, boolean>>({});
@@ -114,58 +116,68 @@ export default function Ventes() {
   };
 
   const addPackToCart = async (pack: Pack) => {
-    // Vérifier si le pack est déjà dans le panier
+    if (isAddingPack) {
+      toastWarn("Veuillez patienter...");
+      return;
+    }
+
     const dejaDansPanier = panier.some((p) => p.is_pack && p.pack_id === String(pack.id) && String(p.produit_id).startsWith("pack_"));
     if (dejaDansPanier) {
       toastWarn(`Le pack "${pack.nom}" est déjà dans le panier`);
       return;
     }
 
-    const packComplet = await fetchPackWithProduits(pack.id);
-    if (!packComplet || !packComplet.produits || packComplet.produits.length === 0) {
-      toastWarn("Ce pack ne contient aucun produit");
-      return;
-    }
+    setIsAddingPack(true);
 
-    // Vérifier le stock pour chaque produit du pack
-    const produitsIndividuels: PanierItem[] = [];
-    for (const pp of packComplet.produits) {
-      const produit = pp.produit as Produit | undefined;
-      if (!produit) {
-        toastWarn(`Un produit du pack "${pack.nom}" n'existe plus`);
+    try {
+      const packComplet = await fetchPackWithProduits(pack.id);
+      if (!packComplet || !packComplet.produits || packComplet.produits.length === 0) {
+        toastWarn("Ce pack ne contient aucun produit");
         return;
       }
-      if ((produit.quantite_stock ?? 0) < pp.quantite) {
-        toastWarn(`Stock insuffisant pour "${produit.nom}" (nécessaire: ${pp.quantite}, stock: ${produit.quantite_stock ?? 0})`);
-        return;
+
+      const produitsIndividuels: PanierItem[] = [];
+      for (const pp of packComplet.produits) {
+        const produit = pp.produit as Produit | undefined;
+        if (!produit) {
+          toastWarn(`Un produit du pack "${pack.nom}" n'existe plus`);
+          return;
+        }
+        if ((produit.quantite_stock ?? 0) < pp.quantite) {
+          toastWarn(`Stock insuffisant pour "${produit.nom}" (nécessaire: ${pp.quantite}, stock: ${produit.quantite_stock ?? 0})`);
+          return;
+        }
+        produitsIndividuels.push({
+          produit_id: String(produit.id),
+          nom: produit.nom,
+          quantite: pp.quantite,
+          prix_unitaire: 0,
+          sous_total: 0,
+          stock_max: produit.quantite_stock,
+          is_pack: true,
+          pack_id: String(pack.id),
+          pack_nom: pack.nom,
+        });
       }
-      produitsIndividuels.push({
-        produit_id: String(produit.id),
-        nom: produit.nom,
-        quantite: pp.quantite,
-        prix_unitaire: 0,
-        sous_total: 0,
-        stock_max: produit.quantite_stock,
+
+      const packItem: PanierItem = {
+        produit_id: `pack_${String(pack.id)}`,
+        nom: `📦 ${pack.nom}`,
+        quantite: 1,
+        prix_unitaire: pack.prix,
+        sous_total: pack.prix,
         is_pack: true,
         pack_id: String(pack.id),
         pack_nom: pack.nom,
-      });
+      };
+
+      setPanier([...panier, packItem, ...produitsIndividuels]);
+      toastSuccess(`Pack "${pack.nom}" ajouté au panier`);
+    } catch (e: unknown) {
+      toastError("Erreur lors de l'ajout du pack");
+    } finally {
+      setIsAddingPack(false);
     }
-
-    // Ajouter une ligne "Pack" avec le prix du pack
-    const packItem: PanierItem = {
-      produit_id: `pack_${String(pack.id)}`,
-      nom: `📦 ${pack.nom}`,
-      quantite: 1,
-      prix_unitaire: pack.prix,
-      sous_total: pack.prix,
-      is_pack: true,
-      pack_id: String(pack.id),
-      pack_nom: pack.nom,
-    };
-
-    setPanier([...panier, packItem, ...produitsIndividuels]);
-    toastSuccess(`Pack "${pack.nom}" ajouté au panier`);
   };
 
   const updateCartQty = (id: string, qty: number) => {
