@@ -289,10 +289,12 @@ export const deleteVente = async (id: string): Promise<void> => {
 
   for (const item of vente.details) {
     try {
-      logger.log(`[DELETE VENTE] Restauration: produit_id=${item.produit_id}, quantite=${item.quantite}, prix_unitaire=${item.prix_unitaire}`);
+      logger.log(`[DELETE VENTE] Restauration: produit_id=${item.produit_id} (type: ${typeof item.produit_id}), quantite=${item.quantite}`);
       await restoreStockAfterUpdate(String(item.produit_id), Number(item.quantite) || 1, id);
+      logger.log(`[DELETE VENTE] OK: ${item.produit_id} restauré`);
     } catch (e: unknown) {
       logger.error("[DELETE VENTE] Erreur restauration:", e);
+      throw e; // Propager l'erreur pour bloquer la suppression si le stock n'est pas restauré
     }
   }
 
