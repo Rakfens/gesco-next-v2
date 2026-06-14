@@ -326,6 +326,8 @@ const updateStockAfterSale = async (
 ): Promise<void> => {
   const company = getCurrentCompany();
 
+  logger.log(`[UPDATE STOCK] produitId=${produitId}, quantite=${quantite}, venteId=${venteId}`);
+
   const { data: produit, error: produitError } = await getSupabase()
     .from("produits")
     .select("quantite_stock")
