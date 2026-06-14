@@ -74,6 +74,8 @@ export default function Ventes() {
   const [printPending, setPrintPending] = useState<string | null>(null);
   const [isAddingPack, setIsAddingPack] = useState(false);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [form, setForm] = useState<VenteForm>(EMPTY_FORM);
   const [modalTab, setModalTab] = useState<ModalTab>("produits");
   const [packDisponible, setPackDisponible] = useState<Record<string, boolean>>({});
@@ -192,7 +194,13 @@ export default function Ventes() {
   const resetForm = () => { setEditMode(false); setSelectedVente(null); setPanier([]); setSearchProduit(""); setForm(EMPTY_FORM); setModalTab("produits"); };
 
   const handleSubmit = async () => {
+    if (isSubmitting) {
+      toastWarn("Veuillez patienter...");
+      return;
+    }
     if (panier.length === 0) { toastWarn("Ajoutez au moins un produit ou un pack"); return; }
+
+    setIsSubmitting(true);
 
     // Séparer les lignes de pack (prix) des produits individuels
     const packLines = panier.filter((p) => p.is_pack && String(p.produit_id).startsWith("pack_"));
@@ -236,7 +244,7 @@ export default function Ventes() {
       }
       setShowModal(false); resetForm(); loadData();
     } catch (e: unknown) { logger.error("Erreur sauvegarde:", e); toastError(`Erreur : ${e instanceof Error ? e.message : "Impossible"}`); }
-    finally { setSaving(false); }
+    finally { setSaving(false); setIsSubmitting(false); }
   };
 
   const handleEdit = async (vente: Vente) => {
