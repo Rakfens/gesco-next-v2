@@ -58,31 +58,31 @@ const StatusIcon = ({ name, size = 14, className = "text-current" }: { name: str
 );
 
 const STATUS_OPTIONS = [
-  { key: "en_cours", label: "En cours", activeClass: "text-amber-400 border-amber-400 bg-amber-400/10 shadow-[0_0_14px_rgba(251,191,36,0.33)]", inactiveClass: "border-gray-700 bg-[#1a1a1f] text-gray-500 hover:border-gray-600", icon: "clock" },
-  { key: "livre", label: "Livré", activeClass: "text-emerald-400 border-emerald-400 bg-emerald-400/10 shadow-[0_0_14px_rgba(52,211,153,0.33)]", inactiveClass: "border-gray-700 bg-[#1a1a1f] text-gray-500 hover:border-gray-600", icon: "check" },
-  { key: "retourne", label: "Retourné", activeClass: "text-red-400 border-red-400 bg-red-400/10 shadow-[0_0_14px_rgba(248,113,113,0.33)]", inactiveClass: "border-gray-700 bg-[#1a1a1f] text-gray-500 hover:border-gray-600", icon: "rotate-left" },
-  { key: "reporte", label: "Reporté", activeClass: "text-violet-400 border-violet-400 bg-violet-400/10 shadow-[0_0_14px_rgba(139,92,246,0.33)]", inactiveClass: "border-gray-700 bg-[#1a1a1f] text-gray-500 hover:border-gray-600", icon: "xmark" },
+  { key: "en_cours", label: "En cours", activeClass: "text-[var(--gold)] border-[var(--gold)] bg-[var(--gold)]/10 shadow-[0_0_14px_rgba(201,169,110,0.33)]", inactiveClass: "border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:border-[var(--border-active)]", icon: "clock" },
+  { key: "livre", label: "Livré", activeClass: "text-[var(--success)] border-[var(--success)] bg-[var(--success)]/10 shadow-[0_0_14px_rgba(52,211,153,0.33)]", inactiveClass: "border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:border-[var(--border-active)]", icon: "check" },
+  { key: "retourne", label: "Retourné", activeClass: "text-[var(--danger)] border-[var(--danger)] bg-[var(--danger)]/10 shadow-[0_0_14px_rgba(248,113,113,0.33)]", inactiveClass: "border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:border-[var(--border-active)]", icon: "rotate-left" },
+  { key: "reporte", label: "Reporté", activeClass: "text-[var(--violet)] border-[var(--violet)] bg-[var(--violet)]/10 shadow-[0_0_14px_rgba(139,92,246,0.33)]", inactiveClass: "border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:border-[var(--border-active)]", icon: "xmark" },
 ];
 
 const statusBarColor = (statut?: string) => {
-  if (statut === "livre") return "border-emerald-400";
-  if (statut === "retourne") return "border-red-400";
-  if (statut === "reporte") return "border-violet-400";
-  return "border-amber-400";
+  if (statut === "livre") return "border-[var(--success)]";
+  if (statut === "retourne") return "border-[var(--danger)]";
+  if (statut === "reporte") return "border-[var(--violet)]";
+  return "border-[var(--gold)]";
 };
 
 const statusBgColor = (statut?: string) => {
-  if (statut === "livre") return "bg-emerald-400/10";
-  if (statut === "retourne") return "bg-red-400/10";
-  if (statut === "reporte") return "bg-violet-400/10";
-  return "bg-amber-400/10";
+  if (statut === "livre") return "bg-[var(--success)]/10";
+  if (statut === "retourne") return "bg-[var(--danger)]/10";
+  if (statut === "reporte") return "bg-[var(--violet)]/10";
+  return "bg-[var(--gold)]/10";
 };
 
 const statusTextColor = (statut?: string) => {
-  if (statut === "livre") return "text-emerald-400";
-  if (statut === "retourne") return "text-red-400";
-  if (statut === "reporte") return "text-violet-400";
-  return "text-amber-400";
+  if (statut === "livre") return "text-[var(--success)]";
+  if (statut === "retourne") return "text-[var(--danger)]";
+  if (statut === "reporte") return "text-[var(--violet)]";
+  return "text-[var(--gold)]";
 };
 
 function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate: (id: string, updates: Record<string, unknown>) => void }) {
@@ -138,22 +138,21 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
         title={opt.label}
         className={`flex h-11 w-11 items-center justify-center rounded-[10px] border-2 transition-all ${isActive ? `scale-110 ${opt.activeClass}` : opt.inactiveClass} ${saving ? "opacity-50 cursor-wait" : "cursor-pointer"}`}
         >
-        <StatusIcon name={opt.icon} size={17} className={isActive ? "text-current" : "text-gray-500"} />
+        <StatusIcon name={opt.icon} size={17} className={isActive ? "text-current" : "text-[var(--text-faint)]"} />
         </button>
       );
     })}
     </div>
-
     {(showRemarque || needsRemarque) && (
-      <div className="w-full animate-fade-up rounded-xl border border-gray-800 bg-[#1a1a1f] p-2.5">
-      <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+      <div className="w-full animate-fade-up rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-2.5">
+      <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
       {livraison.statut === "retourne" ? "⚠️ Motif du retour" : "📅 Motif du report"}
       </div>
       <textarea
       value={remarque}
       onChange={(e) => setRemarque(e.target.value)}
       placeholder={livraison.statut === "retourne" ? "Ex: Client injoignable..." : "Ex: Reporté au lendemain..."}
-      className="w-full min-h-[50px] resize-y rounded-lg border border-gray-800 bg-[#111] p-2 text-xs text-white outline-none focus:border-gray-700"
+      className="w-full min-h-[50px] resize-y rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] p-2 text-xs text-[var(--text-primary)] outline-none focus:border-[var(--border-active)]"
       autoFocus
       />
       <div className="mt-1.5 flex gap-1.5">
@@ -161,7 +160,7 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
       type="button"
       onClick={handleSaveRemarque}
       disabled={saving || !remarque.trim()}
-      className={`flex-1 rounded-lg py-1.5 text-[11px] font-bold transition-colors ${remarque.trim() ? "bg-amber-400 text-[#08080c] cursor-pointer" : "bg-[#222] text-[#555] cursor-not-allowed"}`}
+      className={`flex-1 rounded-lg py-1.5 text-[11px] font-bold transition-colors ${remarque.trim() ? "bg-[var(--gold)] text-[var(--bg-primary)] cursor-pointer" : "bg-[var(--bg-elevated)] text-[var(--text-faint)] cursor-not-allowed"}`}
       >
       {saving ? "..." : "✓ OK"}
       </button>
@@ -169,23 +168,22 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
       type="button"
       onClick={() => { setShowRemarque(false); setRemarque(livraison.remarque || ""); }}
       disabled={saving}
-      className="rounded-lg border border-gray-800 px-3 py-1.5 text-[11px] font-semibold text-gray-400 transition-colors hover:bg-white/5"
+      className="rounded-lg border border-[var(--border-default)] px-3 py-1.5 text-[11px] font-semibold text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-card-hover)]"
       >
       Annuler
       </button>
       </div>
       </div>
     )}
-
     {editingMontant ? (
-      <div className="w-full animate-fade-up rounded-xl border border-amber-400 bg-[#1a1a1f] p-2.5">
-      <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-400">💰 Modifier montant</div>
+      <div className="w-full animate-fade-up rounded-xl border border-[var(--gold)] bg-[var(--bg-elevated)] p-2.5">
+      <div className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--gold)]">💰 Modifier montant</div>
       <input
       type="number"
       value={montant}
       onChange={(e) => setMontant(e.target.value)}
       placeholder="Montant en Ar"
-      className="w-full rounded-lg border border-gray-800 bg-[#111] p-2 text-sm text-white outline-none focus:border-gray-700"
+      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] p-2 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--border-active)]"
       autoFocus
       />
       <div className="mt-1.5 flex gap-1.5">
@@ -193,7 +191,7 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
       type="button"
       onClick={handleSaveMontant}
       disabled={saving}
-      className="flex-1 rounded-lg bg-amber-400 py-1.5 text-[11px] font-bold text-[#08080c] transition-colors hover:bg-amber-500 cursor-pointer disabled:cursor-wait"
+      className="flex-1 rounded-lg bg-[var(--gold)] py-1.5 text-[11px] font-bold text-[var(--bg-primary)] transition-colors hover:bg-[var(--gold-light)] cursor-pointer disabled:cursor-wait"
       >
       {saving ? "..." : "✓ OK"}
       </button>
@@ -201,7 +199,7 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
       type="button"
       onClick={() => { setEditingMontant(false); setMontant(String(livraison.montant || "")); }}
       disabled={saving}
-      className="rounded-lg border border-gray-800 px-3 py-1.5 text-[11px] font-semibold text-gray-400 transition-colors hover:bg-white/5"
+      className="rounded-lg border border-[var(--border-default)] px-3 py-1.5 text-[11px] font-semibold text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-card-hover)]"
       >
       Annuler
       </button>
@@ -211,7 +209,7 @@ function StatusButtons({ livraison, onUpdate }: { livraison: Livraison; onUpdate
       <button
       type="button"
       onClick={() => setEditingMontant(true)}
-      className="rounded-md border border-gray-800 px-2 py-0.5 text-[10px] font-medium text-gray-500 transition-colors hover:border-gray-700 hover:text-gray-400"
+      className="rounded-md border border-[var(--border-default)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-muted)] transition-colors hover:border-[var(--border-active)] hover:text-[var(--text-secondary)]"
       >
       ✏️ Montant
       </button>
@@ -229,10 +227,10 @@ export default function Dashboard() {
 
   const [selectedDate, setSelectedDate] = useState<string>(TODAY());
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth());
-  const [recuperationsJour, setRecuperationsJour] = useState<Recuperation[]>([]);
+  const [recuperationsJour, setRecuperationsJour] = useState<<Recuperation[]>([]);
   const [loadingRecup, setLoadingRecup] = useState(false);
   const [errorRecup, setErrorRecup] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"jour" | "mois">("jour");
+  const [activeTab, setActiveTab] = useState<<"jour" | "mois">("jour");
 
   const safeLivraisons = Array.isArray(livraisons) ? livraisons : [];
   const safeAgents = Array.isArray(agents) ? agents : [];
@@ -279,7 +277,7 @@ export default function Dashboard() {
       setErrorRecup(null);
       try {
         const { getRecuperationsByDate: fetchRecup } = await import("../services/recuperationService");
-        const { currentCompany } = useCompany(); // ou ton hook contexte
+        const { currentCompany } = useCompany();
         const data = await fetchRecup(selectedDate, currentCompany!.id) || [];
         if (!cancelled) setRecuperationsJour(data);
       } catch (e: unknown) {
@@ -333,26 +331,26 @@ export default function Dashboard() {
   return (
     <div className="animate-fade-up">
     {/* HEADER */}
-    <div className="relative mb-5 overflow-hidden rounded-2xl border border-gray-800 bg-gradient-to-br from-amber-400/10 to-violet-500/5 p-6">
-    <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-amber-400/10 blur-3xl" />
+    <div className="relative mb-5 overflow-hidden rounded-2xl border border-[var(--border-default)] bg-gradient-to-br from-[var(--gold)]/10 to-[var(--violet)]/5 p-6">
+    <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[var(--gold)]/10 blur-3xl" />
     <div className="relative z-10">
     <div className="mb-2.5 flex items-center gap-3">
-    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-violet-500 shadow-lg shadow-amber-400/20">
-    <Icon d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" size={20} className="text-[#08080c]" />
+    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--gold)] to-[var(--violet)] shadow-[0_0_20px_rgba(201,169,110,0.2)]">
+    <Icon d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" size={20} className="text-[var(--bg-primary)]" />
     </div>
     <div>
-    <h1 className="text-2xl font-extrabold tracking-tight text-white">Tableau de bord</h1>
-    <p className="text-xs text-gray-500">{currentCompany?.name || "HT-GesCom"} · {TODAY()}</p>
+    <h1 className="text-2xl font-extrabold tracking-tight text-[var(--text-primary)]">Tableau de bord</h1>
+    <p className="text-xs text-[var(--text-muted)]">{currentCompany?.name || "HT-GesCom"} · {TODAY()}</p>
     </div>
     </div>
     <div className="flex flex-wrap gap-2">
     {[
-      { label: "Aujourd'hui", value: `${todayLivraisons.length} livraison${todayLivraisons.length !== 1 ? "s" : ""}`, color: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/15" },
-      { label: "Montant du jour", value: formatAr(todayMontant), color: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400/15" },
-          { label: "Taux réussite", value: `${totalLivraisons ? Math.round((totalLivres / totalLivraisons) * 100) : 0}%`, color: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400/15" },
+      { label: "Aujourd'hui", value: `${todayLivraisons.length} livraison${todayLivraisons.length !== 1 ? "s" : ""}`, color: "text-[var(--gold)]", bg: "bg-[var(--gold)]/10", border: "border-[var(--gold)]/15" },
+          { label: "Montant du jour", value: formatAr(todayMontant), color: "text-[var(--success)]", bg: "bg-[var(--success)]/10", border: "border-[var(--success)]/15" },
+          { label: "Taux réussite", value: `${totalLivraisons ? Math.round((totalLivres / totalLivraisons) * 100) : 0}%`, color: "text-[var(--success)]", bg: "bg-[var(--success)]/10", border: "border-[var(--success)]/15" },
     ].map((q) => (
       <div key={q.label} className={`rounded-full px-3 py-1.5 ${q.bg} ${q.border} border`}>
-      <span className="mr-1 text-[10px] text-gray-500">{q.label}</span>
+      <span className="mr-1 text-[10px] text-[var(--text-muted)]">{q.label}</span>
       <span className={`text-[11px] font-bold ${q.color}`}>{q.value}</span>
       </div>
     ))}
@@ -362,28 +360,28 @@ export default function Dashboard() {
 
     {/* STATS */}
     <div className={`mb-5 grid gap-3 ${isMobile ? "grid-cols-2" : "grid-cols-4"}`}>
-    <StatCard label="Total livraisons" value={totalLivraisons} className="text-amber-400" icon={<Icon d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" size={18} className="text-amber-400" />} />
-    <StatCard label="En cours" value={enCours} className="text-amber-400" icon={<Icon d="M12 2a10 10 0 100 20 10 10 0 000-20zM12 6v6l4 2" size={18} className="text-amber-400" />} />
-    <StatCard label="Livrés aujourd'hui" value={todayLivres} className="text-emerald-400" icon={<Icon d="M20 6L9 17l-5-5" size={18} className="text-emerald-400" />} />
-    <StatCard label="Montant du mois" value={formatAr(monthMontant)} className="text-violet-400" icon={<Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={18} className="text-violet-400" />} />
+    <StatCard label="Total livraisons" value={totalLivraisons} color="accent" icon={<Icon d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" size={18} />} />
+    <StatCard label="En cours" value={enCours} color="warning" icon={<Icon d="M12 2a10 10 0 100 20 10 10 0 000-20zM12 6v6l4 2" size={18} />} />
+    <StatCard label="Livrés aujourd'hui" value={todayLivres} color="success" icon={<Icon d="M20 6L9 17l-5-5" size={18} />} />
+    <StatCard label="Montant du mois" value={formatAr(monthMontant)} color="purple" icon={<Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={18} />} />
     </div>
 
     {/* RACCOURCIS */}
     <div className={`mb-5 grid gap-2.5 ${isMobile ? "grid-cols-2" : "grid-cols-4"}`}>
     {[
-      { label: "Nouvelle livraison", icon: "📦", href: "/livraison/livraisons", hoverBorder: "hover:border-amber-400" },
-      { label: "Historique", icon: "📋", href: "/livraison/historique", hoverBorder: "hover:border-violet-400" },
-      { label: "Agents", icon: "👥", href: "/livraison/agents", hoverBorder: "hover:border-emerald-400" },
-      { label: "Récap", icon: "📊", href: "/livraison/recap", hoverBorder: "hover:border-amber-400" },
+      { label: "Nouvelle livraison", icon: "📦", href: "/livraison/livraisons", hoverBorder: "hover:border-[var(--gold)]" },
+          { label: "Historique", icon: "📋", href: "/livraison/historique", hoverBorder: "hover:border-[var(--violet)]" },
+          { label: "Agents", icon: "👥", href: "/livraison/agents", hoverBorder: "hover:border-[var(--success)]" },
+          { label: "Récap", icon: "📊", href: "/livraison/recap", hoverBorder: "hover:border-[var(--gold)]" },
     ].map((r) => (
       <button
       key={r.label}
       type="button"
       onClick={() => router.push(r.href)}
-      className={`flex items-center gap-2.5 rounded-xl border border-gray-800 bg-[#111] p-3 text-left transition-all hover:-translate-y-0.5 ${r.hoverBorder}`}
+      className={`flex items-center gap-2.5 rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] p-3 text-left transition-all hover:-translate-y-0.5 ${r.hoverBorder}`}
       >
       <span className="text-xl">{r.icon}</span>
-      <span className="text-xs font-semibold text-white">{r.label}</span>
+      <span className="text-xs font-semibold text-[var(--text-primary)]">{r.label}</span>
       </button>
     ))}
     </div>
@@ -392,8 +390,8 @@ export default function Dashboard() {
     <Card className="mb-5">
     <CardHeader className="flex items-center justify-between">
     <div className="flex items-center gap-2">
-    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400/10">
-    <Icon d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" size={14} className="text-amber-400" />
+    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--gold)]/10">
+    <Icon d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" size={14} className="text-[var(--gold)]" />
     </div>
     <CardTitle>Livraisons</CardTitle>
     </div>
@@ -401,12 +399,12 @@ export default function Dashboard() {
     <button
     type="button"
     onClick={() => { const p = new Date(selectedMonth + "-01"); p.setMonth(p.getMonth() - 1); setSelectedMonth(p.toISOString().slice(0, 7)); setActiveTab("mois"); }}
-    className="flex h-7.5 w-7.5 items-center justify-center rounded-lg border border-gray-800 bg-[#1a1a1f] text-white transition-colors hover:bg-[#222]"
+    className="flex h-7.5 w-7.5 items-center justify-center rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] text-[var(--text-primary)] transition-colors hover:bg-[var(--bg-card-hover)]"
     >‹</button>
     <select
     value={selectedMonth}
     onChange={(e) => { setSelectedMonth(e.target.value); setActiveTab("mois"); }}
-    className="min-w-[120px] rounded-full border-[1.5px] border-amber-400 bg-amber-400/10 px-3 py-1.5 text-center text-xs font-semibold text-amber-400 outline-none"
+    className="min-w-[120px] rounded-full border-[1.5px] border-[var(--gold)] bg-[var(--gold)]/10 px-3 py-1.5 text-center text-xs font-semibold text-[var(--gold)] outline-none"
     >
     {availableMonths.map((m) => <option key={m} value={m}>{monthLabel(m)}</option>)}
     </select>
@@ -414,11 +412,10 @@ export default function Dashboard() {
     type="button"
     onClick={() => { const n = new Date(selectedMonth + "-01"); n.setMonth(n.getMonth() + 1); const s = n.toISOString().slice(0, 7); if (s <= currentMonth()) { setSelectedMonth(s); setActiveTab("mois"); } }}
     disabled={selectedMonth >= currentMonth()}
-    className="flex h-7.5 w-7.5 items-center justify-center rounded-lg border border-gray-800 text-white transition-colors disabled:cursor-not-allowed disabled:bg-[#222] disabled:text-gray-600 hover:bg-[#222]"
+    className="flex h-7.5 w-7.5 items-center justify-center rounded-lg border border-[var(--border-default)] text-[var(--text-primary)] transition-colors disabled:cursor-not-allowed disabled:bg-[var(--bg-elevated)] disabled:text-[var(--text-faint)] hover:bg-[var(--bg-card-hover)]"
     >›</button>
     </div>
     </CardHeader>
-
     <div className="mb-3.5 flex gap-1.5 px-4">
     {(["jour", "mois"] as const).map((tab) => {
       const isActive = activeTab === tab;
@@ -428,17 +425,16 @@ export default function Dashboard() {
         key={tab}
         type="button"
         onClick={() => setActiveTab(tab)}
-        className={`rounded-full px-4 py-1.5 text-[11px] font-semibold transition-all ${isActive ? "border-[1.5px] border-amber-400 bg-amber-400/10 text-amber-400" : "border-[1.5px] border-gray-800 text-gray-500 hover:border-gray-700 hover:text-gray-400"}`}
+        className={`rounded-full px-4 py-1.5 text-[11px] font-semibold transition-all ${isActive ? "border-[1.5px] border-[var(--gold)] bg-[var(--gold)]/10 text-[var(--gold)]" : "border-[1.5px] border-[var(--border-default)] text-[var(--text-muted)] hover:border-[var(--border-active)] hover:text-[var(--text-secondary)]"}`}
         >
         {tab === "jour" ? `Aujourd'hui (${count})` : `${monthLabel(selectedMonth)} (${count})`}
         </button>
       );
     })}
     </div>
-
     {activeTab === "jour" ? (
       todayLivraisons.length === 0 ? (
-        <div className="py-8 text-center text-sm text-gray-500">
+        <div className="py-8 text-center text-sm text-[var(--text-muted)]">
         <div className="mb-1.5 text-3xl">📦</div>
         Aucune livraison aujourd'hui.
         </div>
@@ -447,16 +443,16 @@ export default function Dashboard() {
         {todayLivraisons.map((l) => (
           <div
           key={l.id}
-          className={`flex items-center gap-3 rounded-xl border border-gray-800 bg-[#1a1a1f] p-3 border-l-[3px] ${statusBarColor(l.statut)}`}
+          className={`flex items-center gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3 border-l-[3px] ${statusBarColor(l.statut)}`}
           >
           <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${statusBgColor(l.statut)}`}>
           <StatusIcon name={STATUS_OPTIONS.find((s) => s.key === l.statut)?.icon || "clock"} size={16} className={statusTextColor(l.statut)} />
           </div>
           <div className="min-w-0 flex-1">
-          <div className="text-[13px] font-bold text-white">{l.colis}</div>
-          <div className="text-[10px] text-gray-500">{l.client_donneur || "—"} → {l.destinataire || "—"} {l.agent_nom ? `· ${l.agent_nom}` : ""}</div>
+          <div className="text-[13px] font-bold text-[var(--text-primary)]">{l.colis}</div>
+          <div className="text-[10px] text-[var(--text-muted)]">{l.client_donneur || "—"} → {l.destinataire || "—"} {l.agent_nom ? `· ${l.agent_nom}` : ""}</div>
           </div>
-          <div className="whitespace-nowrap rounded-full bg-amber-400/10 px-2 py-0.5 text-xs font-bold text-amber-400">
+          <div className="whitespace-nowrap rounded-full bg-[var(--gold)]/10 px-2 py-0.5 text-xs font-bold text-[var(--gold)]">
           {l.montant ? formatAr(l.montant) : "—"}
           </div>
           <StatusButtons livraison={l} onUpdate={handleStatusUpdate} />
@@ -466,7 +462,7 @@ export default function Dashboard() {
       )
     ) : (
       selectedMonthLivraisons.length === 0 ? (
-        <div className="py-8 text-center text-sm text-gray-500">
+        <div className="py-8 text-center text-sm text-[var(--text-muted)]">
         <div className="mb-1.5 text-3xl">📦</div>
         Aucune livraison en {monthLabel(selectedMonth)}.
         </div>
@@ -474,14 +470,14 @@ export default function Dashboard() {
         <div className="px-4 pb-4">
         <div className={`mb-3.5 grid gap-2 ${isMobile ? "grid-cols-2" : "grid-cols-4"}`}>
         {[
-          { label: "Total", value: selectedMonthLivraisons.length, color: "text-amber-400" },
-          { label: "Livrés", value: selectedMonthLivraisons.filter((l) => l.statut === "livre").length, color: "text-emerald-400" },
-           { label: "En cours", value: selectedMonthLivraisons.filter((l) => l.statut === "en_cours").length, color: "text-amber-400" },
-           { label: "Frais", value: formatAr(monthFrais), color: "text-violet-400" },
+          { label: "Total", value: selectedMonthLivraisons.length, color: "text-[var(--gold)]" },
+           { label: "Livrés", value: selectedMonthLivraisons.filter((l) => l.statut === "livre").length, color: "text-[var(--success)]" },
+           { label: "En cours", value: selectedMonthLivraisons.filter((l) => l.statut === "en_cours").length, color: "text-[var(--gold)]" },
+           { label: "Frais", value: formatAr(monthFrais), color: "text-[var(--violet)]" },
         ].map((s) => (
-          <div key={s.label} className="rounded-xl border border-gray-800 bg-[#1a1a1f] py-2 text-center">
+          <div key={s.label} className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] py-2 text-center">
           <div className={`text-base font-extrabold ${s.color}`}>{s.value}</div>
-          <div className="mt-0.5 text-[9px] uppercase tracking-wider text-gray-500">{s.label}</div>
+          <div className="mt-0.5 text-[9px] uppercase tracking-wider text-[var(--text-muted)]">{s.label}</div>
           </div>
         ))}
         </div>
@@ -489,17 +485,17 @@ export default function Dashboard() {
         {selectedMonthLivraisons.map((l) => (
           <div
           key={l.id}
-          className={`flex items-center gap-2.5 rounded-xl border border-gray-800 bg-[#1a1a1f] p-2.5 border-l-[3px] ${statusBarColor(l.statut)}`}
+          className={`flex items-center gap-2.5 rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-2.5 border-l-[3px] ${statusBarColor(l.statut)}`}
           >
           <div className={`flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg ${statusBgColor(l.statut)}`}>
           <span className={`text-[13px] font-extrabold leading-none ${statusTextColor(l.statut)}`}>{l.date.split("-")[2]}</span>
-          <span className="text-[8px] uppercase text-gray-500">{["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"][parseInt(l.date.split("-")[1]) - 1]}</span>
+          <span className="text-[8px] uppercase text-[var(--text-muted)]">{["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"][parseInt(l.date.split("-")[1]) - 1]}</span>
           </div>
           <div className="min-w-0 flex-1">
-          <div className="text-xs font-bold text-white">{l.colis}</div>
-          <div className="text-[10px] text-gray-500">{l.client_donneur || "—"} → {l.destinataire || "—"}{l.agent_nom ? ` · ${l.agent_nom}` : ""}</div>
+          <div className="text-xs font-bold text-[var(--text-primary)]">{l.colis}</div>
+          <div className="text-[10px] text-[var(--text-muted)]">{l.client_donneur || "—"} → {l.destinataire || "—"}{l.agent_nom ? ` · ${l.agent_nom}` : ""}</div>
           </div>
-          <div className="whitespace-nowrap rounded-full bg-amber-400/10 px-1.5 py-0.5 text-[11px] font-bold text-amber-400">
+          <div className="whitespace-nowrap rounded-full bg-[var(--gold)]/10 px-1.5 py-0.5 text-[11px] font-bold text-[var(--gold)]">
           {l.montant ? formatAr(l.montant) : "—"}
           </div>
           <StatusButtons livraison={l} onUpdate={handleStatusUpdate} />
@@ -515,32 +511,32 @@ export default function Dashboard() {
     <Card className="mb-5">
     <CardHeader className="flex items-center justify-between">
     <div className="flex items-center gap-2">
-    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-400/10">
-    <Icon d="M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 1015.24 4.76L23 9" size={14} className="text-emerald-400" />
+    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--success)]/10">
+    <Icon d="M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 1015.24 4.76L23 9" size={14} className="text-[var(--success)]" />
     </div>
     <div>
     <CardTitle>Récupérations matinales</CardTitle>
-    <div className="text-2xl font-extrabold text-emerald-400">{formatAr(totalRecuperationsJour)}</div>
-    <div className="text-[11px] text-gray-500">{nbRecuperationsJour} récupération(s)</div>
+    <div className="text-2xl font-extrabold text-[var(--success)]">{formatAr(totalRecuperationsJour)}</div>
+    <div className="text-[11px] text-[var(--text-muted)]">{nbRecuperationsJour} récupération(s)</div>
     </div>
     </div>
     <Input type="date" label="Date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
     </CardHeader>
     {loadingRecup && <SkeletonGrid cols={isMobile ? 1 : 2} rows={2} />}
-    {errorRecup && <div className="mx-3.5 mb-3.5 rounded-xl bg-red-500/10 p-3.5 text-center text-sm text-red-400">{errorRecup}</div>}
+    {errorRecup && <div className="mx-3.5 mb-3.5 rounded-xl bg-[var(--danger)]/10 p-3.5 text-center text-sm text-[var(--danger)]">{errorRecup}</div>}
     {!loadingRecup && !errorRecup && Object.keys(recuperationsParLivreur).length > 0 ? (
-      <div className="border-t border-gray-800 p-3.5">
+      <div className="border-t border-[var(--border-default)] p-3.5">
       <div className={`grid gap-3 ${isMobile ? "grid-cols-1" : "grid-cols-2"}`}>
       {Object.values(recuperationsParLivreur).map((rl) => (
-        <div key={rl.livreur} className="rounded-xl border border-gray-800 bg-[#1a1a1f] p-3.5">
+        <div key={rl.livreur} className="rounded-xl border border-[var(--border-default)] bg-[var(--bg-elevated)] p-3.5">
         <div className="mb-2 flex justify-between">
-        <span className="text-[13px] font-bold text-white">{rl.livreur}</span>
-        <span className="text-xs font-bold text-emerald-400">{rl.nb} récup. · {formatAr(rl.total)}</span>
+        <span className="text-[13px] font-bold text-[var(--text-primary)]">{rl.livreur}</span>
+        <span className="text-xs font-bold text-[var(--success)]">{rl.nb} récup. · {formatAr(rl.total)}</span>
         </div>
         {rl.details.map((d, idx) => (
-          <div key={idx} className={`flex justify-between py-1 text-[11px] ${idx < rl.details.length - 1 ? "border-b border-gray-800" : ""}`}>
-          <span className="text-gray-400">{d.client}</span>
-          <span className="font-semibold text-emerald-400">{formatAr(d.frais)}</span>
+          <div key={idx} className={`flex justify-between py-1 text-[11px] ${idx < rl.details.length - 1 ? "border-b border-[var(--border-default)]" : ""}`}>
+          <span className="text-[var(--text-secondary)]">{d.client}</span>
+          <span className="font-semibold text-[var(--success)]">{formatAr(d.frais)}</span>
           </div>
         ))}
         </div>
@@ -549,24 +545,24 @@ export default function Dashboard() {
       </div>
     ) : (
       !loadingRecup && !errorRecup && (
-        <div className="py-5 text-center text-sm text-gray-500">Aucune récupération pour cette date.</div>
+        <div className="py-5 text-center text-sm text-[var(--text-muted)]">Aucune récupération pour cette date.</div>
       )
     )}
     </Card>
 
     {/* GÉRANT */}
-    <div className="relative mb-5 flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-2xl border border-amber-400/20 bg-gradient-to-br from-amber-400/5 to-violet-500/5 p-5">
-    <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-amber-400/10 blur-2xl" />
+    <div className="relative mb-5 flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-2xl border border-[var(--gold)]/20 bg-gradient-to-br from-[var(--gold)]/5 to-[var(--violet)]/5 p-5">
+    <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[var(--gold)]/10 blur-2xl" />
     <div className="relative z-10">
     <div className="mb-1.5 flex items-center gap-1.5">
-    <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-400">
-    <Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={12} className="text-[#08080c]" />
+    <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--gold)]">
+    <Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={12} className="text-[var(--bg-primary)]" />
     </div>
-    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">Gérant — Aujourd'hui</span>
+    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--gold)]">Gérant — Aujourd'hui</span>
     </div>
-    <div className="text-3xl font-black tracking-tight text-white">{formatAr(gerantGain)}</div>
-    <div className="mt-0.5 text-[11px] text-gray-500">{livsGerant.length} livraisons × {formatAr(commissionGerant)}</div>
-    {excludedToday.length > 0 && <div className="mt-0.5 text-[10px] text-amber-400">⚠️ {excludedToday.length} livraison(s) exclue(s)</div>}
+    <div className="text-3xl font-black tracking-tight text-[var(--text-primary)]">{formatAr(gerantGain)}</div>
+    <div className="mt-0.5 text-[11px] text-[var(--text-muted)]">{livsGerant.length} livraisons × {formatAr(commissionGerant)}</div>
+    {excludedToday.length > 0 && <div className="mt-0.5 text-[10px] text-[var(--gold)]">⚠️ {excludedToday.length} livraison(s) exclue(s)</div>}
     </div>
     <Button variant="primary" onClick={() => router.push("/livraison/gerant")} className="relative z-10">Voir détails →</Button>
     </div>
@@ -575,32 +571,32 @@ export default function Dashboard() {
     <div className="mb-5">
     <div className="mb-3.5 flex items-center justify-between">
     <div className="flex items-center gap-2">
-    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/10">
-    <Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z" size={14} className="text-violet-400" />
+    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--violet)]/10">
+    <Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z" size={14} className="text-[var(--violet)]" />
     </div>
-    <h2 className="text-[15px] font-bold text-white">Récap par agent</h2>
+    <h2 className="text-[15px] font-bold text-[var(--text-primary)]">Récap par agent</h2>
     </div>
     <Badge variant="default" size="sm">Tous temps</Badge>
     </div>
     {safeAgents.length === 0 ? (
       <Card className="p-7 text-center">
       <div className="mb-1.5 text-2xl">👥</div>
-      <div className="text-sm text-gray-500">Aucun agent enregistré.</div>
+      <div className="text-sm text-[var(--text-muted)]">Aucun agent enregistré.</div>
       </Card>
     ) : (
       <div className={`grid gap-3 ${isMobile ? "grid-cols-1" : "grid-cols-[repeat(auto-fill,minmax(320px,1fr))]"}`}>
       {agentStats.map(({ agent, ls, totalFrais, livres, retournes, reportes, taux }) => (
         <Card key={agent.id} className="overflow-hidden p-0">
-        <div className="border-b border-gray-800 bg-gradient-to-br from-amber-400/5 to-violet-500/5 p-3.5">
+        <div className="border-b border-[var(--border-default)] bg-gradient-to-br from-[var(--gold)]/5 to-[var(--violet)]/5 p-3.5">
         <div className="flex items-center gap-2.5">
-        <div className="flex h-10.5 w-10.5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-violet-500 text-lg font-extrabold text-[#08080c] shadow-lg shadow-amber-400/20">
+        <div className="flex h-10.5 w-10.5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--gold)] to-[var(--violet)] text-lg font-extrabold text-[var(--bg-primary)] shadow-[0_0_20px_rgba(201,169,110,0.2)]">
         {agent.nom?.charAt(0) || "?"}
         </div>
         <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-bold text-white">{agent.nom}</div>
-        <div className="text-[10px] text-gray-500">{ls.length} livraison{ls.length !== 1 ? "s" : ""}</div>
+        <div className="truncate text-sm font-bold text-[var(--text-primary)]">{agent.nom}</div>
+        <div className="text-[10px] text-[var(--text-muted)]">{ls.length} livraison{ls.length !== 1 ? "s" : ""}</div>
         </div>
-        <div className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${taux >= 70 ? "bg-emerald-400/10 text-emerald-400" : taux >= 40 ? "bg-amber-400/10 text-amber-400" : "bg-red-400/10 text-red-400"}`}>
+        <div className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${taux >= 70 ? "bg-[var(--success)]/10 text-[var(--success)]" : taux >= 40 ? "bg-[var(--gold)]/10 text-[var(--gold)]" : "bg-[var(--danger)]/10 text-[var(--danger)]"}`}>
         {taux}%
         </div>
         </div>
@@ -608,25 +604,25 @@ export default function Dashboard() {
         <div className="p-3">
         <div className="mb-2.5 grid grid-cols-4 gap-1.5">
         {[
-          { label: "Livrés", value: livres, color: "text-emerald-400" },
-          { label: "Retournés", value: retournes, color: "text-red-400" },
-          { label: "Reportés", value: reportes, color: "text-violet-400" },
-          { label: "Frais", value: formatAr(totalFrais), color: "text-amber-400" },
+          { label: "Livrés", value: livres, color: "text-[var(--success)]" },
+                                                                                         { label: "Retournés", value: retournes, color: "text-[var(--danger)]" },
+                                                                                         { label: "Reportés", value: reportes, color: "text-[var(--violet)]" },
+                                                                                         { label: "Frais", value: formatAr(totalFrais), color: "text-[var(--gold)]" },
         ].map((item) => (
-          <div key={item.label} className="rounded-lg border border-gray-800 bg-[#1a1a1f] py-2 text-center">
+          <div key={item.label} className="rounded-lg border border-[var(--border-default)] bg-[var(--bg-elevated)] py-2 text-center">
           <div className={`text-sm font-extrabold leading-none ${item.color}`}>{item.value}</div>
-          <div className="mt-0.5 text-[8px] uppercase tracking-wider text-gray-500">{item.label}</div>
+          <div className="mt-0.5 text-[8px] uppercase tracking-wider text-[var(--text-muted)]">{item.label}</div>
           </div>
         ))}
         </div>
         <div>
         <div className="mb-0.5 flex justify-between">
-        <span className="text-[9px] text-gray-500">Réussite</span>
-        <span className={`text-[9px] font-bold ${taux >= 70 ? "text-emerald-400" : taux >= 40 ? "text-amber-400" : "text-red-400"}`}>{taux}%</span>
+        <span className="text-[9px] text-[var(--text-muted)]">Réussite</span>
+        <span className={`text-[9px] font-bold ${taux >= 70 ? "text-[var(--success)]" : taux >= 40 ? "text-[var(--gold)]" : "text-[var(--danger)]"}`}>{taux}%</span>
         </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-gray-800">
+        <div className="h-1.5 overflow-hidden rounded-full bg-[var(--bg-elevated)]">
         <div
-        className={`h-full rounded-full transition-all duration-500 ${taux >= 70 ? "bg-gradient-to-r from-emerald-400 to-emerald-500" : taux >= 40 ? "bg-gradient-to-r from-amber-400 to-amber-500" : "bg-gradient-to-r from-red-400 to-red-500"}`}
+        className={`h-full rounded-full transition-all duration-500 ${taux >= 70 ? "bg-gradient-to-r from-[var(--success)] to-emerald-500" : taux >= 40 ? "bg-gradient-to-r from-[var(--gold)] to-amber-500" : "bg-gradient-to-r from-[var(--danger)] to-red-500"}`}
         style={{ width: `${taux}%` }}
         />
         </div>

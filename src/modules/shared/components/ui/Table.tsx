@@ -1,4 +1,4 @@
-// ui/Table.tsx — Tableau professionnel (100% Tailwind pur)
+// src/modules/shared/components/ui/Table.tsx
 import type { ReactNode } from "react";
 
 /* ─── Table wrapper ─── */
@@ -9,7 +9,7 @@ interface TableProps {
 
 export function Table({ children, className = "" }: TableProps) {
   return (
-    <div className={`overflow-x-auto rounded-xl border border-white/[0.06] ${className}`}>
+    <div className={`overflow-x-auto rounded-xl border border-[var(--border-subtle)] ${className}`}>
     <table className="w-full border-collapse">{children}</table>
     </div>
   );
@@ -24,7 +24,7 @@ interface TableHeadProps {
 export function TableHead({ children, className = "" }: TableHeadProps) {
   return (
     <thead className={className}>
-    <tr className="bg-gray-950 text-[11px] uppercase tracking-wider text-gray-500">
+    <tr className="bg-[var(--bg-secondary)] text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
     {children}
     </tr>
     </thead>
@@ -54,11 +54,11 @@ export function TableHeader({
 /* ─── Body ─── */
 interface TableBodyProps {
   children: ReactNode;
-  className?: string; // ← AJOUTÉ
+  className?: string;
 }
 
 export function TableBody({ children, className = "" }: TableBodyProps) {
-  return <tbody className={className}>{children}</tbody>; // ← UTILISÉ
+  return <tbody className={className}>{children}</tbody>;
 }
 
 /* ─── Row ─── */
@@ -69,7 +69,7 @@ interface TableRowProps {
 
 export function TableRow({ children, className = "" }: TableRowProps) {
   return (
-    <tr className={`border-b border-white/[0.06] transition-colors duration-100 hover:bg-white/[0.02] ${className}`}>
+    <tr className={`border-b border-[var(--border-default)] transition-colors duration-150 hover:bg-[var(--bg-card-hover)] ${className}`}>
     {children}
     </tr>
   );
@@ -93,7 +93,7 @@ export function TableCell({
   return (
     <td
     colSpan={colSpan}
-    className={`px-3.5 py-2.5 text-[13px] ${alignClass} ${className}`}
+    className={`px-3.5 py-2.5 text-[13px] text-[var(--text-primary)] ${alignClass} ${className}`}
     >
     {children}
     </td>
@@ -111,7 +111,7 @@ export function TableEmpty({ colSpan = 6, message = "Aucune donnée" }: TableEmp
     <tr>
     <td
     colSpan={colSpan}
-    className="px-3.5 py-10 text-center text-[13px] text-gray-500"
+    className="px-3.5 py-10 text-center text-[13px] text-[var(--text-muted)]"
     >
     {message}
     </td>
@@ -128,7 +128,7 @@ interface TableFooterProps {
 export function TableFooter({ children, className = "" }: TableFooterProps) {
   return (
     <tfoot className={className}>
-    <tr className="border-t-2 border-white/[0.08] bg-gray-950">
+    <tr className="border-t-2 border-[var(--border-active)] bg-[var(--bg-secondary)]">
     {children}
     </tr>
     </tfoot>

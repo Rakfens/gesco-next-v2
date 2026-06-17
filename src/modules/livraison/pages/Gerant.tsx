@@ -102,15 +102,15 @@ export default function Gerant() {
       {/* ══ HEADER ══ */}
       <header className="mb-5">
       <div className="flex items-center gap-2.5 mb-1">
-      <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-pink-400/10">
+      <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-[var(--gold)]/10">
       <Icon
       d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19"
       size={18}
-      className="text-pink-400"
+      className="text-[var(--gold)]"
       />
       </div>
       <div>
-      <h1 className={`font-extrabold m-0 text-[var(--text)] ${isMobile ? "text-xl" : "text-2xl"}`}>
+      <h1 className={`font-extrabold m-0 text-[var(--text-primary)] ${isMobile ? "text-xl" : "text-2xl"}`}>
       Gérant
       </h1>
       <p className="text-xs text-[var(--text-muted)] mt-0.5">
@@ -124,7 +124,7 @@ export default function Gerant() {
       <Card className="mb-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
       <div>
-      <div className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-pink-400">
+      <div className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-[var(--gold)]">
       Commission par livraison
       </div>
       {editCommission ? (
@@ -144,7 +144,7 @@ export default function Gerant() {
         </div>
       ) : (
         <div className="flex items-center gap-2.5">
-        <span className="text-2xl font-black text-pink-400">
+        <span className="text-2xl font-black text-[var(--gold)]">
         {formatAr(commissionGerant)}
         </span>
         <Button
@@ -164,7 +164,7 @@ export default function Gerant() {
       <div>Commission sur toutes les livraisons</div>
       <div>Dès que les frais sont payés</div>
       {EXCLUDED_CLIENTS.length > 0 && (
-        <div className="mt-0.5 text-amber-400">
+        <div className="mt-0.5 text-[var(--warning)]">
         Exclus : {EXCLUDED_CLIENTS.join(", ")}
         </div>
       )}
@@ -178,7 +178,7 @@ export default function Gerant() {
         <button
         key={tab}
         onClick={() => setGerantTab(tab)}
-        className={`px-5 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all font-[var(--font)] ${gerantTab === tab ? "border-[1.5px] border-pink-400 bg-pink-400/10 text-pink-400" : "border-[1.5px] border-[var(--border)] bg-transparent text-[var(--text-muted)]"}`}
+        className={`px-5 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all ${gerantTab === tab ? "border-[1.5px] border-[var(--gold)] bg-[var(--gold)]/10 text-[var(--gold)]" : "border-[1.5px] border-[var(--border-default)] bg-transparent text-[var(--text-muted)]"}`}
         >
         {tab === "jour" ? "Par jour" : "Par mois"}
         </button>
@@ -197,10 +197,9 @@ export default function Gerant() {
         className={isMobile ? "" : "max-w-[220px]"}
         />
         </div>
-
         {dayExcluded.length > 0 && (
-          <Card className="mb-3.5 bg-amber-400/10 border border-amber-400/20">
-          <div className="text-[11px] font-semibold text-amber-400">
+          <Card className="mb-3.5 bg-[var(--warning)]/10 border border-[var(--warning)]/20">
+          <div className="text-[11px] font-semibold text-[var(--warning)]">
           ⚠️ {dayExcluded.length} livraison(s) exclue(s) — clients {EXCLUDED_CLIENTS.join(", ")}
           </div>
           </Card>
@@ -211,26 +210,26 @@ export default function Gerant() {
         <StatCard
         label="Gain du jour"
         value={formatAr(dayGain)}
-        className="text-pink-400"
-        icon={<Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={18} className="text-pink-400" />}
+        color="accent"
+        icon={<Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={18} />}
         />
         <StatCard
         label="Livraisons"
         value={dayCount}
-        className="text-amber-400"
-        icon={<Icon d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" size={18} className="text-amber-400" />}
+        color="warning"
+        icon={<Icon d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" size={18} />}
         />
         <StatCard
         label="Frais collectés"
         value={formatAr(dayFraisTotal)}
-        className="text-violet-400"
-        icon={<Icon d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" size={18} className="text-violet-400" />}
+        color="purple"
+        icon={<Icon d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" size={18} />}
         />
         <StatCard
         label="Frais nets"
         value={formatAr(dayNet)}
-        className={dayNet >= 0 ? "text-emerald-400" : "text-red-400"}
-        icon={<Icon d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" size={18} className={dayNet >= 0 ? "text-emerald-400" : "text-red-400"} />}
+        color={dayNet >= 0 ? "success" : "danger"}
+        icon={<Icon d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" size={18} />}
         />
         </div>
 
@@ -255,10 +254,10 @@ export default function Gerant() {
             <TableCell>{l.client_donneur}</TableCell>
             <TableCell>{l.destinataire}</TableCell>
             <TableCell>{l.agent_nom}</TableCell>
-            <TableCell align="right" className="font-semibold text-violet-400">
+            <TableCell align="right" className="font-semibold text-[var(--violet)]">
             {formatAr(Number(l.frais) || 0)}
             </TableCell>
-            <TableCell align="right" className="font-semibold text-pink-400">
+            <TableCell align="right" className="font-semibold text-[var(--gold)]">
             {formatAr(commissionGerant)}
             </TableCell>
             </TableRow>
@@ -268,10 +267,10 @@ export default function Gerant() {
           <TableCell colSpan={5} className="font-bold">
           TOTAL
           </TableCell>
-          <TableCell align="right" className="font-bold text-violet-400">
+          <TableCell align="right" className="font-bold text-[var(--violet)]">
           {formatAr(dayFraisTotal)}
           </TableCell>
-          <TableCell align="right" className="font-bold text-pink-400">
+          <TableCell align="right" className="font-bold text-[var(--gold)]">
           {formatAr(dayGain)}
           </TableCell>
           </TableFooter>
@@ -305,14 +304,14 @@ export default function Gerant() {
         <StatCard
         label={`Gain total — ${monthLabel(gerantMonth)}`}
         value={formatAr(monthGain)}
-        className="text-pink-400"
-        icon={<Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={18} className="text-pink-400" />}
+        color="accent"
+        icon={<Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={18} />}
         />
         <StatCard
         label="Frais collectés"
         value={formatAr(monthFrais)}
-        className="text-violet-400"
-        icon={<Icon d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" size={18} className="text-violet-400" />}
+        color="purple"
+        icon={<Icon d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" size={18} />}
         />
         </div>
 
@@ -338,13 +337,13 @@ export default function Gerant() {
               {d.count}
               </Badge>
               </TableCell>
-              <TableCell align="right" className="font-semibold text-violet-400">
+              <TableCell align="right" className="font-semibold text-[var(--violet)]">
               {formatAr(d.frais)}
               </TableCell>
-              <TableCell align="right" className="font-semibold text-pink-400">
+              <TableCell align="right" className="font-semibold text-[var(--gold)]">
               {formatAr(d.gain)}
               </TableCell>
-              <TableCell align="right" className={`font-semibold ${net >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+              <TableCell align="right" className={`font-semibold ${net >= 0 ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
               {formatAr(net)}
               </TableCell>
               </TableRow>
@@ -356,13 +355,13 @@ export default function Gerant() {
           <TableCell align="center" className="font-bold">
           {monthCount}
           </TableCell>
-          <TableCell align="right" className="font-bold text-violet-400">
+          <TableCell align="right" className="font-bold text-[var(--violet)]">
           {formatAr(monthFrais)}
           </TableCell>
-          <TableCell align="right" className="font-bold text-pink-400">
+          <TableCell align="right" className="font-bold text-[var(--gold)]">
           {formatAr(monthGain)}
           </TableCell>
-          <TableCell align="right" className={`font-bold ${monthFrais - monthGain >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+          <TableCell align="right" className={`font-bold ${monthFrais - monthGain >= 0 ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
           {formatAr(monthFrais - monthGain)}
           </TableCell>
           </TableFooter>

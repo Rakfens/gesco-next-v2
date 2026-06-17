@@ -1,3 +1,4 @@
+// src/modules/commerce/pages/Inventaire.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -23,19 +24,20 @@ const Icon = ({ d, size = 16, className = "" }: { d: string; size?: number; clas
 
 export default function Inventaire() {
   const { currentCompany, success: showSuccess, error: showError, warn: showWarn } = useApp();
-  const [currentInventory, setCurrentInventory] = useState<Inventaire | null>(null);
-  const [_products, setProducts] = useState<Produit[]>([]);
-  const [countedProducts, setCountedProducts] = useState<Produit[]>([]);
-  const [uncountedProducts, setUncountedProducts] = useState<Produit[]>([]);
+
+  const [currentInventory, setCurrentInventory] = useState<<Inventaire | null>(null);
+  const [_products, setProducts] = useState<<Produit[]>([]);
+  const [countedProducts, setCountedProducts] = useState<<Produit[]>([]);
+  const [uncountedProducts, setUncountedProducts] = useState<<Produit[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showCountModal, setShowCountModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Produit | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<<Produit | null>(null);
   const [countValue, setCountValue] = useState("");
-  const [history, setHistory] = useState<Inventaire[]>([]);
-  const [selectedInventory, setSelectedInventory] = useState<Inventaire | null>(null);
+  const [history, setHistory] = useState<<Inventaire[]>([]);
+  const [selectedInventory, setSelectedInventory] = useState<<Inventaire | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [inventoryDetails, setInventoryDetails] = useState<{
+  const [inventoryDetails, setInventoryDetails] = useState<<{
     stats: { total_products: number; products_with_difference: number; accuracy_rate: number };
     details: Array<{ id?: string; produit?: { nom?: string; unite?: string }; quantite_theorique?: number; quantite_reelle?: number; ecart?: number }>;
   } | null>(null);
@@ -109,12 +111,12 @@ export default function Inventaire() {
     {/* ══ HEADER ══ */}
     <div className="flex items-center justify-between mb-5 flex-wrap gap-2.5">
     <div className="flex items-center gap-2.5">
-    <div className="w-9 h-9 rounded-[10px] bg-violet-400/10 flex items-center justify-center">
-    <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" size={18} className="text-violet-400" />
+    <div className="w-9 h-9 rounded-[10px] bg-[var(--violet)]/10 flex items-center justify-center">
+    <Icon d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" size={18} className="text-[var(--violet)]" />
     </div>
     <div>
-    <h1 className="text-[22px] font-extrabold text-white m-0">Inventaire</h1>
-    <p className="text-xs text-zinc-500 mt-0.5">{currentCompany?.name} · Comptez votre stock physique</p>
+    <h1 className="text-[22px] font-extrabold text-[var(--text-primary)] m-0">Inventaire</h1>
+    <p className="text-xs text-[var(--text-muted)] mt-0.5">{currentCompany?.name} · Comptez votre stock physique</p>
     </div>
     </div>
     {!currentInventory && (
@@ -126,36 +128,36 @@ export default function Inventaire() {
 
     {/* ══ INVENTAIRE EN COURS ══ */}
     {currentInventory && (
-      <Card className="mb-5 border border-blue-400/30 bg-blue-400/[0.05]">
+      <Card className="mb-5 border border-[var(--info)]/30 bg-[var(--info)]/[0.05]">
       <CardHeader>
       <div className="flex items-center gap-2">
-      <div className="w-7 h-7 rounded-lg bg-blue-400/10 flex items-center justify-center">
-      <Icon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" size={14} className="text-blue-400" />
+      <div className="w-7 h-7 rounded-lg bg-[var(--info)]/10 flex items-center justify-center">
+      <Icon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" size={14} className="text-[var(--info)]" />
       </div>
       <CardTitle>Inventaire en cours</CardTitle>
       </div>
-      <span className="text-[11px] text-zinc-500">
+      <span className="text-[11px] text-[var(--text-muted)]">
       Débuté le {new Date(currentInventory.date_debut ?? "").toLocaleString("fr-FR")}
       </span>
       </CardHeader>
       <div className="grid grid-cols-3 gap-2.5 mb-4 px-4">
-      <div className="text-center bg-[#0a0a0f] rounded-[10px] p-3">
-      <div className="text-[22px] font-extrabold text-blue-400">{countedProducts.length}</div>
-      <div className="text-[10px] text-zinc-500">Comptés</div>
+      <div className="text-center bg-[var(--bg-primary)] rounded-[10px] p-3">
+      <div className="text-[22px] font-extrabold text-[var(--info)]">{countedProducts.length}</div>
+      <div className="text-[10px] text-[var(--text-muted)]">Comptés</div>
       </div>
-      <div className="text-center bg-[#0a0a0f] rounded-[10px] p-3">
-      <div className="text-[22px] font-extrabold text-amber-400">{uncountedProducts.length}</div>
-      <div className="text-[10px] text-zinc-500">Restants</div>
+      <div className="text-center bg-[var(--bg-primary)] rounded-[10px] p-3">
+      <div className="text-[22px] font-extrabold text-[var(--gold)]">{uncountedProducts.length}</div>
+      <div className="text-[10px] text-[var(--text-muted)]">Restants</div>
       </div>
-      <div className="text-center bg-[#0a0a0f] rounded-[10px] p-3">
-      <div className="text-[22px] font-extrabold text-emerald-400">{progressPercent.toFixed(0)}%</div>
-      <div className="text-[10px] text-zinc-500">Progression</div>
+      <div className="text-center bg-[var(--bg-primary)] rounded-[10px] p-3">
+      <div className="text-[22px] font-extrabold text-[var(--success)]">{progressPercent.toFixed(0)}%</div>
+      <div className="text-[10px] text-[var(--text-muted)]">Progression</div>
       </div>
       </div>
       {/* Barre de progression */}
       <div className="px-4 pb-4">
-      <div className="h-1.5 bg-[#1e1e24] rounded-[3px] overflow-hidden">
-      <div className="h-full rounded-[3px] transition-all duration-500 bg-gradient-to-r from-blue-400 to-emerald-400" style={{ width: `${progressPercent}%` }} />
+      <div className="h-1.5 bg-[var(--border-default)] rounded-[3px] overflow-hidden">
+      <div className="h-full rounded-[3px] transition-all duration-500 bg-gradient-to-r from-[var(--info)] to-[var(--success)]" style={{ width: `${progressPercent}%` }} />
       </div>
       </div>
       {/* Actions */}
@@ -179,10 +181,10 @@ export default function Inventaire() {
       <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2 px-4 pb-4">
       {uncountedProducts.map((p) => (
         <button key={p.id} onClick={() => { setSelectedProduct(p); setCountValue(String(p.quantite_stock || "")); setShowCountModal(true); }}
-        className="py-2.5 px-3 rounded-[10px] border border-[#1e1e24] bg-[#0a0a0f] cursor-pointer text-left transition-all duration-150 hover:border-blue-400"
+        className="py-2.5 px-3 rounded-[10px] border border-[var(--border-default)] bg-[var(--bg-primary)] cursor-pointer text-left transition-all duration-150 hover:border-[var(--info)]"
         >
-        <div className="font-semibold text-xs text-white truncate">{p.nom}</div>
-        <div className="text-[10px] text-zinc-500 mt-0.5">Stock: {p.quantite_stock} {p.unite || ""}</div>
+        <div className="font-semibold text-xs text-[var(--text-primary)] truncate">{p.nom}</div>
+        <div className="text-[10px] text-[var(--text-muted)] mt-0.5">Stock: {p.quantite_stock} {p.unite || ""}</div>
         </button>
       ))}
       </div>
@@ -206,7 +208,7 @@ export default function Inventaire() {
       <TableBody>
       {history.map((h) => (
         <TableRow key={h.id}>
-        <TableCell className="font-semibold text-xs">
+        <TableCell className="font-semibold text-xs text-[var(--text-primary)]">
         {h.date_debut ? new Date(h.date_debut).toLocaleDateString("fr-FR") : "—"}
         </TableCell>
         <TableCell>
@@ -228,17 +230,17 @@ export default function Inventaire() {
     <Modal open={showCountModal} onClose={() => { setShowCountModal(false); setSelectedProduct(null); setCountValue(""); }}>
     <ModalHeader title={`Compter — ${selectedProduct?.nom || ""}`} onClose={() => setShowCountModal(false)} />
     <ModalBody>
-    <div className="p-3.5 bg-[#0a0a0f] rounded-[10px] text-center mb-4">
-    <div className="text-[11px] text-zinc-500">Stock théorique</div>
-    <div className="text-[28px] font-extrabold text-blue-400">
+    <div className="p-3.5 bg-[var(--bg-primary)] rounded-[10px] text-center mb-4">
+    <div className="text-[11px] text-[var(--text-muted)]">Stock théorique</div>
+    <div className="text-[28px] font-extrabold text-[var(--info)]">
     {selectedProduct?.quantite_stock ?? 0} <span className="text-sm font-normal">{selectedProduct?.unite || ""}</span>
     </div>
     </div>
     <Input type="number" label="Quantité réelle" value={countValue} onChange={(e) => setCountValue(e.target.value)} placeholder={`Quantité en ${selectedProduct?.unite || "pièce"}`} />
     {countValue && (
-      <div className="mt-3 p-2.5 px-3.5 bg-[#0a0a0f] rounded-lg flex justify-between">
-      <span className="text-xs text-zinc-500">Écart :</span>
-      <span className={`font-bold text-[13px] ${parseFloat(countValue) !== (selectedProduct?.quantite_stock ?? 0) ? "text-amber-400" : "text-emerald-400"}`}>
+      <div className="mt-3 p-2.5 px-3.5 bg-[var(--bg-primary)] rounded-lg flex justify-between">
+      <span className="text-xs text-[var(--text-muted)]">Écart :</span>
+      <span className={`font-bold text-[13px] ${parseFloat(countValue) !== (selectedProduct?.quantite_stock ?? 0) ? "text-[var(--gold)]" : "text-[var(--success)]"}`}>
       {parseFloat(countValue) > (selectedProduct?.quantite_stock ?? 0) ? "+" : ""}
       {(parseFloat(countValue) || 0) - (selectedProduct?.quantite_stock ?? 0)} {selectedProduct?.unite || ""}
       </span>
@@ -255,7 +257,7 @@ export default function Inventaire() {
     <Modal open={confirmFinaliser} onClose={() => setConfirmFinaliser(false)}>
     <ModalHeader title="Terminer l'inventaire ?" onClose={() => setConfirmFinaliser(false)} />
     <ModalBody>
-    <p className="text-[13px] text-zinc-400 text-center">
+    <p className="text-[13px] text-[var(--text-muted)] text-center">
     {uncountedProducts.length > 0
       ? `⚠️ ${uncountedProducts.length} produit(s) non compté(s). Voulez-vous terminer quand même ?`
       : "✅ Tous les produits ont été comptés. Confirmer la finalisation ?"}
@@ -272,26 +274,26 @@ export default function Inventaire() {
       <ModalHeader title={`Détails — Inventaire du ${selectedInventory?.date_debut ? new Date(selectedInventory.date_debut).toLocaleDateString("fr-FR") : ""}`} onClose={() => setShowDetailsModal(false)} />
       <ModalBody>
       {detailsLoading ? (
-        <div className="text-center p-10 text-zinc-500">Chargement...</div>
+        <div className="text-center p-10 text-[var(--text-muted)]">Chargement...</div>
       ) : !inventoryDetails ? (
-        <div className="text-center p-10 text-zinc-500">Aucun détail</div>
+        <div className="text-center p-10 text-[var(--text-muted)]">Aucun détail</div>
       ) : (
         <>
         <div className="grid grid-cols-3 gap-2.5 mb-4">
-        <div className="bg-[#0a0a0f] p-3 rounded-[10px] text-center">
-        <div className="text-xl font-extrabold text-blue-400">{inventoryDetails.stats.total_products}</div>
-        <div className="text-[10px] text-zinc-500">Comptés</div>
+        <div className="bg-[var(--bg-primary)] p-3 rounded-[10px] text-center">
+        <div className="text-xl font-extrabold text-[var(--info)]">{inventoryDetails.stats.total_products}</div>
+        <div className="text-[10px] text-[var(--text-muted)]">Comptés</div>
         </div>
-        <div className="bg-[#0a0a0f] p-3 rounded-[10px] text-center">
-        <div className="text-xl font-extrabold text-amber-400">{inventoryDetails.stats.products_with_difference}</div>
-        <div className="text-[10px] text-zinc-500">Avec écart</div>
+        <div className="bg-[var(--bg-primary)] p-3 rounded-[10px] text-center">
+        <div className="text-xl font-extrabold text-[var(--gold)]">{inventoryDetails.stats.products_with_difference}</div>
+        <div className="text-[10px] text-[var(--text-muted)]">Avec écart</div>
         </div>
-        <div className="bg-[#0a0a0f] p-3 rounded-[10px] text-center">
-        <div className="text-xl font-extrabold text-emerald-400">{inventoryDetails.stats.total_products - inventoryDetails.stats.products_with_difference}</div>
-        <div className="text-[10px] text-zinc-500">Conformes</div>
+        <div className="bg-[var(--bg-primary)] p-3 rounded-[10px] text-center">
+        <div className="text-xl font-extrabold text-[var(--success)]">{inventoryDetails.stats.total_products - inventoryDetails.stats.products_with_difference}</div>
+        <div className="text-[10px] text-[var(--text-muted)]">Conformes</div>
         </div>
         </div>
-        <div className="max-h-[300px] overflow-y-auto border border-[#1e1e24] rounded-lg">
+        <div className="max-h-[300px] overflow-y-auto border border-[var(--border-default)] rounded-lg">
         <Table>
         <TableHead>
         <TableRow>
@@ -305,10 +307,10 @@ export default function Inventaire() {
         <TableBody>
         {inventoryDetails.details.map((d) => (
           <TableRow key={d.id}>
-          <TableCell className="font-semibold text-xs">{d.produit?.nom || "—"}</TableCell>
-          <TableCell align="right" className="text-[11px]">{d.quantite_theorique} {d.produit?.unite || ""}</TableCell>
-          <TableCell align="right" className="text-[11px]">{d.quantite_reelle} {d.produit?.unite || ""}</TableCell>
-          <TableCell align="right" className={`text-[11px] ${(d.ecart ?? 0) > 0 ? "text-red-400" : (d.ecart ?? 0) < 0 ? "text-amber-400" : "text-emerald-400"} ${(d.ecart ?? 0) !== 0 ? "font-semibold" : "font-normal"}`}>
+          <TableCell className="font-semibold text-xs text-[var(--text-primary)]">{d.produit?.nom || "—"}</TableCell>
+          <TableCell align="right" className="text-[11px] text-[var(--text-primary)]">{d.quantite_theorique} {d.produit?.unite || ""}</TableCell>
+          <TableCell align="right" className="text-[11px] text-[var(--text-primary)]">{d.quantite_reelle} {d.produit?.unite || ""}</TableCell>
+          <TableCell align="right" className={`text-[11px] ${(d.ecart ?? 0) > 0 ? "text-[var(--danger)]" : (d.ecart ?? 0) < 0 ? "text-[var(--gold)]" : "text-[var(--success)]"} ${(d.ecart ?? 0) !== 0 ? "font-semibold" : "font-normal"}`}>
           {(d.ecart ?? 0) > 0 ? "+" : ""}{d.ecart ?? 0}
           </TableCell>
           <TableCell align="center">
@@ -321,9 +323,9 @@ export default function Inventaire() {
         </TableBody>
         </Table>
         </div>
-        <div className="mt-3 text-center p-2.5 bg-[#0a0a0f] rounded-lg">
-        <span className="text-[11px] text-zinc-500">Taux de précision : </span>
-        <span className="font-bold text-base text-blue-400">{inventoryDetails.stats.accuracy_rate}%</span>
+        <div className="mt-3 text-center p-2.5 bg-[var(--bg-primary)] rounded-lg">
+        <span className="text-[11px] text-[var(--text-muted)]">Taux de précision : </span>
+        <span className="font-bold text-base text-[var(--info)]">{inventoryDetails.stats.accuracy_rate}%</span>
         </div>
         </>
       )}

@@ -1,7 +1,8 @@
+// src/modules/shared/components/ui/Icons.tsx
 import type { ReactNode, SVGProps } from "react";
 
 /* ─── Base SVG wrapper ─── */
-interface IconProps extends SVGProps<SVGSVGElement> {
+interface IconProps extends SVGProps<<SVGSVGElement> {
   size?: number;
   strokeWidth?: number;
 }
@@ -67,11 +68,12 @@ export function StatusIcon({ status, name, size = 16, className }: StatusIconPro
   }
 
   const colorMap: Record<string, string> = {
-    livre: "text-emerald-500",
-    en_cours: "text-amber-500",
-    annule: "text-red-500",
-    default: "text-slate-500",
+    livre: "text-[var(--success)]",
+    en_cours: "text-[var(--warning)]",
+    annule: "text-[var(--danger)]",
+    default: "text-[var(--text-faint)]",
   };
+
   return (
     <span
     className={`inline-block w-2 h-2 rounded-full ${
@@ -161,7 +163,7 @@ export type NavIconKey =
 | "wallet"
 | "document";
 
-export const NavIcons: Record<NavIconKey, (props?: IconProps) => ReactNode> = {
+export const NavIcons: Record<<NavIconKey, (props?: IconProps) => ReactNode> = {
   grid: (props) => (
     <BaseIcon size={props?.size ?? 16} strokeWidth={1.8} {...props}>
     <rect x="3" y="3" width="7" height="7" rx="1.5" />

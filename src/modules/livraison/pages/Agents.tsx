@@ -48,8 +48,8 @@ export default function Agents() {
   const [editId, setEditId] = useState<string | null>(null);
   const [editData, setEditData] = useState<{ nom: string; salaire: string }>({ nom: "", salaire: "" });
   const [month, setMonth] = useState(currentMonth());
-  const [recupsMois, setRecupsMois] = useState<Record<string, RecupMois>>({});
-  const [recupsCumul, setRecupsCumul] = useState<Record<string, RecupCumul>>({});
+  const [recupsMois, setRecupsMois] = useState<<Record<string, RecupMois>>({});
+  const [recupsCumul, setRecupsCumul] = useState<<Record<string, RecupCumul>>({});
   const [loading, setLoading] = useState(false);
   const [confirmDel, setConfirmDel] = useState<{ id: string; name: string } | null>(null);
   const [saving, setSaving] = useState(false);
@@ -168,7 +168,6 @@ export default function Agents() {
     }
   };
 
-  // Stats
   const totalSalaire = safeAgents.reduce((s, a) => s + (Number(a.salaire) || 0), 0);
   const totalRecupMois = Object.values(recupsMois).reduce((s, r) => s + r.total, 0);
 
@@ -177,15 +176,15 @@ export default function Agents() {
     {/* ══ HEADER ══ */}
     <header className="mb-5">
     <div className="flex items-center gap-2.5 mb-1">
-    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-emerald-50">
+    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-[var(--success)]/10">
     <Icon
     d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z"
     size={18}
-    className="text-emerald-500"
+    className="text-[var(--success)]"
     />
     </div>
     <div>
-    <h1 className={`font-extrabold m-0 text-[var(--text)] ${isMobile ? "text-xl" : "text-2xl"}`}>
+    <h1 className={`font-extrabold m-0 text-[var(--text-primary)] ${isMobile ? "text-xl" : "text-2xl"}`}>
     Agents
     </h1>
     <p className="text-xs text-[var(--text-muted)] mt-0.5">
@@ -200,20 +199,20 @@ export default function Agents() {
     <StatCard
     label="Total agents"
     value={safeAgents.length}
-    className="text-emerald-500"
-    icon={<Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z" size={18} className="text-emerald-500" />}
+    color="success"
+    icon={<Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z" size={18} />}
     />
     <StatCard
     label="Salaires mensuels"
     value={formatAr(totalSalaire)}
-    className="text-amber-600"
-    icon={<Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={18} className="text-amber-600" />}
+    color="accent"
+    icon={<Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={18} />}
     />
     <StatCard
     label="Récup. du mois"
     value={formatAr(totalRecupMois)}
-    className="text-violet-500"
-    icon={<Icon d="M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 1015.24 4.76L23 9" size={18} className="text-violet-500" />}
+    color="purple"
+    icon={<Icon d="M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 1015.24 4.76L23 9" size={18} />}
     />
     </div>
 
@@ -262,27 +261,27 @@ export default function Agents() {
         return (
           <Card key={a.id} className="overflow-hidden">
           {/* Header */}
-          <div className="px-4 py-3.5 border-b border-[var(--border)] bg-gradient-to-br from-emerald-50/60 to-amber-50/40">
+          <div className="px-4 py-3.5 border-b border-[var(--border-default)] bg-gradient-to-br from-[var(--success)]/5 to-[var(--gold)]/5">
           <div className="flex items-center gap-2.5">
-          <div className="w-11 h-11 rounded-full flex items-center justify-center font-extrabold text-lg text-[#08080c] flex-shrink-0 bg-gradient-to-br from-emerald-400 to-amber-500 shadow-[0_4px_12px_rgba(52,211,153,0.2)]">
+          <div className="w-11 h-11 rounded-full flex items-center justify-center font-extrabold text-lg text-[var(--bg-primary)] flex-shrink-0 bg-gradient-to-br from-[var(--success)] to-[var(--gold)] shadow-[0_4px_12px_rgba(52,211,153,0.2)]">
           {a.nom?.charAt(0) || "?"}
           </div>
           <div className="flex-1 min-w-0">
-          <div className="font-bold text-[15px] text-[var(--text)]">{a.nom}</div>
+          <div className="font-bold text-[15px] text-[var(--text-primary)]">{a.nom}</div>
           <div className="text-[11px] text-[var(--text-muted)]">{formatAr(a.salaire)} / mois</div>
           </div>
           <div className="flex gap-1">
           <button
           onClick={() => startEdit(a)}
           title="Modifier"
-          className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-[13px] cursor-pointer border bg-[var(--bg-secondary)] border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--text-muted)] transition-colors"
+          className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-[13px] cursor-pointer border bg-[var(--bg-secondary)] border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-active)] transition-colors"
           >
           ✏️
           </button>
           <button
           onClick={() => setConfirmDel({ id: a.id, name: a.nom })}
           title="Supprimer"
-          className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-[13px] cursor-pointer border bg-red-50 border-red-200/50 text-red-400 hover:bg-red-100 hover:text-red-500 transition-colors"
+          className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-[13px] cursor-pointer border bg-[var(--danger)]/5 border-[var(--danger)]/20 text-[var(--danger)] hover:bg-[var(--danger)]/10 hover:text-[var(--danger)] transition-colors"
           >
           🗑
           </button>
@@ -292,7 +291,7 @@ export default function Agents() {
 
           {/* Edition inline */}
           {isEditing && (
-            <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-secondary)] animate-fade-up">
+            <div className="px-4 py-3 border-b border-[var(--border-default)] bg-[var(--bg-secondary)] animate-fade-up">
             <div className={`grid gap-2 mb-2 ${isMobile ? "grid-cols-1" : "grid-cols-2"}`}>
             <Input value={editData.nom} onChange={(e) => setEditData({ ...editData, nom: e.target.value })} placeholder="Nom" />
             <Input type="number" value={editData.salaire} onChange={(e) => setEditData({ ...editData, salaire: e.target.value })} placeholder="Salaire" />
@@ -311,25 +310,24 @@ export default function Agents() {
           {/* Récupérations du mois */}
           <div className="px-4 py-3">
           <div className="flex justify-between items-center mb-2">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--gold)]">
           📅 {monthLabel(month)}
           </span>
           <div className="flex gap-2">
           <span className="text-[11px] text-[var(--text-muted)]">{rm.count} récup.</span>
-          <span className="text-xs font-bold text-emerald-500">
+          <span className="text-xs font-bold text-[var(--success)]">
           {formatAr(rm.total)}
           </span>
           </div>
           </div>
-
           {rm.details.length > 0 && (
-            <div className="border-t border-[var(--border)] pt-1.5 mb-2">
+            <div className="border-t border-[var(--border-default)] pt-1.5 mb-2">
             {rm.details.map((r, i) => (
               <div key={i} className="flex justify-between py-[3px] text-[10px]">
               <span className="text-[var(--text-secondary)]">
               {r.date} · {r.client_donneur}
               </span>
-              <span className="font-semibold text-emerald-500">
+              <span className="font-semibold text-[var(--success)]">
               {formatAr(r.frais_recuperation)}
               </span>
               </div>
@@ -338,13 +336,13 @@ export default function Agents() {
           )}
 
           {/* Cumul total */}
-          <div className="flex justify-between items-center px-2.5 py-2 rounded-lg bg-[var(--bg)] border border-[var(--border)]">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600">
+          <div className="flex justify-between items-center px-2.5 py-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-default)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--gold)]">
           💰 Cumul total
           </span>
           <div className="flex gap-2">
           <span className="text-[11px] text-[var(--text-muted)]">{rc.count} récup.</span>
-          <span className="text-xs font-bold text-amber-600">
+          <span className="text-xs font-bold text-[var(--gold)]">
           {formatAr(rc.total)}
           </span>
           </div>

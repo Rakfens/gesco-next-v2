@@ -54,10 +54,10 @@ function PaiementButton({
     type="button"
     onClick={onClick}
     data-testid={`paiement-mode-${mode.key}`}
-    className={`flex-1 py-2.5 px-2 rounded-[9px] text-xs font-semibold text-center cursor-pointer transition-all duration-150 font-[var(--font)] ${active ? "border-2 border-[var(--accent)] bg-[var(--accent-dim)] text-[var(--accent)]" : "border-2 border-[var(--border2)] bg-[var(--bg)] text-[var(--subtle)]"}`}
+    className={`flex-1 py-2.5 px-2 rounded-[9px] text-xs font-semibold text-center cursor-pointer transition-all duration-150 ${active ? "border-2 border-[var(--gold)] bg-[var(--gold)]/10 text-[var(--gold)]" : "border-2 border-[var(--border-subtle)] bg-[var(--bg-primary)] text-[var(--text-faint)]"}`}
     >
     <div
-    className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold tracking-wider flex-shrink-0 mx-auto mb-0.5 ${active ? "bg-[var(--accent)] text-white" : "bg-[var(--border2)] text-[var(--subtle)]"}`}
+    className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold tracking-wider flex-shrink-0 mx-auto mb-0.5 ${active ? "bg-[var(--gold)] text-[var(--bg-primary)]" : "bg-[var(--border-active)] text-[var(--text-faint)]"}`}
     >
     {mode.icon}
     </div>
@@ -84,7 +84,7 @@ export function LivraisonForm({
   const { currentCompany } = useCompany();
   const isMobile = useIsMobile();
 
-  const [form, setForm] = useState<FormState>({
+  const [form, setForm] = useState<<FormState>({
     colis: "",
     client_donneur: "",
     destinataire: "",
@@ -119,7 +119,7 @@ export function LivraisonForm({
   );
 
   /* ─── Handlers ─── */
-  const updateField = useCallback(<K extends keyof FormState>(field: K, value: FormState[K]) => {
+  const updateField = useCallback(<<K extends keyof FormState>(field: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   }, []);
 
@@ -197,10 +197,10 @@ export function LivraisonForm({
     <div data-testid="livraison-form-page">
     {/* Header */}
     <div className="mb-5">
-    <h1 className="font-extrabold tracking-tight text-[22px] text-[var(--text)]">
+    <h1 className="font-extrabold tracking-tight text-[22px] text-[var(--text-primary)]">
     Nouvelle livraison
     {currentCompany && (
-      <span className="font-normal ml-1.5 text-sm text-[var(--muted)]">
+      <span className="font-normal ml-1.5 text-sm text-[var(--text-muted)]">
       · {currentCompany.name}
       </span>
     )}
@@ -238,8 +238,8 @@ export function LivraisonForm({
     </div>
 
     {/* Client donneur */}
-    <div className="rounded-[10px] p-3 mb-3 bg-blue-400/10">
-    <SectionHeader label="Client donneur" colorClass="text-blue-400" />
+    <div className="rounded-[10px] p-3 mb-3 bg-[var(--info)]/10">
+    <SectionHeader label="Client donneur" colorClass="text-[var(--info)]" />
     <div className="relative">
     <Input
     placeholder="Ex: SARL TECH"
@@ -257,8 +257,8 @@ export function LivraisonForm({
     </div>
 
     {/* Destinataire */}
-    <div className="rounded-[10px] p-3 mb-3 bg-teal-400/10">
-    <SectionHeader label="Destinataire" colorClass="text-teal-400" />
+    <div className="rounded-[10px] p-3 mb-3 bg-[var(--success)]/10">
+    <SectionHeader label="Destinataire" colorClass="text-[var(--success)]" />
     <div className={`grid gap-3 ${isMobile ? "grid-cols-1" : "grid-cols-2"}`}>
     <div className="relative">
     <Input
@@ -317,7 +317,7 @@ export function LivraisonForm({
 
     {/* Mode de paiement */}
     <div className="mb-3">
-    <label className="block text-xs font-semibold mb-2 text-[var(--text2)]">
+    <label className="block text-xs font-semibold mb-2 text-[var(--text-secondary)]">
     Mode de paiement
     </label>
     <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${paiementModes.length}, 1fr)` }}>
@@ -356,11 +356,11 @@ export function LivraisonForm({
     {/* Remarque — visible si reporté */}
     {form.statut === "reporte" && (
       <div className="mt-3">
-      <label className="block text-xs font-semibold mb-1.5 text-[var(--text2)]">
+      <label className="block text-xs font-semibold mb-1.5 text-[var(--text-secondary)]">
       Motif du report
       </label>
       <textarea
-      className="w-full px-3.5 py-2.5 min-h-[70px] rounded-lg text-sm outline-none resize-y box-border bg-[var(--card)] border border-[var(--border2)] text-[var(--text)] font-[var(--font)]"
+      className="w-full px-3.5 py-2.5 min-h-[70px] rounded-lg text-sm outline-none resize-y box-border bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-primary)]"
       value={form.remarque || ""}
       onChange={(e) => updateField("remarque", e.target.value)}
       placeholder="Ex: Reporté au lendemain..."

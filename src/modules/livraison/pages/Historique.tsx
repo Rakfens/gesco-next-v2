@@ -24,10 +24,10 @@ import { printAgentList } from "@/modules/shared/utils/pdfExport";
 import { StatusIcon, Icon } from "@/modules/shared/components/ui/Icons";
 
 const STATUS_ICONS = [
-  { key: "en_cours", label: "En cours", color: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/15", icon: "clock" as const },
-{ key: "livre", label: "Livré", color: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400/15", icon: "check" as const },
-{ key: "retourne", label: "Retourné", color: "text-red-400", bg: "bg-red-400/10", border: "border-red-400/15", icon: "rotate-left" as const },
-{ key: "reporte", label: "Reporté", color: "text-violet-400", bg: "bg-violet-400/10", border: "border-violet-400/15", icon: "xmark" as const },
+  { key: "en_cours", label: "En cours", color: "text-[var(--gold)]", bg: "bg-[var(--gold)]/10", border: "border-[var(--gold)]", icon: "clock" as const },
+  { key: "livre", label: "Livré", color: "text-[var(--success)]", bg: "bg-[var(--success)]/10", border: "border-[var(--success)]", icon: "check" as const },
+  { key: "retourne", label: "Retourné", color: "text-[var(--danger)]", bg: "bg-[var(--danger)]/10", border: "border-[var(--danger)]", icon: "rotate-left" as const },
+  { key: "reporte", label: "Reporté", color: "text-[var(--violet)]", bg: "bg-[var(--violet)]/10", border: "border-[var(--violet)]", icon: "xmark" as const },
 ] as const;
 
 const STATUS_OPTIONS = STATUS_ICONS.map(({ key, label }) => ({ value: key, label }));
@@ -45,10 +45,10 @@ interface ClientStat {
 }
 
 function statusClasses(statut?: string) {
-  if (statut === "livre") return { color: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400" };
-  if (statut === "retourne") return { color: "text-red-400", bg: "bg-red-400/10", border: "border-red-400" };
-  if (statut === "reporte") return { color: "text-violet-400", bg: "bg-violet-400/10", border: "border-violet-400" };
-  return { color: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400" };
+  if (statut === "livre") return { color: "text-[var(--success)]", bg: "bg-[var(--success)]/10", border: "border-[var(--success)]" };
+  if (statut === "retourne") return { color: "text-[var(--danger)]", bg: "bg-[var(--danger)]/10", border: "border-[var(--danger)]" };
+  if (statut === "reporte") return { color: "text-[var(--violet)]", bg: "bg-[var(--violet)]/10", border: "border-[var(--violet)]" };
+  return { color: "text-[var(--gold)]", bg: "bg-[var(--gold)]/10", border: "border-[var(--gold)]" };
 }
 
 export default function Historique() {
@@ -61,7 +61,7 @@ export default function Historique() {
   const [histAgent, setHistAgent] = useState<string>("tous");
   const [histStatut, setHistStatut] = useState<string>("tous");
   const [editId, setEditId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<Partial<Livraison>>({});
+  const [editData, setEditData] = useState<<Partial<Livraison>>({});
   const [fbClient, setFbClient] = useState<string | { client: string; livs: Livraison[] } | null>(null);
   const [fbRecup, setFbRecup] = useState("0");
   const [fbProvince, setFbProvince] = useState("0");
@@ -182,15 +182,15 @@ export default function Historique() {
     <header className="mb-5">
     <div className="flex items-center justify-between flex-wrap gap-2.5">
     <div className="flex items-center gap-2.5">
-    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-violet-400/10">
+    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-[var(--violet)]/10">
     <Icon
     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
     size={18}
-    className="text-violet-400"
+    className="text-[var(--violet)]"
     />
     </div>
     <div>
-    <h1 className={`font-extrabold m-0 text-[var(--text)] ${isMobile ? "text-xl" : "text-2xl"}`}>
+    <h1 className={`font-extrabold m-0 text-[var(--text-primary)] ${isMobile ? "text-xl" : "text-2xl"}`}>
     Historique
     </h1>
     <p className="text-xs text-[var(--text-muted)] mt-0.5">{currentCompany?.name}</p>
@@ -205,14 +205,14 @@ export default function Historique() {
     {/* ══ STATS ══ */}
     <div className={`grid gap-2.5 mb-4 ${isMobile ? "grid-cols-2" : "grid-cols-4"}`}>
     {[
-      { label: "Total", value: stats.total, color: "text-amber-400" },
-      { label: "Livrés", value: stats.livres, color: "text-emerald-400" },
-      { label: "En cours", value: stats.enCours, color: "text-amber-400" },
-      { label: "Montant", value: formatAr(stats.montant), color: "text-violet-400" },
+      { label: "Total", value: stats.total, color: "text-[var(--gold)]" },
+          { label: "Livrés", value: stats.livres, color: "text-[var(--success)]" },
+          { label: "En cours", value: stats.enCours, color: "text-[var(--gold)]" },
+          { label: "Montant", value: formatAr(stats.montant), color: "text-[var(--violet)]" },
     ].map((s) => (
       <div
       key={s.label}
-      className="text-center rounded-xl border border-[var(--border)] p-3 bg-[var(--card)]"
+      className="text-center rounded-xl border border-[var(--border-default)] p-3 bg-[var(--bg-card)]"
       >
       <div className={`font-extrabold text-xl ${s.color}`}>
       {s.value}
@@ -296,12 +296,12 @@ export default function Historique() {
           <Card key={s.agent} padding="sm" hover>
           <div className="flex justify-between items-center">
           <div>
-          <div className="font-bold text-[13px] text-[var(--text)]">{s.agent}</div>
+          <div className="font-bold text-[13px] text-[var(--text-primary)]">{s.agent}</div>
           <div className="text-[11px] text-[var(--text-muted)]">
           {s.count} livraison{s.count !== 1 ? "s" : ""}
           </div>
           </div>
-          <div className="text-sm font-bold text-violet-400">
+          <div className="text-sm font-bold text-[var(--violet)]">
           {formatAr(s.frais)}
           </div>
           </div>
@@ -332,9 +332,9 @@ export default function Historique() {
         {statsByClient.map((cl) => (
           <Card key={cl.client} padding="sm">
           <div className="flex items-center justify-between mb-2.5 flex-wrap gap-2">
-          <div className="font-extrabold text-sm text-[var(--text)]">{cl.client}</div>
+          <div className="font-extrabold text-sm text-[var(--text-primary)]">{cl.client}</div>
           <div className="flex gap-2 items-center">
-          <span className="font-bold text-sm text-emerald-400">
+          <span className="font-bold text-sm text-[var(--success)]">
           {formatAr(cl.totalMontant)}
           </span>
           <Button
@@ -355,26 +355,26 @@ export default function Historique() {
             return (
               <div
               key={l.id}
-              className="flex items-center gap-2 py-1.5 border-t border-[var(--border)] flex-wrap"
+              className="flex items-center gap-2 py-1.5 border-t border-[var(--border-default)] flex-wrap"
               >
               <div className={`w-2 h-2 rounded-full flex-shrink-0 ${sc.bg.replace('/10', '')}`} />
-              <span className="text-[11px] text-[var(--text)] flex-1 min-w-[100px]">{l.colis}</span>
+              <span className="text-[11px] text-[var(--text-primary)] flex-1 min-w-[100px]">{l.colis}</span>
               <span className="text-[10px] text-[var(--text-muted)]">{l.destinataire}</span>
               <span className={`text-[11px] font-semibold ${sc.color}`}>
               {STATUTS[l.statut || ""]?.label || l.statut}
               </span>
-              <span className="text-[11px] font-semibold text-amber-400">
+              <span className="text-[11px] font-semibold text-[var(--gold)]">
               {l.montant ? formatAr(l.montant) : "—"}
               </span>
               <button
               onClick={() => startEdit(l)}
-              className="px-1.5 py-0.5 rounded-md bg-transparent border border-[var(--border)] text-[var(--text-muted)] cursor-pointer text-xs hover:text-[var(--text)] hover:border-[var(--text-muted)] transition-colors"
+              className="px-1.5 py-0.5 rounded-md bg-transparent border border-[var(--border-default)] text-[var(--text-muted)] cursor-pointer text-xs hover:text-[var(--text-primary)] hover:border-[var(--border-active)] transition-colors"
               >
               ✏️
               </button>
               <button
               onClick={() => setConfirmDelete(l.id)}
-              className="px-1.5 py-0.5 rounded-md cursor-pointer text-xs border bg-red-50 border-red-200/50 text-red-400 hover:bg-red-100 hover:text-red-500 transition-colors"
+              className="px-1.5 py-0.5 rounded-md cursor-pointer text-xs border bg-[var(--danger)]/5 border-[var(--danger)]/20 text-[var(--danger)] hover:bg-[var(--danger)]/10 hover:text-[var(--danger)] transition-colors"
               >
               🗑
               </button>
@@ -400,7 +400,7 @@ export default function Historique() {
           return (
             <div
             key={l.id}
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] bg-[var(--bg-secondary)] border border-[var(--border)] border-l-[3px] ${sc.border}`}
+            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] bg-[var(--bg-secondary)] border border-[var(--border-default)] border-l-[3px] ${sc.border}`}
             >
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${sc.bg}`}>
             <StatusIcon
@@ -411,7 +411,7 @@ export default function Historique() {
             </div>
             <div className="flex-1 min-w-[100px]">
             <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-bold text-xs text-[var(--text)]">{l.colis}</span>
+            <span className="font-bold text-xs text-[var(--text-primary)]">{l.colis}</span>
             <span
             className={`text-[8px] font-bold px-1.5 py-px rounded-full uppercase ${sc.bg} ${sc.color}`}
             >
@@ -423,18 +423,18 @@ export default function Historique() {
             {l.agent_nom ? ` · ${l.agent_nom}` : ""}
             </div>
             </div>
-            <div className="text-xs font-bold text-[var(--accent)] whitespace-nowrap">
+            <div className="text-xs font-bold text-[var(--gold)] whitespace-nowrap">
             {l.montant ? formatAr(l.montant) : "—"}
             </div>
             <button
             onClick={() => startEdit(l)}
-            className="w-7 h-7 rounded-md flex items-center justify-center text-xs cursor-pointer border bg-[var(--bg-tertiary)] border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--text-muted)] transition-colors"
+            className="w-7 h-7 rounded-md flex items-center justify-center text-xs cursor-pointer border bg-[var(--bg-elevated)] border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-active)] transition-colors"
             >
             ✏️
             </button>
             <button
             onClick={() => setConfirmDelete(l.id)}
-            className="w-7 h-7 rounded-md flex items-center justify-center text-xs cursor-pointer border bg-red-50 border-red-200/50 text-red-400 hover:bg-red-100 hover:text-red-500 transition-colors"
+            className="w-7 h-7 rounded-md flex items-center justify-center text-xs cursor-pointer border bg-[var(--danger)]/5 border-[var(--danger)]/20 text-[var(--danger)] hover:bg-[var(--danger)]/10 hover:text-[var(--danger)] transition-colors"
             >
             🗑
             </button>
@@ -443,13 +443,13 @@ export default function Historique() {
         })}
         </div>
         {/* Totaux */}
-        <div className="mt-3 px-3.5 py-2.5 rounded-[10px] bg-[var(--bg)] flex justify-between flex-wrap gap-2.5">
+        <div className="mt-3 px-3.5 py-2.5 rounded-[10px] bg-[var(--bg-secondary)] flex justify-between flex-wrap gap-2.5">
         <span className="text-[11px] text-[var(--text-muted)]">Montant total</span>
-        <span className="text-sm font-extrabold text-amber-400">
+        <span className="text-sm font-extrabold text-[var(--gold)]">
         {formatAr(stats.montant)}
         </span>
         <span className="text-[11px] text-[var(--text-muted)]">Frais total</span>
-        <span className="text-sm font-extrabold text-violet-400">
+        <span className="text-sm font-extrabold text-[var(--violet)]">
         {formatAr(stats.frais)}
         </span>
         </div>

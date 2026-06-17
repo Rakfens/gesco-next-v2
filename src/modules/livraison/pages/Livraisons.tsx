@@ -12,10 +12,10 @@ import { TODAY, formatAr, STATUTS, PAIE_MODES } from "@/modules/shared/utils/con
 import { StatusIcon, Icon } from "@/modules/shared/components/ui/Icons";
 
 const STATUS_OPTIONS = [
-  { key: "en_cours", label: "En cours", icon: "clock" as const, bg: "bg-amber-500/10", text: "text-amber-400", border: "border-l-amber-400", hover: "hover:border-amber-400/50" },
-{ key: "livre", label: "Livré", icon: "check" as const, bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-l-emerald-400", hover: "hover:border-emerald-400/50" },
-{ key: "retourne", label: "Retourné", icon: "rotate-left" as const, bg: "bg-red-500/10", text: "text-red-400", border: "border-l-red-400", hover: "hover:border-red-400/50" },
-{ key: "reporte", label: "Reporté", icon: "xmark" as const, bg: "bg-violet-500/10", text: "text-violet-400", border: "border-l-violet-400", hover: "hover:border-violet-400/50" },
+  { key: "en_cours", label: "En cours", icon: "clock" as const, bg: "bg-[var(--gold)]/10", text: "text-[var(--gold)]", border: "border-l-[var(--gold)]", hover: "hover:border-[var(--gold)]/50" },
+  { key: "livre", label: "Livré", icon: "check" as const, bg: "bg-[var(--success)]/10", text: "text-[var(--success)]", border: "border-l-[var(--success)]", hover: "hover:border-[var(--success)]/50" },
+  { key: "retourne", label: "Retourné", icon: "rotate-left" as const, bg: "bg-[var(--danger)]/10", text: "text-[var(--danger)]", border: "border-l-[var(--danger)]", hover: "hover:border-[var(--danger)]/50" },
+  { key: "reporte", label: "Reporté", icon: "xmark" as const, bg: "bg-[var(--violet)]/10", text: "text-[var(--violet)]", border: "border-l-[var(--violet)]", hover: "hover:border-[var(--violet)]/50" },
 ] as const;
 
 type SortKey = "date" | "montant" | "statut";
@@ -37,11 +37,11 @@ export default function LivraisonsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editMontant, setEditMontant] = useState("");
   const [saving, setSaving] = useState(false);
-  const [sortBy, setSortBy] = useState<SortKey>("date");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [sortBy, setSortBy] = useState<<SortKey>("date");
+  const [sortDir, setSortDir] = useState<<"asc" | "desc">("desc");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const mountedRef = useRef(true);
 
+  const mountedRef = useRef(true);
   useEffect(() => {
     return () => { mountedRef.current = false; };
   }, []);
@@ -201,11 +201,11 @@ export default function LivraisonsPage() {
     {/* ══ HEADER ══ */}
     <header className="mb-5">
     <div className="flex items-center gap-2.5 mb-1">
-    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-amber-400/10">
-    <Icon d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" size={18} className="text-amber-400" />
+    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-[var(--gold)]/10">
+    <Icon d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" size={18} className="text-[var(--gold)]" />
     </div>
     <div>
-    <h1 className={`font-extrabold m-0 text-[var(--text)] ${isMobile ? "text-xl" : "text-2xl"}`}>
+    <h1 className={`font-extrabold m-0 text-[var(--text-primary)] ${isMobile ? "text-xl" : "text-2xl"}`}>
     Livraisons
     </h1>
     <p className="text-xs text-[var(--text-muted)] mt-0.5">
@@ -218,12 +218,12 @@ export default function LivraisonsPage() {
     {/* ══ STATS RAPIDES ══ */}
     <div className={`grid gap-2.5 mb-4 ${isMobile ? "grid-cols-2" : "grid-cols-4"}`}>
     {[
-      { label: "Total", value: stats.total, color: "text-amber-400" },
-      { label: "Livrés", value: stats.livres, color: "text-emerald-400" },
-      { label: "En cours", value: stats.enCours, color: "text-amber-400" },
-      { label: "Montant", value: formatAr(stats.montant), color: "text-violet-400" },
+      { label: "Total", value: stats.total, color: "text-[var(--gold)]" },
+          { label: "Livrés", value: stats.livres, color: "text-[var(--success)]" },
+          { label: "En cours", value: stats.enCours, color: "text-[var(--gold)]" },
+          { label: "Montant", value: formatAr(stats.montant), color: "text-[var(--violet)]" },
     ].map((s) => (
-      <div key={s.label} className="text-center rounded-xl border border-[var(--border)] p-3 bg-[var(--card)]">
+      <div key={s.label} className="text-center rounded-xl border border-[var(--border-default)] p-3 bg-[var(--bg-card)]">
       <div className={`font-extrabold text-xl ${s.color}`}>{s.value}</div>
       <div className="text-[10px] text-[var(--text-muted)] mt-0.5 uppercase tracking-wider">{s.label}</div>
       </div>
@@ -233,7 +233,7 @@ export default function LivraisonsPage() {
     {/* ══ BOUTON NOUVELLE LIVRAISON ══ */}
     <button
     onClick={() => setShowForm((p) => !p)}
-    className={`w-full py-3.5 rounded-xl mb-4 text-sm font-bold flex items-center justify-center gap-2 cursor-pointer transition-all font-[var(--font)] ${showForm ? "bg-[var(--bg-secondary)] text-[var(--text)] border border-[var(--border)]" : "bg-gradient-to-br from-amber-400 to-amber-600 text-[#08080c] border-none"}`}
+    className={`w-full py-3.5 rounded-xl mb-4 text-sm font-bold flex items-center justify-center gap-2 cursor-pointer transition-all ${showForm ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-default)]" : "bg-gradient-to-br from-[var(--gold)] to-[var(--gold-dark)] text-[var(--bg-primary)] border-none"}`}
     >
     {showForm ? "✕ Fermer" : "＋ Nouvelle livraison"}
     </button>
@@ -300,7 +300,7 @@ export default function LivraisonsPage() {
         <button
         key={s.key}
         onClick={() => handleSort(s.key)}
-        className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer transition-all font-[var(--font)] ${sortBy === s.key ? "border-[1.5px] border-amber-400 bg-amber-400/10 text-amber-400" : "border border-[var(--border)] bg-transparent text-[var(--text-muted)]"}`}
+        className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer transition-all ${sortBy === s.key ? "border-[1.5px] border-[var(--gold)] bg-[var(--gold)]/10 text-[var(--gold)]" : "border border-[var(--border-default)] bg-transparent text-[var(--text-muted)]"}`}
         >
         {s.label} {sortBy === s.key && (sortDir === "asc" ? "↑" : "↓")}
         </button>
@@ -308,7 +308,7 @@ export default function LivraisonsPage() {
       </div>
       <button
       onClick={handleExportCSV}
-      className="px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 cursor-pointer border border-[var(--border)] bg-transparent text-[var(--text-muted)] font-[var(--font)] hover:text-[var(--text)] hover:border-[var(--text-muted)] transition-colors"
+      className="px-3 py-1.5 rounded-lg text-[11px] font-semibold flex items-center gap-1 cursor-pointer border border-[var(--border-default)] bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-active)] transition-colors"
       >
       📥 Exporter CSV
       </button>
@@ -334,17 +334,17 @@ export default function LivraisonsPage() {
           {/* Infos */}
           <div className="flex-1 min-w-[140px]">
           <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="font-bold text-sm text-[var(--text)]">{l.colis}</span>
+          <span className="font-bold text-sm text-[var(--text-primary)]">{l.colis}</span>
           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${config.bg} ${config.text}`}>
           {STATUTS[l.statut || ""]?.label || l.statut || "—"}
           </span>
-          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--bg-tertiary)] text-[var(--text-muted)]">
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--bg-elevated)] text-[var(--text-muted)]">
           {paiementIcon} {paiementLabel}
           </span>
           </div>
           <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
           {l.client_donneur || "—"} → {l.destinataire || "—"}
-          {l.agent_nom && <span className="text-[var(--accent)]"> · 🚚 {l.agent_nom}</span>}
+          {l.agent_nom && <span className="text-[var(--gold)]"> · 🚚 {l.agent_nom}</span>}
           </div>
           <div className="text-[10px] text-[var(--text-faint)] mt-0.5">
           {l.date} {l.destinataire_lieu && `· 📍 ${l.destinataire_lieu}`}
@@ -362,26 +362,26 @@ export default function LivraisonsPage() {
               if (e.key === "Enter") handleEditMontant(l.id);
               if (e.key === "Escape") cancelEdit();
             }}
-            className="w-[90px] px-2 py-1.5 rounded-lg text-xs outline-none bg-[var(--card)] border border-[var(--accent)] text-[var(--text)] font-[var(--font)]"
+            className="w-[90px] px-2 py-1.5 rounded-lg text-xs outline-none bg-[var(--bg-card)] border border-[var(--gold)] text-[var(--text-primary)]"
             autoFocus
             />
             <button
             onClick={() => handleEditMontant(l.id)}
             disabled={saving}
-            className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold cursor-pointer border-none bg-amber-400 text-[#08080c] hover:bg-amber-500 transition-colors"
+            className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold cursor-pointer border-none bg-[var(--gold)] text-[var(--bg-primary)] hover:bg-[var(--gold-light)] transition-colors"
             >
             ✓
             </button>
             <button
             onClick={cancelEdit}
-            className="px-2.5 py-1.5 rounded-lg text-[11px] cursor-pointer border border-[var(--border)] bg-transparent text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--text-muted)] transition-colors"
+            className="px-2.5 py-1.5 rounded-lg text-[11px] cursor-pointer border border-[var(--border-default)] bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-active)] transition-colors"
             >
             ✕
             </button>
             </div>
           ) : (
             <>
-            <div className="font-bold text-sm text-amber-400">
+            <div className="font-bold text-sm text-[var(--gold)]">
             {l.montant ? formatAr(l.montant) : "—"}
             </div>
             {l.frais ? <div className="text-[10px] text-[var(--text-muted)]">Frais: {formatAr(l.frais)}</div> : null}
@@ -393,14 +393,14 @@ export default function LivraisonsPage() {
           <button
           onClick={() => startEdit(l)}
           title="Modifier le montant"
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-sm cursor-pointer border bg-[var(--bg-secondary)] border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--text-muted)] transition-colors"
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-sm cursor-pointer border bg-[var(--bg-secondary)] border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-active)] transition-colors"
           >
           ✏️
           </button>
           <button
           onClick={() => handleDelete(l.id)}
           title={deleteConfirmId === l.id ? "Confirmer la suppression" : "Supprimer"}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm cursor-pointer border transition-all ${deleteConfirmId === l.id ? "bg-red-400 border-red-400 text-white" : "bg-red-50 border-red-200/50 text-red-400 hover:bg-red-100 hover:text-red-500"}`}
+          className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm cursor-pointer border transition-all ${deleteConfirmId === l.id ? "bg-[var(--danger)] border-[var(--danger)] text-white" : "bg-[var(--danger)]/5 border-[var(--danger)]/20 text-[var(--danger)] hover:bg-[var(--danger)]/10 hover:text-[var(--danger)]"}`}
           >
           {deleteConfirmId === l.id ? "⚠️" : "🗑"}
           </button>
@@ -408,12 +408,12 @@ export default function LivraisonsPage() {
           </div>
           {/* Remarque */}
           {l.remarque && (
-            <div className="mt-2 px-2.5 py-1.5 rounded-lg text-[11px] text-[var(--text-secondary)] border-l-2 border-amber-400 bg-[var(--bg)]">
+            <div className="mt-2 px-2.5 py-1.5 rounded-lg text-[11px] text-[var(--text-secondary)] border-l-2 border-[var(--gold)] bg-[var(--bg-secondary)]">
             📝 {l.remarque}
             </div>
           )}
           {/* Boutons de changement de statut */}
-          <div className="flex gap-1.5 mt-2.5 pt-2.5 border-t border-[var(--border)]">
+          <div className="flex gap-1.5 mt-2.5 pt-2.5 border-t border-[var(--border-default)]">
           {STATUS_OPTIONS.map((opt) => {
             const isActive = l.statut === opt.key;
             return (
@@ -421,7 +421,7 @@ export default function LivraisonsPage() {
               key={opt.key}
               onClick={() => !isActive && handleStatusUpdate(l.id, opt.key)}
               disabled={saving || isActive}
-              className={`flex-1 py-1.5 px-1 rounded-lg text-[10px] flex items-center justify-center gap-1 transition-all font-[var(--font)] ${isActive ? `border-2 ${opt.border.replace('border-l-', 'border-')} ${opt.bg} ${opt.text} font-bold opacity-100 cursor-default` : `border border-[var(--border)] bg-transparent text-[var(--text-muted)] opacity-70 hover:opacity-100 cursor-pointer ${opt.hover}`}`}
+              className={`flex-1 py-1.5 px-1 rounded-lg text-[10px] flex items-center justify-center gap-1 transition-all ${isActive ? `border-2 ${opt.border.replace('border-l-', 'border-')} ${opt.bg} ${opt.text} font-bold opacity-100 cursor-default` : `border border-[var(--border-default)] bg-transparent text-[var(--text-muted)] opacity-70 hover:opacity-100 cursor-pointer ${opt.hover}`}`}
               >
               <StatusIcon name={opt.icon} size={12} className={isActive ? opt.text : "text-[var(--text-muted)]"} />
               {opt.label}
@@ -441,15 +441,15 @@ export default function LivraisonsPage() {
       <div className="flex gap-4 flex-wrap">
       <div>
       <span className="text-[10px] text-[var(--text-muted)] block">Montant total</span>
-      <div className="font-extrabold text-lg text-amber-400">{formatAr(stats.montant)}</div>
+      <div className="font-extrabold text-lg text-[var(--gold)]">{formatAr(stats.montant)}</div>
       </div>
       <div>
       <span className="text-[10px] text-[var(--text-muted)] block">Frais total</span>
-      <div className="font-extrabold text-lg text-violet-400">{formatAr(stats.frais)}</div>
+      <div className="font-extrabold text-lg text-[var(--violet)]">{formatAr(stats.frais)}</div>
       </div>
       <div>
       <span className="text-[10px] text-[var(--text-muted)] block">Livrés / Total</span>
-      <div className="font-extrabold text-lg text-emerald-400">
+      <div className="font-extrabold text-lg text-[var(--success)]">
       {stats.livres} / {stats.total}
       <span className="text-xs font-normal ml-1 text-[var(--text-muted)]">({stats.tauxLivraison}%)</span>
       </div>

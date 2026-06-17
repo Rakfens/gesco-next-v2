@@ -1,4 +1,4 @@
-// ui/Badge.tsx — Badge moderne (100% Tailwind pur)
+// src/modules/shared/components/ui/Badge.tsx
 import type { ReactNode } from "react";
 
 type BadgeVariant = "default" | "primary" | "success" | "danger" | "warning" | "info" | "purple";
@@ -13,38 +13,38 @@ interface BadgeProps {
 
 const variantMap: Record<BadgeVariant, { container: string; dot: string }> = {
   default: {
-    container: "bg-[#141418] text-[#a0a0b0] border-white/[0.03]",
-    dot: "bg-[#6b6b7b]",
+    container: "bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-subtle)]",
+    dot: "bg-[var(--text-faint)]",
   },
   primary: {
-    container: "bg-amber-400/10 text-amber-400 border-amber-400/15",
-    dot: "bg-amber-400",
+    container: "bg-[var(--gold)]/10 text-[var(--gold)] border-[var(--gold)]/15",
+    dot: "bg-[var(--gold)]",
   },
   success: {
-    container: "bg-emerald-400/10 text-emerald-400 border-emerald-400/15",
-    dot: "bg-emerald-400",
+    container: "bg-[var(--success)]/10 text-[var(--success)] border-[var(--success)]/15",
+    dot: "bg-[var(--success)]",
   },
   danger: {
-    container: "bg-red-400/10 text-red-400 border-red-400/15",
-    dot: "bg-red-400",
+    container: "bg-[var(--danger)]/10 text-[var(--danger)] border-[var(--danger)]/15",
+    dot: "bg-[var(--danger)]",
   },
   warning: {
-    container: "bg-yellow-400/10 text-yellow-400 border-yellow-400/15",
-    dot: "bg-yellow-400",
+    container: "bg-[var(--warning)]/10 text-[var(--warning)] border-[var(--warning)]/15",
+    dot: "bg-[var(--warning)]",
   },
   info: {
-    container: "bg-sky-300/10 text-sky-300 border-sky-300/15",
-    dot: "bg-sky-300",
+    container: "bg-[var(--info)]/10 text-[var(--info)] border-[var(--info)]/15",
+    dot: "bg-[var(--info)]",
   },
   purple: {
-    container: "bg-violet-500/10 text-violet-500 border-violet-500/15",
-    dot: "bg-violet-500",
+    container: "bg-[var(--violet)]/10 text-[var(--violet)] border-[var(--violet)]/15",
+    dot: "bg-[var(--violet)]",
   },
 };
 
 const sizeMap = {
-  sm: "px-2 py-[3px] text-[11px]",
-  md: "px-2.5 py-1 text-xs",
+  sm: "px-2 py-[3px] text-[11px] gap-1",
+  md: "px-2.5 py-1 text-xs gap-1.5",
 };
 
 export function Badge({
@@ -56,14 +56,15 @@ export function Badge({
 }: BadgeProps) {
   const v = variantMap[variant];
   const s = sizeMap[size];
+
   return (
     <span
-    className={`inline-flex items-center gap-1.5 rounded-full border font-semibold leading-none ${v.container} ${s} ${className}`}
+    className={`inline-flex items-center rounded-full border font-semibold leading-none ${v.container} ${s} ${className}`}
     >
     {dot && (
-      <span className={`h-[5px] w-[5px] shrink-0 rounded-full ${v.dot}`} />
+      <span className={`h-[5px] w-[5px] shrink-0 rounded-full ${v.dot} ${variant === "default" ? "" : "shadow-[0_0_6px_currentColor]"}`} />
     )}
-    {children}
+    <span className="truncate">{children}</span>
     </span>
   );
 }

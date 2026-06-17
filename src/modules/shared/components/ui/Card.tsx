@@ -1,4 +1,4 @@
-// ui/Card.tsx — Carte moderne avec ombres subtiles (100% Tailwind pur)
+// src/modules/shared/components/ui/Card.tsx
 import type { MouseEventHandler, ReactNode } from "react";
 
 /* ─── Card ─── */
@@ -7,7 +7,7 @@ interface CardProps {
   padding?: "none" | "sm" | "md" | "lg" | "xl" | number;
   className?: string;
   hover?: boolean;
-  onClick?: MouseEventHandler<HTMLDivElement>;
+  onClick?: MouseEventHandler<<HTMLDivElement>;
 }
 
 const paddingMap = {
@@ -25,17 +25,16 @@ export function Card({
   hover = false,
   onClick,
 }: CardProps) {
-  const paddingClass =
-  typeof padding === "string" ? paddingMap[padding] : "";
+  const paddingClass = typeof padding === "string" ? paddingMap[padding] : "";
   const inlinePadding = typeof padding === "number" ? padding : undefined;
 
   return (
     <div
     onClick={onClick}
     style={inlinePadding !== undefined ? { padding: inlinePadding } : undefined}
-    className={`rounded-2xl border border-white/[0.06] bg-[#121218] shadow-[0_2px_8px_rgba(0,0,0,0.4)] transition-all duration-200 ease-out ${
+    className={`rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] shadow-[var(--shadow-sm)] transition-all duration-200 ease-out ${
       hover
-      ? "hover:border-white/[0.12] hover:shadow-[0_4px_16px_rgba(0,0,0,0.5)] cursor-pointer"
+      ? "hover:border-[var(--border-active)] hover:shadow-[var(--shadow-md)] hover:bg-[var(--bg-card-hover)] cursor-pointer"
       : ""
     } ${onClick ? "cursor-pointer" : ""} ${paddingClass} ${className}`}
     >
@@ -59,15 +58,13 @@ export function SectionHeader({
   className = "",
 }: SectionHeaderProps) {
   return (
-    <div
-    className={`mb-5 flex flex-wrap items-center justify-between gap-3 ${className}`}
-    >
+    <div className={`mb-5 flex flex-wrap items-center justify-between gap-3 ${className}`}>
     <div>
-    <h2 className="text-lg font-bold tracking-tight text-gray-100">
+    <h2 className="text-lg font-bold tracking-tight text-[var(--text-primary)]">
     {title}
     </h2>
     {subtitle && (
-      <p className="mt-0.5 text-[13px] text-gray-500">{subtitle}</p>
+      <p className="mt-0.5 text-[13px] text-[var(--text-muted)]">{subtitle}</p>
     )}
     </div>
     {action}
@@ -83,9 +80,7 @@ interface CardHeaderProps {
 
 export function CardHeader({ children, className = "" }: CardHeaderProps) {
   return (
-    <div
-    className={`mb-3 flex items-center justify-between ${className}`}
-    >
+    <div className={`mb-3 flex items-center justify-between ${className}`}>
     {children}
     </div>
   );
@@ -99,9 +94,7 @@ interface CardTitleProps {
 
 export function CardTitle({ children, className = "" }: CardTitleProps) {
   return (
-    <h3
-    className={`text-sm font-bold tracking-tight text-gray-100 ${className}`}
-    >
+    <h3 className={`text-sm font-bold tracking-tight text-[var(--text-primary)] ${className}`}>
     {children}
     </h3>
   );
@@ -125,9 +118,7 @@ interface CardFooterProps {
 
 export function CardFooter({ children, className = "" }: CardFooterProps) {
   return (
-    <div
-    className={`mt-3 flex justify-end gap-2 border-t border-white/[0.06] pt-3 ${className}`}
-    >
+    <div className={`mt-3 flex justify-end gap-2 border-t border-[var(--border-default)] pt-3 ${className}`}>
     {children}
     </div>
   );

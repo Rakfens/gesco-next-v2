@@ -1,4 +1,4 @@
-// src/app/layout.tsx — 100% Tailwind pur
+// src/app/layout.tsx
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -12,22 +12,30 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "HT-GesCom — Gestion commerciale",
-  description: "Application de gestion commerciale Aterinay Services",
+  title: { default: "HT-GesCom", template: "%s | HT-GesCom" },
+  description: "Gestion commerciale — Aterinay, Pomanay, Zazatiana",
+  icons: { icon: "/favicon.ico" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#08080c",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#08080c" },
+    { media: "(prefers-color-scheme: light)", color: "#08080c" },
+  ],
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="fr" className={`${inter.variable} dark h-full`}>
-    <body className="min-h-full flex flex-col bg-[#08080c] text-[#e8e8ec] antialiased font-[family-name:var(--font-inter),Inter,system-ui,sans-serif]">
+    <html lang="fr" className={`${inter.variable} dark`} suppressHydrationWarning>
+    <body className="min-h-full bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased font-sans">
     <ClientProviders>{children}</ClientProviders>
     </body>
     </html>

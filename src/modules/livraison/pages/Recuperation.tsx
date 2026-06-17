@@ -41,7 +41,7 @@ export default function Recuperation() {
   const { currentCompany } = useCompany();
   const companyId = currentCompany?.id;
 
-  const [recuperations, setRecuperations] = useState<RecupType[]>([]);
+  const [recuperations, setRecuperations] = useState<<RecupType[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(TODAY());
   const [form, setForm] = useState({
     livreur_id: "",
@@ -193,15 +193,15 @@ export default function Recuperation() {
     {/* ══ HEADER ══ */}
     <header className="mb-5">
     <div className="flex items-center gap-2.5 mb-1">
-    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-teal-400/10">
+    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-[var(--success)]/10">
     <Icon
     d="M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 1015.24 4.76L23 9"
     size={18}
-    className="text-teal-400"
+    className="text-[var(--success)]"
     />
     </div>
     <div>
-    <h1 className={`font-extrabold m-0 text-[var(--text)] ${isMobile ? "text-xl" : "text-2xl"}`}>
+    <h1 className={`font-extrabold m-0 text-[var(--text-primary)] ${isMobile ? "text-xl" : "text-2xl"}`}>
     Récupération matinale
     </h1>
     <p className="text-xs text-[var(--text-muted)] mt-0.5">
@@ -216,20 +216,20 @@ export default function Recuperation() {
     <StatCard
     label="Total du jour"
     value={formatAr(totalGains)}
-    className="text-teal-400"
-    icon={<Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={18} className="text-teal-400" />}
+    color="success"
+    icon={<Icon d="M12 1v22M17 5H9.5a3.5 3.5 0 010-7h5a3.5 3.5 0 000 7H6M17 19h-5.5a3.5 3.5 0 010-7H19" size={18} />}
     />
     <StatCard
     label="Récupérations"
     value={totalRecuperations}
-    className="text-amber-400"
-    icon={<Icon d="M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 1015.24 4.76L23 9" size={18} className="text-amber-400" />}
+    color="accent"
+    icon={<Icon d="M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 1015.24 4.76L23 9" size={18} />}
     />
     <StatCard
     label="Livreurs actifs"
     value={Object.keys(recuperationsParLivreur).length}
-    className="text-violet-400"
-    icon={<Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z" size={18} className="text-violet-400" />}
+    color="purple"
+    icon={<Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z" size={18} />}
     />
     </div>
 
@@ -307,20 +307,20 @@ export default function Recuperation() {
         .map((rl) => (
           <Card key={rl.livreur} className="overflow-hidden">
           {/* Header livreur */}
-          <div className="px-4 py-3.5 border-b border-[var(--border)] flex items-center justify-between bg-gradient-to-br from-teal-400/5 to-amber-400/5">
+          <div className="px-4 py-3.5 border-b border-[var(--border-default)] flex items-center justify-between bg-gradient-to-br from-[var(--success)]/5 to-[var(--gold)]/5">
           <div className="flex items-center gap-2.5">
-          <div className="w-[38px] h-[38px] rounded-full flex items-center justify-center font-extrabold text-base text-[#08080c] flex-shrink-0 bg-gradient-to-br from-teal-400 to-amber-400 shadow-[0_4px_12px_rgba(45,212,191,0.2)]">
+          <div className="w-[38px] h-[38px] rounded-full flex items-center justify-center font-extrabold text-base text-[var(--bg-primary)] flex-shrink-0 bg-gradient-to-br from-[var(--success)] to-[var(--gold)] shadow-[0_4px_12px_rgba(52,211,153,0.2)]">
           {rl.livreur.charAt(0)}
           </div>
           <div>
-          <div className="font-bold text-sm text-[var(--text)]">{rl.livreur}</div>
+          <div className="font-bold text-sm text-[var(--text-primary)]">{rl.livreur}</div>
           <div className="text-[11px] text-[var(--text-muted)]">
           {rl.recuperations.length} récupération
           {rl.recuperations.length !== 1 ? "s" : ""}
           </div>
           </div>
           </div>
-          <div className="text-base font-extrabold text-teal-400">
+          <div className="text-base font-extrabold text-[var(--success)]">
           {formatAr(rl.totalGain)}
           </div>
           </div>
@@ -329,15 +329,15 @@ export default function Recuperation() {
           {rl.recuperations.map((r) => (
             <div
             key={r.id}
-            className="flex items-center gap-2.5 py-2 border-b border-[var(--border)] last:border-b-0"
+            className="flex items-center gap-2.5 py-2 border-b border-[var(--border-default)] last:border-b-0"
             >
             <div className="flex-1">
-            <div className="font-semibold text-xs text-[var(--text)]">
+            <div className="font-semibold text-xs text-[var(--text-primary)]">
             {r.client_donneur}
             </div>
             <div className="text-[10px] text-[var(--text-muted)]">{r.date}</div>
             </div>
-            <div className="text-[13px] font-bold text-emerald-400">
+            <div className="text-[13px] font-bold text-[var(--success)]">
             {formatAr(r.frais_recuperation)}
             </div>
             <button
@@ -348,13 +348,13 @@ export default function Recuperation() {
                 frais_recuperation: r.frais_recuperation ?? 0,
               });
             }}
-            className="w-7 h-7 rounded-md flex items-center justify-center text-xs cursor-pointer border bg-[var(--bg-secondary)] border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] hover:border-[var(--text-muted)] transition-colors"
+            className="w-7 h-7 rounded-md flex items-center justify-center text-xs cursor-pointer border bg-[var(--bg-secondary)] border-[var(--border-default)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-active)] transition-colors"
             >
             ✏️
             </button>
             <button
             onClick={() => setConfirmDelete(r.id)}
-            className="w-7 h-7 rounded-md flex items-center justify-center text-xs cursor-pointer border bg-red-50 border-red-200/50 text-red-400 hover:bg-red-100 hover:text-red-500 transition-colors"
+            className="w-7 h-7 rounded-md flex items-center justify-center text-xs cursor-pointer border bg-[var(--danger)]/5 border-[var(--danger)]/20 text-[var(--danger)] hover:bg-[var(--danger)]/10 hover:text-[var(--danger)] transition-colors"
             >
             🗑
             </button>

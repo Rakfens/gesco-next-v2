@@ -1,5 +1,4 @@
-// CompanySheet.tsx — 100% Tailwind pur
-import { CheckIcon } from "@/modules/shared/components/ui/Icons";
+// src/modules/shared/components/layout/CompanySheet.tsx
 import type { Company } from "@/modules/shared/context/CompanyContext";
 import { getCompanyMeta, getLogoSrc } from "./company";
 
@@ -10,6 +9,12 @@ interface CompanySheetProps {
   onClose: () => void;
 }
 
+const CheckIcon = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+  <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
 export function CompanySheet({
   companies,
   currentCompany,
@@ -18,21 +23,30 @@ export function CompanySheet({
 }: CompanySheetProps) {
   return (
     <div
-    className="fixed inset-0 z-[500] flex items-end justify-center bg-black/40 animate-fade-in"
+    className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in"
     onClick={onClose}
     >
     <div
-    className="w-full max-w-[480px] animate-fade-up rounded-t-[18px] bg-[#121218] shadow-[0_8px_32px_rgba(0,0,0,0.6)] pb-[env(safe-area-inset-bottom)]"
+    className="w-full sm:w-[420px] sm:rounded-2xl rounded-t-2xl bg-[var(--bg-card)] border border-[var(--border-default)] shadow-[var(--shadow-lg)] animate-fade-up overflow-hidden"
+    style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     onClick={(e) => e.stopPropagation()}
     >
-    {/* Handle */}
-    <div className="mx-auto mt-3 h-1 w-9 rounded bg-[#2a2a32]" />
-    <div className="px-5 pb-2 pt-4 text-[13px] font-semibold text-[#6b6b7b]">
+    {/* Handle (mobile only) */}
+    <div className="sm:hidden mx-auto mt-3 h-1 w-10 rounded-full bg-[var(--border-active)]" />
+
+    {/* Header */}
+    <div className="px-6 pt-5 pb-3">
+    <h2 className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-wider">
     Choisir une société
+    </h2>
     </div>
+
+    {/* List */}
+    <div className="px-3 pb-4 space-y-1">
     {companies.map((company) => {
       const meta = getCompanyMeta(company);
       const isActive = currentCompany?.id === company.id;
+
       return (
         <button
         key={company.id}
@@ -41,36 +55,51 @@ export function CompanySheet({
           onSelect(company);
           onClose();
         }}
-        className={`flex w-full items-center gap-3.5 border-b border-white/[0.06] px-5 py-3.5 transition-colors ${isActive ? "bg-amber-400/5" : "bg-transparent hover:bg-white/[0.02]"}`}
+        className={`group flex w-full items-center gap-4 rounded-xl px-4 py-3.5 transition-all duration-200 ${
+          isActive
+          ? "bg-[var(--gold)]/8 border border-[var(--gold)]/20 shadow-[var(--shadow-gold)]"
+          : "bg-transparent border border-transparent hover:bg-[var(--bg-card-hover)] hover:border-[var(--border-subtle)]"
+        }`}
         >
+        {/* Logo */}
         <div
-        className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-white/[0.08] ${meta.tailwindAvatarBg}`}
+        className={`flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border ${
+          isActive ? "border-[var(--gold)]/30" : "border-[var(--border-default)]"
+        } bg-[var(--bg-primary)] transition-colors duration-200`}
         >
         <img
         src={getLogoSrc(company)}
         alt={company.name}
-        className="h-full w-full object-contain"
+        className="h-full w-full object-contain p-1"
         />
         </div>
-        <div className="flex-1 text-left">
+
+        {/* Info */}
+        <div className="flex-1 text-left min-w-0">
         <div
-        className={`text-sm ${isActive ? "font-bold" : "font-semibold"} text-[#e8e8ec]`}
+        className={`text-[15px] truncate ${
+          isActive ? "font-bold text-[var(--gold)]" : "font-semibold text-[var(--text-primary)]"
+        }`}
         >
         {company.name}
         </div>
-        <div className="mt-0.5 text-[11px] text-[#6b6b7b]">
+        <div className="mt-0.5 text-[12px] text-[var(--text-muted)]">
         {meta.label}
         </div>
         </div>
-        {isActive && (
-          <div className="flex h-[22px] w-[22px] items-center justify-center rounded-full bg-amber-400">
-          <CheckIcon size={12} strokeWidth={3} />
+
+        {/* Active indicator */}
+        {isActive ? (
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--gold)] text-[var(--bg-primary)] shadow-[var(--shadow-gold)]">
+          <CheckIcon size={12} />
           </div>
+        ) : (
+          <div className="h-5 w-5 shrink-0 rounded-full border-2 border-[var(--border-active)] group-hover:border-[var(--text-muted)] transition-colors duration-200" />
         )}
         </button>
       );
     })}
-    <div className="h-3" />
+    </div>
     </div>
     </div>
   );

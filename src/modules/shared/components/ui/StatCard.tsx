@@ -1,4 +1,4 @@
-// ui/StatCard.tsx — 100% Tailwind pur
+// src/modules/shared/components/ui/StatCard.tsx
 import type { ReactNode } from "react";
 
 interface StatCardProps {
@@ -11,7 +11,7 @@ interface StatCardProps {
   trend?: { value: number; label: string };
   color?: string;
   loading?: boolean;
-  className?: string; // ← AJOUTÉ
+  className?: string;
 }
 
 const colorClassesMap: Record<string, {
@@ -19,26 +19,26 @@ const colorClassesMap: Record<string, {
   iconText: string;
   gradient: string;
 }> = {
-  blue:     { iconBg: "bg-blue-500/10",     iconText: "text-blue-400",     gradient: "bg-gradient-to-r from-blue-400 to-blue-600" },
-  green:    { iconBg: "bg-emerald-500/10",  iconText: "text-emerald-400",  gradient: "bg-gradient-to-r from-emerald-400 to-emerald-600" },
-  red:      { iconBg: "bg-red-500/10",      iconText: "text-red-400",      gradient: "bg-gradient-to-r from-red-400 to-red-600" },
-  orange:   { iconBg: "bg-amber-500/10",    iconText: "text-amber-400",    gradient: "bg-gradient-to-r from-amber-400 to-amber-600" },
-  purple:   { iconBg: "bg-violet-500/10",   iconText: "text-violet-400",   gradient: "bg-gradient-to-r from-violet-400 to-violet-600" },
-  cyan:     { iconBg: "bg-sky-500/10",      iconText: "text-sky-400",      gradient: "bg-gradient-to-r from-sky-400 to-sky-500" },
-  teal:     { iconBg: "bg-teal-500/10",     iconText: "text-teal-400",     gradient: "bg-gradient-to-r from-teal-400 to-teal-600" },
-  accent:   { iconBg: "bg-amber-400/10",    iconText: "text-amber-400",    gradient: "bg-gradient-to-r from-amber-400 to-amber-600" },
-  success:  { iconBg: "bg-emerald-500/10",  iconText: "text-emerald-400",  gradient: "bg-gradient-to-r from-emerald-400 to-emerald-600" },
-  warning:  { iconBg: "bg-amber-500/10",    iconText: "text-amber-400",    gradient: "bg-gradient-to-r from-amber-400 to-amber-600" },
-  danger:   { iconBg: "bg-red-500/10",      iconText: "text-red-400",      gradient: "bg-gradient-to-r from-red-400 to-red-600" },
-  info:     { iconBg: "bg-sky-500/10",      iconText: "text-sky-400",      gradient: "bg-gradient-to-r from-sky-400 to-sky-500" },
-  accent2:  { iconBg: "bg-violet-500/10",   iconText: "text-violet-400",   gradient: "bg-gradient-to-r from-violet-400 to-violet-600" },
+  blue:     { iconBg: "bg-[var(--info)]/10",     iconText: "text-[var(--info)]",     gradient: "bg-gradient-to-r from-[var(--info)] to-[var(--violet)]" },
+  green:    { iconBg: "bg-[var(--success)]/10",  iconText: "text-[var(--success)]",  gradient: "bg-gradient-to-r from-[var(--success)] to-emerald-600" },
+  red:      { iconBg: "bg-[var(--danger)]/10",    iconText: "text-[var(--danger)]",    gradient: "bg-gradient-to-r from-[var(--danger)] to-red-600" },
+  orange:   { iconBg: "bg-[var(--warning)]/10",   iconText: "text-[var(--warning)]",   gradient: "bg-gradient-to-r from-[var(--warning)] to-amber-600" },
+  purple:   { iconBg: "bg-[var(--violet)]/10",   iconText: "text-[var(--violet)]",   gradient: "bg-gradient-to-r from-[var(--violet)] to-violet-600" },
+  cyan:     { iconBg: "bg-[var(--info)]/10",      iconText: "text-[var(--info)]",      gradient: "bg-gradient-to-r from-[var(--info)] to-sky-500" },
+  teal:     { iconBg: "bg-teal-500/10",           iconText: "text-teal-400",           gradient: "bg-gradient-to-r from-teal-400 to-teal-600" },
+  accent:   { iconBg: "bg-[var(--gold)]/10",      iconText: "text-[var(--gold)]",      gradient: "bg-gradient-to-r from-[var(--gold-light)] to-[var(--gold-dark)]" },
+  success:  { iconBg: "bg-[var(--success)]/10",   iconText: "text-[var(--success)]",   gradient: "bg-gradient-to-r from-[var(--success)] to-emerald-600" },
+  warning:  { iconBg: "bg-[var(--warning)]/10",   iconText: "text-[var(--warning)]",   gradient: "bg-gradient-to-r from-[var(--warning)] to-amber-600" },
+  danger:   { iconBg: "bg-[var(--danger)]/10",     iconText: "text-[var(--danger)]",     gradient: "bg-gradient-to-r from-[var(--danger)] to-red-600" },
+  info:     { iconBg: "bg-[var(--info)]/10",       iconText: "text-[var(--info)]",       gradient: "bg-gradient-to-r from-[var(--info)] to-sky-500" },
+  accent2:  { iconBg: "bg-[var(--violet)]/10",     iconText: "text-[var(--violet)]",     gradient: "bg-gradient-to-r from-[var(--violet)] to-violet-600" },
 };
 
 function resolveColorClasses(color: string) {
   return colorClassesMap[color] || {
-    iconBg: "bg-white/5",
-    iconText: "text-gray-400",
-    gradient: "bg-gradient-to-r from-gray-400 to-gray-600",
+    iconBg: "bg-[var(--bg-elevated)]",
+    iconText: "text-[var(--text-muted)]",
+    gradient: "bg-gradient-to-r from-[var(--text-muted)] to-[var(--text-faint)]",
   };
 }
 
@@ -52,7 +52,7 @@ export function StatCard({
   trend,
   color = "accent",
   loading = false,
-  className = "", // ← AJOUTÉ
+  className = "",
 }: StatCardProps) {
   const c = resolveColorClasses(color);
   const subText = subtitle || sub;
@@ -60,20 +60,21 @@ export function StatCard({
 
   if (loading) {
     return (
-      <div className={`relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#121218] p-5 shadow-[0_2px_8px_rgba(0,0,0,0.4)] ${className}`}>
-      <div className="skeleton mb-3 h-3 w-3/5" />
-      <div className="skeleton mb-2 h-7 w-2/5" />
-      <div className="skeleton h-2.5 w-4/5" />
+      <div className={`relative overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-sm)] ${className}`}>
+      <div className="animate-pulse bg-[var(--bg-elevated)] mb-3 h-3 w-3/5 rounded" />
+      <div className="animate-pulse bg-[var(--bg-elevated)] mb-2 h-7 w-2/5 rounded" />
+      <div className="animate-pulse bg-[var(--bg-elevated)] h-2.5 w-4/5 rounded" />
       </div>
     );
   }
 
   return (
-    <div className={`group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#121218] p-5 shadow-[0_2px_8px_rgba(0,0,0,0.4)] transition-all duration-200 hover:-translate-y-0.5 hover:border-white/[0.12] hover:shadow-[0_4px_16px_rgba(0,0,0,0.5)] ${className}`}>
+    <div className={`group relative overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--border-active)] hover:shadow-[var(--shadow-md)] hover:bg-[var(--bg-card-hover)] ${className}`}>
     {/* Top gradient line */}
     <div className={`absolute left-0 right-0 top-0 h-[3px] ${c.gradient}`} />
+
     <div className="mb-3.5 flex items-start justify-between">
-    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+    <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
     {displayTitle}
     </span>
     {icon && (
@@ -82,17 +83,19 @@ export function StatCard({
       </div>
     )}
     </div>
-    <div className="text-[28px] font-extrabold leading-tight tracking-tight text-gray-100">
+
+    <div className="text-[28px] font-extrabold leading-tight tracking-tight text-[var(--text-primary)]">
     {value}
     </div>
+
     {(subText || trend) && (
       <div className="mt-2 flex items-center gap-1.5">
       {trend && (
-        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${trend.value >= 0 ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"}`}>
+        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${trend.value >= 0 ? "bg-[var(--success)]/10 text-[var(--success)]" : "bg-[var(--danger)]/10 text-[var(--danger)]"}`}>
         {trend.value >= 0 ? "↑" : "↓"} {Math.abs(trend.value)}%
         </span>
       )}
-      {subText && <span className="text-xs text-gray-500">{subText}</span>}
+      {subText && <span className="text-xs text-[var(--text-faint)]">{subText}</span>}
       </div>
     )}
     </div>

@@ -1,3 +1,4 @@
+// src/modules/commerce/pages/Depenses.tsx
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -12,18 +13,18 @@ import { useIsMobile } from "@/modules/shared/hooks/useIsMobile";
 import type { Depense } from "@/modules/shared/types";
 import { CATEGORIES_DEPENSES, formatAr } from "@/modules/shared/utils/constants";
 
-const CAT_TAILWIND: Record<string, string> = {
-  "Électricité": "bg-amber-400",
-  "Eau": "bg-blue-400",
-  "Transport": "bg-amber-400",
-  "Fournitures": "bg-violet-400",
-  "Communication": "bg-blue-400",
-  "Loyer": "bg-pink-400",
-  "Marketing": "bg-violet-400",
-  "Salaires": "bg-emerald-400",
-  "Entretien": "bg-amber-400",
-  "Impressions": "bg-amber-400",
-  "Autres": "bg-orange-400",
+const CAT_COLORS: Record<string, string> = {
+  "Électricité": "bg-[var(--gold)]",
+  "Eau": "bg-[var(--info)]",
+  "Transport": "bg-[var(--gold)]",
+  "Fournitures": "bg-[var(--violet)]",
+  "Communication": "bg-[var(--info)]",
+  "Loyer": "bg-[var(--danger)]",
+  "Marketing": "bg-[var(--violet)]",
+  "Salaires": "bg-[var(--success)]",
+  "Entretien": "bg-[var(--gold)]",
+  "Impressions": "bg-[var(--gold)]",
+  "Autres": "bg-[var(--warning)]",
 };
 
 const Icon = ({ d, size = 16, className = "" }: { d: string; size?: number; className?: string }) => (
@@ -35,11 +36,12 @@ const Icon = ({ d, size = 16, className = "" }: { d: string; size?: number; clas
 export default function Depenses() {
   const { currentCompany, success: showSuccess, error: showError, warn: showWarn } = useApp();
   const isMobile = useIsMobile();
-  const [depenses, setDepenses] = useState<Depense[]>([]);
+
+  const [depenses, setDepenses] = useState<<Depense[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<Depense | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<<Depense | null>(null);
   const [filterCat, setFilterCat] = useState("");
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
@@ -131,7 +133,7 @@ export default function Depenses() {
     <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)}>
     <ModalHeader title="Supprimer la dépense ?" onClose={() => setConfirmDelete(null)} />
     <ModalBody>
-    <p className="text-[13px] text-zinc-400 text-center">
+    <p className="text-[13px] text-[var(--text-muted)] text-center">
     "{confirmDelete?.description}" · {formatAr(confirmDelete?.montant || 0)}
     </p>
     </ModalBody>
@@ -165,12 +167,12 @@ export default function Depenses() {
     {/* ══ HEADER ══ */}
     <div className="flex items-center justify-between mb-5 flex-wrap gap-2.5">
     <div className="flex items-center gap-2.5">
-    <div className="w-9 h-9 rounded-[10px] bg-red-400/10 flex items-center justify-center">
-    <Icon d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" size={18} className="text-red-400" />
+    <div className="w-9 h-9 rounded-[10px] bg-[var(--danger)]/10 flex items-center justify-center">
+    <Icon d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" size={18} className="text-[var(--danger)]" />
     </div>
     <div>
-    <h1 className={`font-extrabold m-0 ${isMobile ? "text-xl" : "text-2xl"}`}>Dépenses</h1>
-    <p className="text-xs text-zinc-500 mt-0.5">{currentCompany?.name} · {depenses.length} enregistrement(s)</p>
+    <h1 className={`font-extrabold m-0 text-[var(--text-primary)] ${isMobile ? "text-xl" : "text-2xl"}`}>Dépenses</h1>
+    <p className="text-xs text-[var(--text-muted)] mt-0.5">{currentCompany?.name} · {depenses.length} enregistrement(s)</p>
     </div>
     </div>
     <Button variant="danger" onClick={() => setShowModal(true)}>＋ Nouvelle dépense</Button>
@@ -178,11 +180,11 @@ export default function Depenses() {
 
     {/* ══ STATS ══ */}
     <div className={isMobile ? "grid grid-cols-2 gap-2.5 mb-4" : "grid grid-cols-5 gap-2.5 mb-4"}>
-    <StatCard label="Aujourd'hui" value={formatAr(stats.totalJour)} color="red" icon={<Icon d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" size={16} className="text-red-400" />} />
-    <StatCard label="Semaine" value={formatAr(stats.totalSemaine)} color="orange" icon={<Icon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" size={16} className="text-orange-400" />} />
-    <StatCard label="Mois" value={formatAr(stats.totalMois)} color="pink" icon={<Icon d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" size={16} className="text-pink-400" />} />
-    <StatCard label="Année" value={formatAr(stats.totalAnnee)} color="violet" icon={<Icon d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" size={16} className="text-violet-400" />} />
-    <StatCard label="Total" value={formatAr(totalDepenses)} color="amber" icon={<Icon d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" size={16} className="text-amber-400" />} />
+    <StatCard label="Aujourd'hui" value={formatAr(stats.totalJour)} color="danger" icon={<Icon d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" size={16} />} />
+    <StatCard label="Semaine" value={formatAr(stats.totalSemaine)} color="warning" icon={<Icon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" size={16} />} />
+    <StatCard label="Mois" value={formatAr(stats.totalMois)} color="accent" icon={<Icon d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" size={16} />} />
+    <StatCard label="Année" value={formatAr(stats.totalAnnee)} color="purple" icon={<Icon d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" size={16} />} />
+    <StatCard label="Total" value={formatAr(totalDepenses)} color="accent" icon={<Icon d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" size={16} />} />
     </div>
 
     {/* ══ RÉPARTITION PAR CATÉGORIE ══ */}
@@ -192,14 +194,14 @@ export default function Depenses() {
       <div className="px-4 pb-4">
       {Object.entries(byCategorie).sort(([, a], [, b]) => (b as number) - (a as number)).map(([cat, total]) => {
         const pct = totalDepenses > 0 ? (((total as number) / totalDepenses) * 100).toFixed(1) : 0;
-        const bgClass = CAT_TAILWIND[cat] || "bg-amber-400";
+        const bgClass = CAT_COLORS[cat] || "bg-[var(--gold)]";
         return (
           <div key={cat} className="mb-2.5">
           <div className="flex justify-between mb-1 text-xs">
-          <span className="font-semibold text-white">{cat}</span>
-          <span className="text-zinc-500">{formatAr(total as number)} · {pct}%</span>
+          <span className="font-semibold text-[var(--text-primary)]">{cat}</span>
+          <span className="text-[var(--text-muted)]">{formatAr(total as number)} · {pct}%</span>
           </div>
-          <div className="bg-[#0a0a0f] h-1.5 rounded-[3px] overflow-hidden">
+          <div className="bg-[var(--bg-primary)] h-1.5 rounded-[3px] overflow-hidden">
           <div className={`${bgClass} h-full rounded-[3px] transition-all duration-500`} style={{ width: `${pct}%` }} />
           </div>
           </div>
@@ -225,7 +227,7 @@ export default function Depenses() {
 
     {/* ══ TABLE ══ */}
     {loading ? (
-      <div className="text-center text-zinc-500 p-10">Chargement...</div>
+      <div className="text-center text-[var(--text-muted)] p-10">Chargement...</div>
     ) : (
       <Card padding={0} className="overflow-hidden">
       <Table>
@@ -244,12 +246,12 @@ export default function Depenses() {
       ) : (
         depenses.map((d) => (
           <TableRow key={d.id}>
-          <TableCell className="text-xs text-zinc-500">{formatDate(d.date_depense || d.date || "")}</TableCell>
+          <TableCell className="text-xs text-[var(--text-muted)]">{formatDate(d.date_depense || d.date || "")}</TableCell>
           <TableCell>
           <Badge variant="info" size="sm">{d.categorie}</Badge>
           </TableCell>
-          <TableCell className="text-xs">{d.description}</TableCell>
-          <TableCell align="right" className="font-bold text-red-400 text-[13px]">{formatAr(d.montant)}</TableCell>
+          <TableCell className="text-xs text-[var(--text-primary)]">{d.description}</TableCell>
+          <TableCell align="right" className="font-bold text-[var(--danger)] text-[13px]">{formatAr(d.montant)}</TableCell>
           <TableCell align="center">
           <Button variant="danger" size="sm" onClick={() => setConfirmDelete(d)}>🗑️</Button>
           </TableCell>
@@ -259,8 +261,8 @@ export default function Depenses() {
       </TableBody>
       {depenses.length > 0 && (
         <TableFooter>
-        <TableCell colSpan={3} className="font-bold">TOTAL</TableCell>
-        <TableCell align="right" className="font-extrabold text-red-400">{formatAr(totalDepenses)}</TableCell>
+        <TableCell colSpan={3} className="font-bold text-[var(--text-primary)]">TOTAL</TableCell>
+        <TableCell align="right" className="font-extrabold text-[var(--danger)]">{formatAr(totalDepenses)}</TableCell>
         <td />
         </TableFooter>
       )}

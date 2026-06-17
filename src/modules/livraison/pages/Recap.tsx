@@ -61,7 +61,7 @@ export default function Recap() {
   const [avanceAgentId, setAvanceAgentId] = useState("");
   const [avanceMontant, setAvanceMontant] = useState("");
   const [avanceMotif, setAvanceMotif] = useState("");
-  const [recuperationsMois, setRecuperationsMois] = useState<Recuperation[]>([]);
+  const [recuperationsMois, setRecuperationsMois] = useState<<Recuperation[]>([]);
   const [loadingRecup, setLoadingRecup] = useState(false);
   const [confirmAvance, setConfirmAvance] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -208,15 +208,15 @@ export default function Recap() {
     {/* ══ HEADER ══ */}
     <header className="flex items-center justify-between mb-5 flex-wrap gap-2.5">
     <div className="flex items-center gap-2.5">
-    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-amber-400/10">
+    <div className="w-9 h-9 rounded-[10px] flex items-center justify-center bg-[var(--gold)]/10">
     <Icon
     d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
     size={18}
-    className="text-amber-400"
+    className="text-[var(--gold)]"
     />
     </div>
     <div>
-    <h1 className={`font-extrabold m-0 text-[var(--text)] ${isMobile ? "text-xl" : "text-2xl"}`}>
+    <h1 className={`font-extrabold m-0 text-[var(--text-primary)] ${isMobile ? "text-xl" : "text-2xl"}`}>
     Récapitulatif
     </h1>
     <p className="text-xs text-[var(--text-muted)] mt-0.5">{currentCompany?.name}</p>
@@ -232,14 +232,14 @@ export default function Recap() {
 
     {/* ══ BÉNÉFICE NET ══ */}
     <Card
-    className={`mb-5 ${isBeneficePositive ? "border-emerald-400" : "border-red-400"}`}
+    className={`mb-5 ${isBeneficePositive ? "border-[var(--success)]" : "border-[var(--danger)]"}`}
     >
     <div className="flex items-center justify-between flex-wrap gap-3">
     <div>
-    <div className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isBeneficePositive ? "text-emerald-400" : "text-red-400"}`}>
+    <div className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isBeneficePositive ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
     💰 Bénéfice net — {monthLabel(selectedMonth)}
     </div>
-    <div className={`font-black ${isMobile ? "text-[28px]" : "text-4xl"} ${isBeneficePositive ? "text-emerald-400" : "text-red-400"}`}>
+    <div className={`font-black ${isMobile ? "text-[28px]" : "text-4xl"} ${isBeneficePositive ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
     {formatAr(monthBenefice)}
     </div>
     <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
@@ -248,10 +248,10 @@ export default function Recap() {
     </div>
     <div className="grid gap-2 grid-cols-2">
     {[
-      { label: "Montant colis", value: formatAr(monthTotalMontant), color: "text-emerald-400" },
-          { label: "Frais collectés", value: formatAr(monthTotalFrais), color: "text-amber-400" },
-          { label: "Salaires", value: formatAr(monthTotalSalaires), color: "text-red-400" },
-          { label: "Commission", value: formatAr(monthGerantGain), color: "text-pink-400" },
+      { label: "Montant colis", value: formatAr(monthTotalMontant), color: "text-[var(--success)]" },
+          { label: "Frais collectés", value: formatAr(monthTotalFrais), color: "text-[var(--gold)]" },
+          { label: "Salaires", value: formatAr(monthTotalSalaires), color: "text-[var(--danger)]" },
+          { label: "Commission", value: formatAr(monthGerantGain), color: "text-[var(--gold)]" },
     ].map((s) => (
       <div
       key={s.label}
@@ -271,10 +271,10 @@ export default function Recap() {
     <Card className="mb-5">
     <div className="flex items-center justify-between flex-wrap gap-3">
     <div>
-    <div className="text-[10px] font-bold uppercase tracking-wider mb-1 text-pink-400">
+    <div className="text-[10px] font-bold uppercase tracking-wider mb-1 text-[var(--gold)]">
     👑 Commission gérant — {monthLabel(selectedMonth)}
     </div>
-    <div className="text-2xl font-black text-[var(--text)]">
+    <div className="text-2xl font-black text-[var(--text-primary)]">
     {formatAr(monthGerantGain)}
     </div>
     <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
@@ -283,11 +283,11 @@ export default function Recap() {
     </div>
     <div className="text-right text-[11px] text-[var(--text-muted)]">
     <div>
-    Frais collectés: <b className="text-[var(--accent)]">{formatAr(monthTotalFrais)}</b>
+    Frais collectés: <b className="text-[var(--gold)]">{formatAr(monthTotalFrais)}</b>
     </div>
     <div>
     Frais nets:{" "}
-    <b className={monthTotalFrais - monthGerantGain >= 0 ? "text-emerald-400" : "text-red-400"}>
+    <b className={monthTotalFrais - monthGerantGain >= 0 ? "text-[var(--success)]" : "text-[var(--danger)]"}>
     {formatAr(monthTotalFrais - monthGerantGain)}
     </b>
     </div>
@@ -309,13 +309,13 @@ export default function Recap() {
     {monthStatsByAgent.map((a) => (
       <Card key={a.id} className="overflow-hidden">
       {/* Header agent */}
-      <div className="px-4 py-3.5 border-b border-[var(--border)] bg-gradient-to-br from-amber-400/5 to-violet-500/5">
+      <div className="px-4 py-3.5 border-b border-[var(--border-default)] bg-gradient-to-br from-[var(--gold)]/5 to-[var(--violet)]/5">
       <div className="flex items-center gap-2.5">
-      <div className="w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-base text-[#08080c] flex-shrink-0 bg-gradient-to-br from-amber-400 to-violet-500 shadow-[0_4px_12px_rgba(201,169,110,0.2)]">
+      <div className="w-10 h-10 rounded-full flex items-center justify-center font-extrabold text-base text-[var(--bg-primary)] flex-shrink-0 bg-gradient-to-br from-[var(--gold)] to-[var(--violet)] shadow-[var(--shadow-gold)]">
       {a.nom?.charAt(0) || "?"}
       </div>
       <div className="flex-1">
-      <div className="font-bold text-sm text-[var(--text)]">{a.nom}</div>
+      <div className="font-bold text-sm text-[var(--text-primary)]">{a.nom}</div>
       <div className="flex gap-1.5 flex-wrap">
       <Badge variant="success" size="sm">
       Sal: {formatAr(a.salaire)}
@@ -336,14 +336,14 @@ export default function Recap() {
       <div className="px-4 py-3">
       <div className={`grid gap-2 mb-2.5 ${isMobile ? "grid-cols-2" : "grid-cols-4"}`}>
       {[
-        { label: "Livraisons", value: a.nbLivs, color: "text-amber-400" },
-        { label: "Livrés", value: a.nbLivres, color: "text-emerald-400" },
-        { label: "Retournés", value: a.nbRetours, color: "text-red-400" },
-        { label: "Frais", value: formatAr(a.totalFrais), color: "text-violet-400" },
+        { label: "Livraisons", value: a.nbLivs, color: "text-[var(--gold)]" },
+                                   { label: "Livrés", value: a.nbLivres, color: "text-[var(--success)]" },
+                                   { label: "Retournés", value: a.nbRetours, color: "text-[var(--danger)]" },
+                                   { label: "Frais", value: formatAr(a.totalFrais), color: "text-[var(--violet)]" },
       ].map((s) => (
         <div
         key={s.label}
-        className="text-center py-2 px-1 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)]"
+        className="text-center py-2 px-1 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-default)]"
         >
         <div className={`text-sm font-extrabold ${s.color}`}>
         {s.value}
@@ -356,8 +356,8 @@ export default function Recap() {
       </div>
       {/* Avances */}
       {a.avances.length > 0 && (
-        <div className="mt-2 border-t border-[var(--border)] pt-2">
-        <div className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-amber-400">
+        <div className="mt-2 border-t border-[var(--border-default)] pt-2">
+        <div className="text-[10px] font-bold uppercase tracking-wider mb-1.5 text-[var(--gold)]">
         💸 Avances sur salaire
         </div>
         {a.avances.map((av) => (
@@ -366,7 +366,7 @@ export default function Recap() {
           className="bg-[var(--bg-secondary)] rounded-lg px-2.5 py-2 mb-1 flex justify-between items-center flex-wrap gap-1.5"
           >
           <div>
-          <span className="font-bold text-xs text-amber-400">
+          <span className="font-bold text-xs text-[var(--gold)]">
           {formatAr(Number(av.montant) || 0)}
           </span>
           {av.motif && (
@@ -387,12 +387,12 @@ export default function Recap() {
       )}
       {/* Récupérations */}
       {a.nbRecuperations > 0 && (
-        <div className="mt-2 border-t border-[var(--border)] pt-2">
+        <div className="mt-2 border-t border-[var(--border-default)] pt-2">
         <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--success)]">
         🔄 Récupérations ({a.nbRecuperations})
         </span>
-        <span className="text-[11px] text-emerald-400">
+        <span className="text-[11px] text-[var(--success)]">
         {formatAr(a.totalRecuperations)}
         </span>
         </div>
@@ -401,7 +401,7 @@ export default function Recap() {
           <span className="text-[var(--text-secondary)]">
           {rec.date} · {rec.client_donneur}
           </span>
-          <span className="font-semibold text-emerald-400">
+          <span className="font-semibold text-[var(--success)]">
           {formatAr(rec.frais_recuperation)}
           </span>
           </div>
@@ -463,7 +463,7 @@ export default function Recap() {
         .map((av) => (
           <div
           key={av.id}
-          className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3.5 py-2 mb-1.5 flex justify-between items-center opacity-60"
+          className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-lg px-3.5 py-2 mb-1.5 flex justify-between items-center opacity-60"
           >
           <div>
           <span className="text-[var(--text-muted)] line-through">

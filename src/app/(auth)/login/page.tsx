@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase";
 import { LOGIN_EMAIL, LOGIN_PASSWORD } from "@/modules/shared/utils/constants";
-import { logger } from "@/lib/logger";
 
 const EyeOpen = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -90,40 +89,40 @@ export default function LoginPage() {
       } else router.replace("/commerce/dashboard");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Identifiants incorrects";
-      logger.error("[LOGIN] Error:", msg); setError(msg);
+      setError(msg);
     } finally { setLoading(false); }
   };
 
   if (checkingSession) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#08080c]">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
+      <div className="flex h-screen items-center justify-center bg-background">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-[#08080c] px-4 py-6 overflow-hidden">
+    <div className="relative flex min-h-screen items-center justify-center bg-background px-4 py-6 overflow-hidden">
     {/* Background effects */}
     <div className="pointer-events-none fixed inset-0">
-    <div className="absolute left-[5%] top-[10%] h-[400px] w-[400px] rounded-full bg-amber-400/[0.03] blur-[100px] animate-pulse" style={{ animationDuration: "4s" }} />
-    <div className="absolute bottom-[15%] right-[10%] h-[500px] w-[500px] rounded-full bg-violet-500/[0.03] blur-[100px] animate-pulse" style={{ animationDuration: "6s", animationDelay: "1s" }} />
-    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-blue-500/[0.02] blur-[120px]" />
+    <div className="absolute left-[5%] top-[10%] h-[400px] w-[400px] rounded-full bg-primary/[0.03] blur-[100px] animate-pulse" style={{ animationDuration: "4s" }} />
+    <div className="absolute bottom-[15%] right-[10%] h-[500px] w-[500px] rounded-full bg-violet/[0.03] blur-[100px] animate-pulse" style={{ animationDuration: "6s", animationDelay: "1s" }} />
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full bg-info/[0.02] blur-[120px]" />
     </div>
 
-    <div className={`relative z-10 w-full max-w-[460px] rounded-2xl border border-white/[0.06] bg-[#111114]/80 backdrop-blur-xl p-10 shadow-2xl transition-all duration-700 ${mounted ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-[0.96]"}`}>
+    <div className={`relative z-10 w-full max-w-[460px] rounded-2xl glass-card p-10 shadow-2xl transition-all duration-700 ${mounted ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-8 scale-[0.96]"}`}>
     {/* Logo */}
     <div className="mb-10 text-center">
-    <div className="mx-auto mb-6 flex h-[100px] w-[100px] items-center justify-center overflow-hidden rounded-2xl border-2 border-amber-400/50 bg-gradient-to-br from-[#16161a] to-[#08080c] shadow-[0_8px_32px_rgba(201,169,110,0.25)]">
+    <div className="mx-auto mb-6 flex h-[100px] w-[100px] items-center justify-center overflow-hidden rounded-2xl border-2 border-primary/50 bg-gradient-to-br from-card to-background shadow-gold-strong">
     <img src="/logo.png" alt="HT-GesCom" className="h-full w-full object-contain" />
     </div>
-    <h1 className="text-[28px] font-extrabold tracking-tight text-white">HT-GesCom</h1>
-    <p className="mt-2 text-[13px] text-zinc-500">Aterinay Services · Connexion sécurisée</p>
+    <h1 className="text-[28px] font-extrabold tracking-tight text-foreground">HT-GesCom</h1>
+    <p className="mt-2 text-[13px] text-muted-foreground">Aterinay Services · Connexion sécurisée</p>
     </div>
 
     {/* Error */}
     {error && (
-      <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3.5 text-[13px] text-red-400 animate-fade-in">
+      <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3.5 text-[13px] text-destructive animate-fade-in">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
       </svg>
@@ -134,49 +133,77 @@ export default function LoginPage() {
     <form onSubmit={handleLogin} className="space-y-5">
     {/* Email */}
     <div>
-    <label className="mb-2 block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Adresse email</label>
+    <label className="mb-2 block text-xs font-semibold text-secondary uppercase tracking-wider">Adresse email</label>
     <div className="relative">
-    <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-200 ${emailFocused ? "text-amber-400" : "text-zinc-600"}`}>
+    <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-200 ${emailFocused ? "text-primary" : "text-faint"}`}>
     <MailIcon />
     </div>
-    <input type="email" placeholder="admin@aterinay.com" value={email} onChange={(e) => setEmail(e.target.value)} onFocus={() => setEmailFocused(true)} onBlur={() => setEmailFocused(false)}
-    className="w-full rounded-xl border border-zinc-800 bg-[#0a0a0f] py-3.5 pl-11 pr-3.5 text-sm text-white outline-none transition-all placeholder:text-zinc-700 input-focus" />
+    <input
+    type="email"
+    placeholder="admin@aterinay.com"
+    value={email}
+    onChange={(e) => setEmail(e.target.value)}
+    onFocus={() => setEmailFocused(true)}
+    onBlur={() => setEmailFocused(false)}
+    className="w-full rounded-xl border border-border bg-card py-3.5 pl-11 pr-3.5 text-sm text-foreground outline-none transition-all placeholder:text-faint input-focus"
+    />
     </div>
-    <p className="mt-1.5 ml-0.5 text-[11px] text-zinc-600">Entrez votre adresse email professionnelle</p>
+    <p className="mt-1.5 ml-0.5 text-[11px] text-faint">Entrez votre adresse email professionnelle</p>
     </div>
 
     {/* Password */}
     <div>
-    <label className="mb-2 block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Mot de passe</label>
+    <label className="mb-2 block text-xs font-semibold text-secondary uppercase tracking-wider">Mot de passe</label>
     <div className="relative">
-    <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-200 ${pwdFocused ? "text-amber-400" : "text-zinc-600"}`}>
+    <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-200 ${pwdFocused ? "text-primary" : "text-faint"}`}>
     <LockIcon />
     </div>
-    <input type={showPwd ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} onFocus={() => setPwdFocused(true)} onBlur={() => setPwdFocused(false)}
-    className="w-full rounded-xl border border-zinc-800 bg-[#0a0a0f] py-3.5 pl-11 pr-12 text-sm text-white outline-none transition-all placeholder:text-zinc-700 input-focus" />
-    <button type="button" onClick={() => setShowPwd(!showPwd)} className={`absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors ${showPwd ? "bg-amber-400/10 text-amber-400" : "text-zinc-600 hover:text-zinc-400"}`}>
+    <input
+    type={showPwd ? "text" : "password"}
+    placeholder="••••••••"
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+    onFocus={() => setPwdFocused(true)}
+    onBlur={() => setPwdFocused(false)}
+    className="w-full rounded-xl border border-border bg-card py-3.5 pl-11 pr-12 text-sm text-foreground outline-none transition-all placeholder:text-faint input-focus"
+    />
+    <button
+    type="button"
+    onClick={() => setShowPwd(!showPwd)}
+    className={`absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors btn-press ${showPwd ? "bg-primary/10 text-primary" : "text-faint hover:text-muted-foreground"}`}
+    >
     {showPwd ? <EyeOpen /> : <EyeClosed />}
     </button>
     </div>
-    <p className="mt-1.5 ml-0.5 text-[11px] text-zinc-600">8 caractères minimum recommandés</p>
+    <p className="mt-1.5 ml-0.5 text-[11px] text-faint">8 caractères minimum recommandés</p>
     </div>
 
     {/* Remember + Forgot */}
     <div className="flex items-center justify-between">
     <label className="flex cursor-pointer select-none items-center gap-2">
-    <button type="button" onClick={() => setRemember(!remember)} className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded transition-all ${remember ? "border-2 border-amber-400 bg-amber-400" : "border-2 border-zinc-700"}`}>
+    <button
+    type="button"
+    onClick={() => setRemember(!remember)}
+    className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded transition-all btn-press ${remember ? "border-2 border-primary bg-primary" : "border-2 border-faint"}`}
+    >
     {remember && <CheckIcon />}
     </button>
-    <span className="text-xs text-zinc-400">Se souvenir de moi</span>
+    <span className="text-xs text-secondary">Se souvenir de moi</span>
     </label>
-    <button type="button" className="text-xs text-amber-400 hover:text-amber-300 underline underline-offset-2 transition-colors">Mot de passe oublié ?</button>
+    <button type="button" className="text-xs text-primary hover:text-primary-light underline underline-offset-2 transition-colors">
+    Mot de passe oublié ?
+    </button>
     </div>
 
     {/* Submit */}
-    <button type="submit" disabled={loading} className={`btn-press flex w-full items-center justify-center gap-2.5 rounded-xl py-4 text-base font-bold tracking-wide transition-all duration-300 ${loading ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" : "bg-gradient-to-r from-amber-400 to-amber-500 text-gray-950 shadow-[0_6px_24px_rgba(201,169,110,0.35)] hover:shadow-[0_8px_32px_rgba(201,169,110,0.45)] hover:-translate-y-0.5"}`}>
+    <button
+    type="submit"
+    disabled={loading}
+    className={`btn-press flex w-full items-center justify-center gap-2.5 rounded-xl py-4 text-base font-bold tracking-wide transition-all duration-300 ${loading ? "bg-secondary text-muted-foreground cursor-not-allowed" : "bg-gradient-to-r from-primary to-primary-light text-background shadow-gold-strong hover:shadow-gold hover:-translate-y-0.5"}`}
+    >
     {loading ? (
       <>
-      <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-zinc-800 border-t-amber-400" />
+      <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-border border-t-primary" />
       Connexion en cours...
       </>
     ) : "Se connecter"}
@@ -185,8 +212,8 @@ export default function LoginPage() {
 
     {/* Footer */}
     <div className="mt-8 border-t border-white/[0.04] pt-5 text-center">
-    <p className="text-[11px] text-zinc-600">HT-GesCom v3.0 · © 2024-2026 Aterinay Services</p>
-    <p className="mt-1 text-[10px] text-zinc-700">Propulsé par <span className="text-amber-400">ZOO</span> · Tous droits réservés</p>
+    <p className="text-[11px] text-faint">HT-GesCom v3.0 · © 2024-2026 Aterinay Services</p>
+    <p className="mt-1 text-[10px] text-muted-foreground">Propulsé par <span className="text-primary">ZOO</span> · Tous droits réservés</p>
     </div>
     </div>
     </div>

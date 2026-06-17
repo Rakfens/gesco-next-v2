@@ -1,3 +1,4 @@
+// src/modules/shared/components/ui/ConfirmDialog.tsx
 import { Button } from "./Button";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "./Modal";
 
@@ -26,7 +27,7 @@ export function ConfirmDialog({
     <Modal open={open} onClose={onCancel}>
     <ModalHeader title={title} onClose={onCancel} />
     <ModalBody>
-    <p className="text-sm leading-relaxed text-gray-400">{message}</p>
+    <p className="text-sm leading-relaxed text-[var(--text-muted)]">{message}</p>
     </ModalBody>
     <ModalFooter>
     <Button variant="secondary" onClick={onCancel}>

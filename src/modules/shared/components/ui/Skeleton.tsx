@@ -1,4 +1,4 @@
-// ui/Skeleton.tsx — Composants de chargement (100% Tailwind pur)
+// src/modules/shared/components/ui/Skeleton.tsx
 import type { ReactNode } from "react";
 
 interface SkeletonProps {
@@ -16,7 +16,7 @@ export function Skeleton({
 }: SkeletonProps) {
   return (
     <div
-    className={`skeleton ${circle ? "rounded-full" : "rounded-md"} ${className}`}
+    className={`animate-pulse bg-[var(--bg-elevated)] ${circle ? "rounded-full" : "rounded-md"} ${className}`}
     style={{ width, height }}
     />
   );
@@ -24,7 +24,7 @@ export function Skeleton({
 
 export function SkeletonCard() {
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-[#121218] p-5 shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
+    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-sm)]">
     <Skeleton height={10} width="40%" className="mb-3" />
     <Skeleton height={24} width="60%" className="mb-2" />
     <Skeleton height={10} width="80%" />
@@ -42,7 +42,7 @@ export function SkeletonTable({ rows = 5 }: { rows?: number }) {
     <Skeleton height={12} width={100} />
     </div>
     {Array.from({ length: rows }).map((_, i) => (
-      <div key={i} className="flex gap-3 border-b border-white/[0.06] px-2 py-3">
+      <div key={i} className="flex gap-3 border-b border-[var(--border-default)] px-2 py-3">
       <Skeleton height={12} width={120} />
       <Skeleton height={12} width={100} />
       <Skeleton height={12} width={80} />
@@ -62,7 +62,6 @@ export function SkeletonGrid({ cols = 4, rows = 1 }: { cols?: number; rows?: num
     5: "grid-cols-5",
     6: "grid-cols-6",
   };
-
   return (
     <div className={`grid gap-3 ${gridColsMap[cols] || "grid-cols-4"}`}>
     {Array.from({ length: cols * rows }).map((_, i) => (
