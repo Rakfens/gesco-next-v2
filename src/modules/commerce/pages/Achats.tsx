@@ -30,13 +30,13 @@ export default function Achats() {
   const isMobile = useIsMobile();
 
   const [achats, setAchats] = useState<Achat[]>([]);
-  const [produits, setProduits] = useState<<Produit[]>([]);
+  const [produits, setProduits] = useState<Produit[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [selectedAchat, setSelectedAchat] = useState<Achat | null>(null);
-  const [panier, setPanier] = useState<<PanierItem[]>([]);
+  const [panier, setPanier] = useState<PanierItem[]>([]);
   const [searchProduit, setSearchProduit] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [fournisseursConnus, setFournisseursConnus] = useState<string[]>([]);

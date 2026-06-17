@@ -121,7 +121,7 @@ export default function Rapports() {
   });
   const [ventesParJour, setVentesParJour] = useState<Array<{ date: string; total: number }>>([]);
   const [topProduits, setTopProduits] = useState<Array<{ produit_nom?: string; produit?: { nom?: string }; quantite?: number; chiffre?: number }>>([]);
-  const [depenses, setDepenses] = useState<<Depense[]>([]);
+  const [depenses, setDepenses] = useState<Depense[]>([]);
 
   const loadReports = useCallback(async () => {
     if (!currentCompany) return;

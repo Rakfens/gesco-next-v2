@@ -133,7 +133,7 @@ export default function Stock() {
   const isMobile = useIsMobile();
   const router = useRouter();
 
-  const [produits, setProduits] = useState<<Produit[]>([]);
+  const [produits, setProduits] = useState<Produit[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -143,7 +143,7 @@ export default function Stock() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
 
-  const [selectedProduit, setSelectedProduit] = useState<<Produit | null>(null);
+  const [selectedProduit, setSelectedProduit] = useState<Produit | null>(null);
   const [mouvements, setMouvements] = useState<Mouvement[]>([]);
   const [editMode, setEditMode] = useState(false);
 

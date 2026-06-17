@@ -59,26 +59,26 @@ export default function PacksPage() {
   const isMobile = useIsMobile();
   const router = useRouter();
 
-  const [packs, setPacks] = useState<<PackWithAvailability[]>([]);
-  const [produits, setProduits] = useState<<Produit[]>([]);
+  const [packs, setPacks] = useState<PackWithAvailability[]>([]);
+  const [produits, setProduits] = useState<Produit[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
-  const [filterDisponible, setFilterDisponible] = useState<<"tous" | "disponible" | "indisponible">("tous");
+  const [filterDisponible, setFilterDisponible] = useState<"tous" | "disponible" | "indisponible">("tous");
 
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [selectedPack, setSelectedPack] = useState<<Pack | null>(null);
+  const [selectedPack, setSelectedPack] = useState<Pack | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
   const [showDetailModal, setShowDetailModal] = useState<string | null>(null);
-  const [detailPack, setDetailPack] = useState<<PackWithAvailability | null>(null);
+  const [detailPack, setDetailPack] = useState<PackWithAvailability | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailStock, setDetailStock] = useState<Array<{ nom: string; quantite: number; stock: number; suffisant: boolean }>>([]);
 
   const [formNom, setFormNom] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formPrix, setFormPrix] = useState("");
-  const [formProduits, setFormProduits] = useState<<PackProduitForm[]>([]);
+  const [formProduits, setFormProduits] = useState<PackProduitForm[]>([]);
 
   useEffect(() => {
     if (currentCompany?.type === "service") {

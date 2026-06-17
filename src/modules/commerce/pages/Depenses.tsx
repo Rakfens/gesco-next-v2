@@ -37,11 +37,11 @@ export default function Depenses() {
   const { currentCompany, success: showSuccess, error: showError, warn: showWarn } = useApp();
   const isMobile = useIsMobile();
 
-  const [depenses, setDepenses] = useState<<Depense[]>([]);
+  const [depenses, setDepenses] = useState<Depense[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<<Depense | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Depense | null>(null);
   const [filterCat, setFilterCat] = useState("");
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");

@@ -61,7 +61,7 @@ export default function Recap() {
   const [avanceAgentId, setAvanceAgentId] = useState("");
   const [avanceMontant, setAvanceMontant] = useState("");
   const [avanceMotif, setAvanceMotif] = useState("");
-  const [recuperationsMois, setRecuperationsMois] = useState<<Recuperation[]>([]);
+  const [recuperationsMois, setRecuperationsMois] = useState<Recuperation[]>([]);
   const [loadingRecup, setLoadingRecup] = useState(false);
   const [confirmAvance, setConfirmAvance] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);

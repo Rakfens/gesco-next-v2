@@ -41,7 +41,7 @@ export default function Recuperation() {
   const { currentCompany } = useCompany();
   const companyId = currentCompany?.id;
 
-  const [recuperations, setRecuperations] = useState<<RecupType[]>([]);
+  const [recuperations, setRecuperations] = useState<RecupType[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(TODAY());
   const [form, setForm] = useState({
     livreur_id: "",

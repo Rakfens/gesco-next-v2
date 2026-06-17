@@ -37,8 +37,8 @@ export default function LivraisonsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editMontant, setEditMontant] = useState("");
   const [saving, setSaving] = useState(false);
-  const [sortBy, setSortBy] = useState<<SortKey>("date");
-  const [sortDir, setSortDir] = useState<<"asc" | "desc">("desc");
+  const [sortBy, setSortBy] = useState<SortKey>("date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const mountedRef = useRef(true);

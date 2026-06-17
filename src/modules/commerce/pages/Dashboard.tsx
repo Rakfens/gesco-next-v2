@@ -16,7 +16,7 @@ import { fetchProduits, getAlertesStockBas, getValeurTotaleStock } from "../serv
 import { fetchVentes } from "../services/venteService";
 
 const Icon = ({ d, size = 16, className = "" }: { d: string; size?: number; className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2} strokeLinecap="round" strokeLinejoin="round" className={className}>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
   <path d={d} />
   </svg>
 );
@@ -38,8 +38,8 @@ export default function CommerceDashboard() {
   const isMobile = useIsMobile();
 
   const [loading, setLoading] = useState(true);
-  const [recentVentes, setRecentVentes] = useState<<Vente[]>([]);
-  const [alertes, setAlertes] = useState<<Produit[]>([]);
+  const [recentVentes, setRecentVentes] = useState<Vente[]>([]);
+  const [alertes, setAlertes] = useState<Produit[]>([]);
   const [stats, setStats] = useState({ ventesJour: 0, ventesMois: 0, caJour: 0, caMois: 0, nbProduits: 0, stockBas: 0, valeurStock: 0, achatsMois: 0, depensesJour: 0, depensesMois: 0 });
   const [error, setError] = useState<string | null>(null);
 

@@ -4,7 +4,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 type ButtonVariant = "primary" | "success" | "danger" | "warning" | "secondary" | "ghost" | "outline";
 type ButtonSize = "sm" | "md" | "lg";
 
-interface ButtonProps extends ButtonHTMLAttributes<<HTMLButtonElement> {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   variant?: ButtonVariant;
   size?: ButtonSize;
@@ -15,7 +15,7 @@ interface ButtonProps extends ButtonHTMLAttributes<<HTMLButtonElement> {
 }
 
 /* ─── Spinner colors by variant ─── */
-const spinnerMap: Record<<ButtonVariant, string> = {
+const spinnerMap: Record<ButtonVariant, string> = {
   primary:   "border-[var(--bg-primary)]/30 border-t-[var(--bg-primary)]",
   success:   "border-[var(--bg-primary)]/30 border-t-[var(--bg-primary)]",
   danger:    "border-white/30 border-t-white",
@@ -25,7 +25,7 @@ const spinnerMap: Record<<ButtonVariant, string> = {
   outline:   "border-[var(--gold)]/30 border-t-[var(--gold)]",
 };
 
-const variantMap: Record<<ButtonVariant, string> = {
+const variantMap: Record<ButtonVariant, string> = {
   primary:
   "bg-[var(--gold)] text-[var(--bg-primary)] border-transparent shadow-[0_2px_8px_rgba(201,169,110,0.25)] hover:bg-[var(--gold-light)] hover:shadow-[0_4px_16px_rgba(201,169,110,0.35)] active:bg-[var(--gold-dark)]",
   success:
@@ -42,7 +42,7 @@ const variantMap: Record<<ButtonVariant, string> = {
   "bg-transparent text-[var(--gold)] border-[1.5px] border-[var(--border-default)] hover:border-[var(--gold)] hover:bg-[var(--gold)]/5 active:bg-[var(--gold)]/10",
 };
 
-const sizeMap: Record<<ButtonSize, string> = {
+const sizeMap: Record<ButtonSize, string> = {
   sm: "h-8 px-3 py-1.5 text-xs rounded-lg gap-1.5",
   md: "h-[38px] px-4 py-2 text-[13px] rounded-[10px] gap-1.5",
   lg: "h-11 px-5 py-2.5 text-sm rounded-xl gap-2",

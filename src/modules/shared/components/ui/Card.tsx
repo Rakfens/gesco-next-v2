@@ -7,7 +7,7 @@ interface CardProps {
   padding?: "none" | "sm" | "md" | "lg" | "xl" | number;
   className?: string;
   hover?: boolean;
-  onClick?: MouseEventHandler<<HTMLDivElement>;
+  onClick?: MouseEventHandler<HTMLDivElement>;
 }
 
 const paddingMap = {

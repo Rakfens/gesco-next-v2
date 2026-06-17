@@ -2,10 +2,10 @@
 import type { ChangeEvent, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
 
 /* ─── Input ─── */
-interface InputProps extends Omit<InputHTMLAttributes<<HTMLInputElement>, "onChange"> {
+interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "onChange"> {
   label?: string;
   value: string;
-  onChange: (e: ChangeEvent<<HTMLInputElement>) => void;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   error?: string;
   success?: string;
   icon?: ReactNode;
@@ -83,10 +83,10 @@ export function Input({
 }
 
 /* ─── Select ─── */
-interface SelectProps extends Omit<<SelectHTMLAttributes<<HTMLSelectElement>, "onChange"> {
+interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "onChange"> {
   label?: string;
   value: string;
-  onChange: (e: ChangeEvent<<HTMLSelectElement>) => void;
+  onChange: (e: ChangeEvent<HTMLSelectElement>) => void;
   options: Array<{ value: string; label: string }>;
   error?: string;
   placeholder?: string;

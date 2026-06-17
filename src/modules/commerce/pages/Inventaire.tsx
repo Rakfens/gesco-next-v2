@@ -25,19 +25,19 @@ const Icon = ({ d, size = 16, className = "" }: { d: string; size?: number; clas
 export default function Inventaire() {
   const { currentCompany, success: showSuccess, error: showError, warn: showWarn } = useApp();
 
-  const [currentInventory, setCurrentInventory] = useState<<Inventaire | null>(null);
-  const [_products, setProducts] = useState<<Produit[]>([]);
-  const [countedProducts, setCountedProducts] = useState<<Produit[]>([]);
-  const [uncountedProducts, setUncountedProducts] = useState<<Produit[]>([]);
+  const [currentInventory, setCurrentInventory] = useState<Inventaire | null>(null);
+  const [_products, setProducts] = useState<Produit[]>([]);
+  const [countedProducts, setCountedProducts] = useState<Produit[]>([]);
+  const [uncountedProducts, setUncountedProducts] = useState<Produit[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showCountModal, setShowCountModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<<Produit | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Produit | null>(null);
   const [countValue, setCountValue] = useState("");
-  const [history, setHistory] = useState<<Inventaire[]>([]);
-  const [selectedInventory, setSelectedInventory] = useState<<Inventaire | null>(null);
+  const [history, setHistory] = useState<Inventaire[]>([]);
+  const [selectedInventory, setSelectedInventory] = useState<Inventaire | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [inventoryDetails, setInventoryDetails] = useState<<{
+  const [inventoryDetails, setInventoryDetails] = useState<{
     stats: { total_products: number; products_with_difference: number; accuracy_rate: number };
     details: Array<{ id?: string; produit?: { nom?: string; unite?: string }; quantite_theorique?: number; quantite_reelle?: number; ecart?: number }>;
   } | null>(null);

@@ -85,8 +85,8 @@ export default function Ventes() {
   const router = useRouter();
 
   const [ventes, setVentes] = useState<Vente[]>([]);
-  const [produits, setProduits] = useState<<Produit[]>([]);
-  const [packs, setPacks] = useState<<Pack[]>([]);
+  const [produits, setProduits] = useState<Produit[]>([]);
+  const [packs, setPacks] = useState<Pack[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -96,14 +96,14 @@ export default function Ventes() {
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
   const [showPrintModal, setShowPrintModal] = useState<string | null>(null);
 
-  const [panier, setPanier] = useState<<PanierItem[]>([]);
+  const [panier, setPanier] = useState<PanierItem[]>([]);
   const [searchProduit, setSearchProduit] = useState("");
   const [isAddingPack, setIsAddingPack] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [form, setForm] = useState<VenteForm>(EMPTY_FORM);
-  const [modalTab, setModalTab] = useState<<ModalTab>("produits");
-  const [packDisponible, setPackDisponible] = useState<<Record<string, boolean>>({});
+  const [modalTab, setModalTab] = useState<ModalTab>("produits");
+  const [packDisponible, setPackDisponible] = useState<Record<string, boolean>>({});
 
   const loadData = async () => {
     if (!currentCompany) return;

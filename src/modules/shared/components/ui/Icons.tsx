@@ -2,7 +2,7 @@
 import type { ReactNode, SVGProps } from "react";
 
 /* ─── Base SVG wrapper ─── */
-interface IconProps extends SVGProps<<SVGSVGElement> {
+interface IconProps extends SVGProps<SVGSVGElement> {
   size?: number;
   strokeWidth?: number;
 }
@@ -163,7 +163,7 @@ export type NavIconKey =
 | "wallet"
 | "document";
 
-export const NavIcons: Record<<NavIconKey, (props?: IconProps) => ReactNode> = {
+export const NavIcons: Record<NavIconKey, (props?: IconProps) => ReactNode> = {
   grid: (props) => (
     <BaseIcon size={props?.size ?? 16} strokeWidth={1.8} {...props}>
     <rect x="3" y="3" width="7" height="7" rx="1.5" />

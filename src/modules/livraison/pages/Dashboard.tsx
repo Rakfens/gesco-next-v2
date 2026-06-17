@@ -227,10 +227,10 @@ export default function Dashboard() {
 
   const [selectedDate, setSelectedDate] = useState<string>(TODAY());
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth());
-  const [recuperationsJour, setRecuperationsJour] = useState<<Recuperation[]>([]);
+  const [recuperationsJour, setRecuperationsJour] = useState<Recuperation[]>([]);
   const [loadingRecup, setLoadingRecup] = useState(false);
   const [errorRecup, setErrorRecup] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<<"jour" | "mois">("jour");
+  const [activeTab, setActiveTab] = useState<"jour" | "mois">("jour");
 
   const safeLivraisons = Array.isArray(livraisons) ? livraisons : [];
   const safeAgents = Array.isArray(agents) ? agents : [];

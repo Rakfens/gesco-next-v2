@@ -84,7 +84,7 @@ export function LivraisonForm({
   const { currentCompany } = useCompany();
   const isMobile = useIsMobile();
 
-  const [form, setForm] = useState<<FormState>({
+  const [form, setForm] = useState<FormState>({
     colis: "",
     client_donneur: "",
     destinataire: "",
@@ -119,7 +119,7 @@ export function LivraisonForm({
   );
 
   /* ─── Handlers ─── */
-  const updateField = useCallback(<<K extends keyof FormState>(field: K, value: FormState[K]) => {
+  const updateField = useCallback(<K extends keyof FormState>(field: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   }, []);
 

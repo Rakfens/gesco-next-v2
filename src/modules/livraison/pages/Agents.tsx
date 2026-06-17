@@ -48,8 +48,8 @@ export default function Agents() {
   const [editId, setEditId] = useState<string | null>(null);
   const [editData, setEditData] = useState<{ nom: string; salaire: string }>({ nom: "", salaire: "" });
   const [month, setMonth] = useState(currentMonth());
-  const [recupsMois, setRecupsMois] = useState<<Record<string, RecupMois>>({});
-  const [recupsCumul, setRecupsCumul] = useState<<Record<string, RecupCumul>>({});
+  const [recupsMois, setRecupsMois] = useState<Record<string, RecupMois>>({});
+  const [recupsCumul, setRecupsCumul] = useState<Record<string, RecupCumul>>({});
   const [loading, setLoading] = useState(false);
   const [confirmDel, setConfirmDel] = useState<{ id: string; name: string } | null>(null);
   const [saving, setSaving] = useState(false);

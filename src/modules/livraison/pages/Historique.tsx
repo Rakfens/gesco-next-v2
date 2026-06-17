@@ -61,7 +61,7 @@ export default function Historique() {
   const [histAgent, setHistAgent] = useState<string>("tous");
   const [histStatut, setHistStatut] = useState<string>("tous");
   const [editId, setEditId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<<Partial<Livraison>>({});
+  const [editData, setEditData] = useState<Partial<Livraison>>({});
   const [fbClient, setFbClient] = useState<string | { client: string; livs: Livraison[] } | null>(null);
   const [fbRecup, setFbRecup] = useState("0");
   const [fbProvince, setFbProvince] = useState("0");
