@@ -1,10 +1,10 @@
-// src/modules/commerce/pages/Achats.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { logger } from "@/lib/logger";
 import {
-  Badge, Button, Card, CardHeader, CardTitle, ConfirmDialog, Input, Modal, ModalBody, ModalFooter, ModalHeader,
+  Badge, Button, Card, CardTitle, ConfirmDialog, Input, Modal, ModalBody, ModalFooter, ModalHeader,
   Select, SkeletonTable, StatCard, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow,
 } from "@/modules/shared/components/ui";
 import { useApp } from "@/modules/shared/context/AppContext";
@@ -15,9 +15,25 @@ import { formatAr } from "@/modules/shared/utils/constants";
 import { createAchat, deleteAchat, fetchAchats, updateAchat } from "../services/achatService";
 import { fetchProduits } from "../services/produitService";
 
-const Icon = ({ d, size = 16, className = "" }: { d: string; size?: number; className?: string }) => (
+/* ─── SVG Icons ─── */
+const CartIcon = ({ size = 16, className = "" }: { size?: number; className?: string }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-  <path d={d} />
+    <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+  </svg>
+);
+const PlusIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+const EditIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+  </svg>
+);
+const TrashIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
   </svg>
 );
 
@@ -41,8 +57,12 @@ export default function Achats() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [fournisseursConnus, setFournisseursConnus] = useState<string[]>([]);
   const [form, setForm] = useState({
-    fournisseur_nom: "", fournisseur_contact: "", tva: 0, montant_paye: 0, date_achat: new Date().toISOString().split("T")[0],
+    fournisseur_nom: "", fournisseur_contact: "", tva: 0, montant_paye: 0,
+    date_achat: new Date().toISOString().split("T")[0],
   });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setTimeout(() => setMounted(true), 50); }, []);
 
   const loadData = async () => {
     if (!currentCompany) return;
@@ -81,7 +101,10 @@ export default function Achats() {
     setPanier(panier.map((p) => p.produit_id === id ? { ...p, prix_unitaire: price, sous_total: p.quantite * price } : p));
   };
 
-  const resetForm = () => { setEditMode(false); setSelectedAchat(null); setPanier([]); setSearchProduit(""); setForm({ fournisseur_nom: "", fournisseur_contact: "", tva: 0, montant_paye: 0, date_achat: new Date().toISOString().split("T")[0] }); };
+  const resetForm = () => {
+    setEditMode(false); setSelectedAchat(null); setPanier([]); setSearchProduit("");
+    setForm({ fournisseur_nom: "", fournisseur_contact: "", tva: 0, montant_paye: 0, date_achat: new Date().toISOString().split("T")[0] });
+  };
 
   const handleSubmit = async () => {
     if (panier.length === 0) { toastWarn("Ajoutez au moins un produit"); return; }
@@ -123,232 +146,254 @@ export default function Achats() {
   const totalPaye = useMemo(() => achats.reduce((s, a) => s + (a.montant_paye || 0), 0), [achats]);
   const totalSolde = useMemo(() => achats.reduce((s, a) => s + Math.max(0, (a.montant_total || 0) - (a.montant_paye || 0)), 0), [achats]);
 
+  const sectionStyle = (delay: number): React.CSSProperties => ({
+    opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(10px)",
+    transition: `opacity 0.4s ease ${delay}s, transform 0.4s ease ${delay}s`,
+  });
+
   if (loading) return <SkeletonTable rows={6} />;
 
   return (
-    <div className="pb-6 transition-all duration-500 ease-out">
-    {/* ══ MODALS ══ */}
-    <ConfirmDialog open={!!confirmDelete} title="Supprimer cet achat ?" message="Cette action est irréversible. Le stock sera ajusté." onConfirm={executeDelete} onCancel={() => setConfirmDelete(null)} variant="danger" />
+    <div className="pb-8">
+      {/* ══ MODALS ══ */}
+      <ConfirmDialog open={!!confirmDelete} title="Supprimer cet achat ?" message="Cette action est irréversible. Le stock sera ajusté." onConfirm={executeDelete} onCancel={() => setConfirmDelete(null)} variant="danger" />
 
-    {/* ══ HEADER ══ */}
-    <div className="flex items-center justify-between mb-5 flex-wrap gap-2.5">
-    <div className="flex items-center gap-2.5">
-    <div className="w-9 h-9 rounded-[10px] bg-[var(--gold)]/10 flex items-center justify-center">
-    <Icon d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" size={18} className="text-[var(--gold)]" />
-    </div>
-    <div>
-    <h1 className={`font-extrabold m-0 text-[var(--text-primary)] ${isMobile ? "text-xl" : "text-2xl"}`}>Achats</h1>
-    <p className="text-xs text-[var(--text-muted)] mt-0.5">{currentCompany?.name} · {achats.length} commande(s)</p>
-    </div>
-    </div>
-    <Button variant="primary" onClick={() => { resetForm(); setShowModal(true); }}>＋ Nouvel achat</Button>
-    </div>
-
-    {/* ══ STATS ══ */}
-    {achats.length > 0 && (
-      <div className={isMobile ? "grid grid-cols-2 gap-2.5 mb-4" : "grid grid-cols-3 gap-2.5 mb-4"}>
-      <StatCard label="Total général" value={formatAr(totalGeneral)} color="accent" icon={<Icon d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" size={18} />} />
-      <StatCard label="Total payé" value={formatAr(totalPaye)} color="success" icon={<Icon d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" size={18} />} />
-      <StatCard label="Solde restant" value={formatAr(totalSolde)} color="danger" icon={<Icon d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" size={18} />} />
-      </div>
-    )}
-
-    {/* ══ LISTE DES ACHATS ══ */}
-    {isMobile ? (
-      <div className="flex flex-col gap-2.5">
-      {achats.length === 0 ? (
-        <Card padding={40}>
-        <div className="text-center text-[var(--text-muted)] text-[13px]">
-        <div className="text-[32px] mb-2">🛒</div>
-        Aucun achat enregistré.
-        </div>
-        </Card>
-      ) : (
-        achats.map((a) => {
-          const solde = (a.montant_total || 0) - (a.montant_paye || 0);
-          return (
-            <Card key={a.id} padding={14}>
-            <div className="flex items-center justify-between mb-2">
+      {/* ═══════════════════════════════════════════════════════
+          HEADER
+          ═══════════════════════════════════════════════════════ */}
+      <div className="relative mb-6 overflow-hidden rounded-2xl p-5" style={{ ...sectionStyle(0), background: "linear-gradient(135deg, rgba(201,169,110,0.06) 0%, rgba(139,92,246,0.03) 100%)", border: "1px solid rgba(201,169,110,0.08)" }}>
+        <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full blur-3xl" style={{ background: "rgba(201,169,110,0.05)" }} />
+        <div className="relative z-10 flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl overflow-hidden shrink-0" style={{ border: "2px solid rgba(201,169,110,0.2)", background: "linear-gradient(135deg, rgba(17,17,20,0.9), rgba(28,28,34,0.7))", boxShadow: "0 0 20px rgba(201,169,110,0.06)" }}>
+              <Image src="/logo.png" alt="HT-GesCom" width={32} height={32} priority className="object-contain" />
+            </div>
             <div>
-            <div className="font-bold text-[13px] text-[var(--text-primary)]">{a.numero_commande || "—"}</div>
-            <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{a.fournisseur_nom || "—"} · {a.date_achat ? new Date(a.date_achat).toLocaleDateString("fr-FR") : "—"}</div>
+              <h1 className="text-xl font-extrabold tracking-tight" style={{ color: "var(--text-primary)" }}>Achats</h1>
+              <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{currentCompany?.name} · {achats.length} commande{achats.length !== 1 ? "s" : ""}</p>
             </div>
-            <Badge variant={solde > 0 ? "warning" : "success"} size="sm">{solde > 0 ? "Crédit" : "Soldé"}</Badge>
-            </div>
-            <div className="grid grid-cols-3 gap-1.5 mb-2">
-            {[
-              { l: "TOTAL", v: formatAr(a.montant_total), color: "text-[var(--gold)]" },
-                  { l: "PAYÉ", v: formatAr(a.montant_paye), color: "text-[var(--success)]" },
-                  { l: "SOLDE", v: solde > 0 ? formatAr(solde) : "Payé", color: solde > 0 ? "text-[var(--danger)]" : "text-[var(--success)]" },
-            ].map((r) => (
-              <div key={r.l} className="bg-[var(--bg-primary)] rounded-lg py-1.5 px-2 text-center">
-              <div className="text-[9px] text-[var(--text-muted)] mb-0.5">{r.l}</div>
-              <div className={`text-xs font-bold ${r.color}`}>{r.v}</div>
-              </div>
-            ))}
-            </div>
-            <div className="grid grid-cols-2 gap-1.5">
-            <Button variant="secondary" size="sm" onClick={() => handleEditAchat(a)}>✏️ Modifier</Button>
-            <Button variant="danger" size="sm" onClick={() => setConfirmDelete(a.id)}>🗑️ Supprimer</Button>
-            </div>
-            </Card>
-          );
-        })
-      )}
-      {achats.length > 0 && (
-        <Card padding={12}>
-        <div className="flex justify-between items-center">
-        <span className="font-bold text-xs text-[var(--text-primary)]">TOTAL GÉNÉRAL</span>
-        <div className="flex gap-3">
-        <span className="text-[var(--gold)] font-extrabold text-[13px]">{formatAr(totalGeneral)}</span>
-        <span className="text-[var(--danger)] font-bold text-xs">Solde: {formatAr(totalSolde)}</span>
+          </div>
+          <Button variant="primary" onClick={() => { resetForm(); setShowModal(true); }} icon={<PlusIcon />}>Nouvel achat</Button>
         </div>
-        </div>
-        </Card>
-      )}
       </div>
-    ) : (
-      <Card padding={0} className="overflow-hidden">
-      <Table>
-      <TableHead>
-      <TableRow>
-      <TableHeader>Commande</TableHeader>
-      <TableHeader>Fournisseur</TableHeader>
-      <TableHeader>Date</TableHeader>
-      <TableHeader align="right">Montant</TableHeader>
-      <TableHeader align="right">Payé</TableHeader>
-      <TableHeader align="right">Solde</TableHeader>
-      <TableHeader align="center">Statut</TableHeader>
-      <TableHeader align="center">Actions</TableHeader>
-      </TableRow>
-      </TableHead>
-      <TableBody>
-      {achats.length === 0 ? (
-        <TableEmpty colSpan={8} message="Aucun achat" />
-      ) : (
-        achats.map((a) => {
-          const solde = (a.montant_total || 0) - (a.montant_paye || 0);
-          return (
-            <TableRow key={a.id}>
-            <TableCell className="font-semibold font-mono text-xs text-[var(--text-primary)]">{a.numero_commande || "—"}</TableCell>
-            <TableCell className="text-[var(--text-primary)]">{a.fournisseur_nom || "—"}</TableCell>
-            <TableCell className="text-[var(--text-muted)] text-[11px]">{a.date_achat ? new Date(a.date_achat).toLocaleDateString("fr-FR") : "—"}</TableCell>
-            <TableCell align="right" className="font-semibold text-[var(--gold)]">{formatAr(a.montant_total)}</TableCell>
-            <TableCell align="right" className="text-[var(--success)]">{formatAr(a.montant_paye)}</TableCell>
-            <TableCell align="right" className={`font-semibold ${solde > 0 ? "text-[var(--danger)]" : "text-[var(--success)]"}`}>{solde > 0 ? formatAr(solde) : "Payé"}</TableCell>
-            <TableCell align="center"><Badge variant={solde > 0 ? "warning" : "success"} size="sm">{solde > 0 ? "Crédit" : "Soldé"}</Badge></TableCell>
-            <TableCell align="center">
-            <div className="flex gap-1 justify-center">
-            <Button variant="secondary" size="sm" onClick={() => handleEditAchat(a)}>✏️</Button>
-            <Button variant="danger" size="sm" onClick={() => setConfirmDelete(a.id)}>🗑️</Button>
-            </div>
-            </TableCell>
-            </TableRow>
-          );
-        })
-      )}
-      </TableBody>
-      </Table>
-      {achats.length > 0 && (
-        <div className="py-3 px-4 bg-[var(--bg-secondary)] border-t-2 border-[var(--border-default)] flex justify-between flex-wrap gap-2">
-        <span className="font-bold text-xs text-[var(--text-primary)]">TOTAL GÉNÉRAL</span>
-        <div className="flex gap-4">
-        <span className="text-[var(--gold)] font-extrabold">{formatAr(totalGeneral)}</span>
-        <span className="text-[var(--success)] font-bold">Payé: {formatAr(totalPaye)}</span>
-        <span className="text-[var(--danger)] font-bold">Solde: {formatAr(totalSolde)}</span>
-        </div>
-        </div>
-      )}
-      </Card>
-    )}
 
-    {/* ══ MODAL NOUVEL/ÉDITION ACHAT ══ */}
-    <Modal open={showModal} onClose={() => { setShowModal(false); resetForm(); }} width={isMobile ? 480 : 900}>
-    <ModalHeader title={editMode ? "Modifier l'achat" : "Nouvel achat"} onClose={() => { setShowModal(false); resetForm(); }} />
-    <ModalBody>
-    <div className={isMobile ? "grid grid-cols-1 gap-4" : "grid grid-cols-2 gap-4"}>
-    {/* Colonne gauche : Produits */}
-    <div>
-    <div className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-2">🛍️ Produits</div>
-    <div className="mb-2">
-    <Input placeholder="Rechercher un produit..." value={searchProduit} onChange={(e) => setSearchProduit(e.target.value)} />
-    </div>
-    <div className="max-h-[300px] overflow-y-auto flex flex-col gap-1">
-    {produitsFiltres.map((p) => (
-      <button key={p.id} onClick={() => addToCart(p)}
-      className="flex items-center justify-between py-2 px-2.5 rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] cursor-pointer text-left text-xs transition-colors hover:bg-[var(--bg-card-hover)]">
-      <div>
-      <div className="font-semibold text-[var(--text-primary)]">{p.nom}</div>
-      <div className="text-[10px] text-[var(--text-muted)]">Stock: {p.quantite_stock} · {formatAr(p.prix_achat)}</div>
-      </div>
-      <span className="text-base text-[var(--success)]">＋</span>
-      </button>
-    ))}
-    {produitsFiltres.length === 0 && <div className="text-center text-[var(--text-muted)] p-4 text-xs">Aucun produit trouvé</div>}
-    </div>
-    </div>
-    {/* Colonne droite : Panier + Formulaire */}
-    <div>
-    <div className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-2">🛒 Panier ({panier.length})</div>
-    <div className="max-h-[200px] overflow-y-auto mb-3">
-    {panier.length === 0 ? (
-      <div className="text-center text-[var(--text-muted)] p-5 text-xs border border-dashed border-[var(--border-default)] rounded-lg">Panier vide</div>
-    ) : (
-      panier.map((p) => (
-        <div key={p.produit_id} className="flex items-center gap-1.5 py-1.5 border-b border-[var(--border-default)]">
-        <div className="flex-1 min-w-0">
-        <div className="font-semibold text-[11px] text-[var(--text-primary)] truncate">{p.nom}</div>
-        </div>
-        <input type="number" min={1} value={p.quantite} onChange={(e) => updateCartQty(p.produit_id, parseInt(e.target.value) || 0)}
-        className="w-[50px] py-[3px] px-1.5 bg-[var(--bg-primary)] border border-[var(--border-default)] rounded-md text-[var(--text-primary)] text-[11px] text-center outline-none focus:border-[var(--gold)]" />
-        <input type="number" value={p.prix_unitaire} onChange={(e) => updateCartPrice(p.produit_id, parseFloat(e.target.value) || 0)}
-        className="w-[70px] py-[3px] px-1.5 bg-[var(--bg-primary)] border border-[var(--border-default)] rounded-md text-[var(--text-primary)] text-[11px] text-center outline-none focus:border-[var(--gold)]" />
-        <span className="text-[11px] font-bold text-[var(--gold)] min-w-[60px] text-right">{formatAr(p.sous_total)}</span>
-        <button onClick={() => updateCartQty(p.produit_id, 0)} className="w-6 h-6 rounded-md bg-[var(--danger)]/10 border border-[var(--danger)]/20 text-[var(--danger)] cursor-pointer flex items-center justify-center text-xs hover:bg-[var(--danger)]/20">✕</button>
-        </div>
-      ))
-    )}
-    </div>
-    {/* Totaux */}
-    {panier.length > 0 && (
-      <div className="py-2 px-2.5 bg-[var(--bg-primary)] rounded-lg mb-3">
-      <div className="flex justify-between text-[11px]">
-      <span className="text-[var(--text-muted)]">Sous-total</span>
-      <span className="font-semibold text-[var(--text-primary)]">{formatAr(totalPanier)}</span>
-      </div>
-      {form.tva > 0 && (
-        <div className="flex justify-between text-[11px] mt-0.5">
-        <span className="text-[var(--text-muted)]">TVA</span>
-        <span className="font-semibold text-[var(--text-primary)]">{formatAr(form.tva)}</span>
+      {/* ═══════════════════════════════════════════════════════
+          STATS
+          ═══════════════════════════════════════════════════════ */}
+      {achats.length > 0 && (
+        <div className={`grid gap-3 mb-5 ${isMobile ? "grid-cols-2" : "grid-cols-3"}`} style={sectionStyle(0.1)}>
+          <StatCard label="Total général" value={formatAr(totalGeneral)} color="accent" icon={<CartIcon size={18} />} />
+          <StatCard label="Total payé" value={formatAr(totalPaye)} color="success" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
+          <StatCard label="Solde restant" value={formatAr(totalSolde)} color="danger" icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
         </div>
       )}
-      <div className="flex justify-between text-[13px] mt-1 pt-1 border-t border-[var(--border-default)]">
-      <span className="font-bold text-[var(--text-primary)]">TOTAL</span>
-      <span className="font-extrabold text-[var(--gold)] text-base">{formatAr(totalAvecTVA)}</span>
-      </div>
-      </div>
-    )}
-    {/* Formulaire */}
-    <div className="grid grid-cols-2 gap-2">
-    <Input label="Fournisseur *" placeholder="Nom du fournisseur" value={form.fournisseur_nom} onChange={(e) => setForm({ ...form, fournisseur_nom: e.target.value })} list="fournisseurs-list" />
-    <datalist id="fournisseurs-list">
-    {fournisseursConnus.map((f) => <option key={f} value={f} />)}
-    </datalist>
-    <Input label="Contact" placeholder="Tél / Email" value={form.fournisseur_contact} onChange={(e) => setForm({ ...form, fournisseur_contact: e.target.value })} />
-    <Input type="date" label="Date" value={form.date_achat} onChange={(e) => setForm({ ...form, date_achat: e.target.value })} />
-    <Input type="number" label="TVA (Ar)" value={String(form.tva)} onChange={(e) => setForm({ ...form, tva: parseFloat(e.target.value) || 0 })} />
-    <Input type="number" label="Payé (Ar)" value={String(form.montant_paye)} onChange={(e) => setForm({ ...form, montant_paye: parseFloat(e.target.value) || 0 })} />
-    </div>
-    </div>
-    </div>
-    </ModalBody>
-    <ModalFooter>
-    <Button variant="secondary" onClick={() => { setShowModal(false); resetForm(); }}>Annuler</Button>
-    <Button variant="primary" onClick={handleSubmit} loading={saving} disabled={saving || panier.length === 0}>
-    {editMode ? "Modifier" : "Enregistrer"}
-    </Button>
-    </ModalFooter>
-    </Modal>
+
+      {/* ═══════════════════════════════════════════════════════
+          LISTE DES ACHATS
+          ═══════════════════════════════════════════════════════ */}
+      {isMobile ? (
+        <div className="flex flex-col gap-3" style={sectionStyle(0.15)}>
+          {achats.length === 0 ? (
+            <div className="rounded-2xl py-14 text-center" style={{ border: "1px solid var(--border-subtle)", background: "var(--bg-card)" }}>
+              <div className="text-4xl mb-3">🛒</div>
+              <div className="text-sm" style={{ color: "var(--text-muted)" }}>Aucun achat enregistré.</div>
+            </div>
+          ) : (
+            achats.map((a, idx) => {
+              const solde = (a.montant_total || 0) - (a.montant_paye || 0);
+              return (
+                <div key={a.id} className="rounded-2xl overflow-hidden transition-all duration-200" style={{ ...sectionStyle(0.2 + idx * 0.03), border: "1px solid var(--border-subtle)", background: "var(--bg-card)" }}>
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <div className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>{a.numero_commande || "—"}</div>
+                        <div className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{a.fournisseur_nom || "—"} · {a.date_achat ? new Date(a.date_achat).toLocaleDateString("fr-FR") : "—"}</div>
+                      </div>
+                      <Badge variant={solde > 0 ? "warning" : "success"} size="sm">{solde > 0 ? "Crédit" : "Soldé"}</Badge>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      {[
+                        { l: "TOTAL", v: formatAr(a.montant_total) },
+                        { l: "PAYÉ", v: formatAr(a.montant_paye) },
+                        { l: "SOLDE", v: solde > 0 ? formatAr(solde) : "Payé" },
+                      ].map((r) => (
+                        <div key={r.l} className="rounded-lg py-2 px-2 text-center" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)" }}>
+                          <div className="text-[9px] mb-0.5" style={{ color: "var(--text-muted)" }}>{r.l}</div>
+                          <div className="text-xs font-bold" style={{ color: r.l === "PAYÉ" ? "var(--success)" : r.l === "SOLDE" && solde > 0 ? "var(--danger)" : "var(--text-primary)" }}>{r.v}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button variant="secondary" size="sm" onClick={() => handleEditAchat(a)} icon={<EditIcon />}>Modifier</Button>
+                      <Button variant="danger" size="sm" onClick={() => setConfirmDelete(a.id)} icon={<TrashIcon />}>Supprimer</Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+          {achats.length > 0 && (
+            <div className="rounded-xl p-3 flex justify-between items-center" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
+              <span className="font-bold text-xs" style={{ color: "var(--text-primary)" }}>TOTAL GÉNÉRAL</span>
+              <div className="flex gap-3">
+                <span className="font-extrabold text-sm" style={{ color: "var(--gold)" }}>{formatAr(totalGeneral)}</span>
+                <span className="font-bold text-xs" style={{ color: "var(--danger)" }}>Solde: {formatAr(totalSolde)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-2xl overflow-hidden" style={{ ...sectionStyle(0.15), border: "1px solid var(--border-subtle)", background: "var(--bg-card)" }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Commande</TableHeader>
+                <TableHeader>Fournisseur</TableHeader>
+                <TableHeader>Date</TableHeader>
+                <TableHeader align="right">Montant</TableHeader>
+                <TableHeader align="right">Payé</TableHeader>
+                <TableHeader align="right">Solde</TableHeader>
+                <TableHeader align="center">Statut</TableHeader>
+                <TableHeader align="center">Actions</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {achats.length === 0 ? (
+                <TableEmpty colSpan={8} message="Aucun achat" />
+              ) : achats.map((a) => {
+                const solde = (a.montant_total || 0) - (a.montant_paye || 0);
+                return (
+                  <TableRow key={a.id}>
+                    <TableCell className="font-semibold font-mono text-xs"><span style={{ color: "var(--text-primary)" }}>{a.numero_commande || "—"}</span></TableCell>
+                    <TableCell><span style={{ color: "var(--text-primary)" }}>{a.fournisseur_nom || "—"}</span></TableCell>
+                    <TableCell className="text-xs"><span style={{ color: "var(--text-muted)" }}>{a.date_achat ? new Date(a.date_achat).toLocaleDateString("fr-FR") : "—"}</span></TableCell>
+                    <TableCell align="right" className="font-semibold"><span style={{ color: "var(--gold)" }}>{formatAr(a.montant_total)}</span></TableCell>
+                    <TableCell align="right"><span style={{ color: "var(--success)" }}>{formatAr(a.montant_paye)}</span></TableCell>
+                    <TableCell align="right" className="font-semibold"><span style={{ color: solde > 0 ? "var(--danger)" : "var(--success)" }}>{solde > 0 ? formatAr(solde) : "Payé"}</span></TableCell>
+                    <TableCell align="center"><Badge variant={solde > 0 ? "warning" : "success"} size="sm">{solde > 0 ? "Crédit" : "Soldé"}</Badge></TableCell>
+                    <TableCell align="center">
+                      <div className="flex gap-1 justify-center">
+                        <Button variant="secondary" size="sm" onClick={() => handleEditAchat(a)} icon={<EditIcon />}>✏️</Button>
+                        <Button variant="danger" size="sm" onClick={() => setConfirmDelete(a.id)} icon={<TrashIcon />}>🗑️</Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+          {achats.length > 0 && (
+            <div className="py-3 px-5 flex justify-between flex-wrap gap-2" style={{ background: "var(--bg-secondary)", borderTop: "2px solid var(--border-active)" }}>
+              <span className="font-bold text-xs" style={{ color: "var(--text-primary)" }}>TOTAL GÉNÉRAL</span>
+              <div className="flex gap-4">
+                <span className="font-extrabold" style={{ color: "var(--gold)" }}>{formatAr(totalGeneral)}</span>
+                <span className="font-bold" style={{ color: "var(--success)" }}>Payé: {formatAr(totalPaye)}</span>
+                <span className="font-bold" style={{ color: "var(--danger)" }}>Solde: {formatAr(totalSolde)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════
+          MODAL NOUVEL/ÉDITION ACHAT
+          ═══════════════════════════════════════════════════════ */}
+      <Modal open={showModal} onClose={() => { setShowModal(false); resetForm(); }} width={isMobile ? 480 : 900}>
+        <ModalHeader title={editMode ? "Modifier l'achat" : "Nouvel achat"} onClose={() => { setShowModal(false); resetForm(); }} />
+        <ModalBody>
+          <div className={isMobile ? "grid grid-cols-1 gap-4" : "grid grid-cols-2 gap-4"}>
+            {/* Colonne gauche : Produits */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex h-5 w-5 items-center justify-center rounded-md" style={{ background: "rgba(201,169,110,0.1)", color: "var(--gold)" }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Produits</span>
+              </div>
+              <Input placeholder="Rechercher un produit..." value={searchProduit} onChange={(e) => setSearchProduit(e.target.value)} className="mb-2" />
+              <div className="max-h-[300px] overflow-y-auto flex flex-col gap-1 rounded-xl p-1" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)" }}>
+                {produitsFiltres.map((p) => (
+                  <button key={p.id} onClick={() => addToCart(p)} className="flex items-center justify-between py-2.5 px-3 rounded-lg text-left text-xs btn-press transition-all" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
+                    <div>
+                      <div className="font-semibold" style={{ color: "var(--text-primary)" }}>{p.nom}</div>
+                      <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>Stock: {p.quantite_stock} · {formatAr(p.prix_achat)}</div>
+                    </div>
+                    <span className="text-base" style={{ color: "var(--success)" }}>＋</span>
+                  </button>
+                ))}
+                {produitsFiltres.length === 0 && <div className="text-center p-4 text-xs" style={{ color: "var(--text-muted)" }}>Aucun produit trouvé</div>}
+              </div>
+            </div>
+
+            {/* Colonne droite : Panier + Formulaire */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex h-5 w-5 items-center justify-center rounded-md" style={{ background: "rgba(201,169,110,0.1)", color: "var(--gold)" }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>Panier ({panier.length})</span>
+              </div>
+              <div className="max-h-[200px] overflow-y-auto mb-3 rounded-xl p-1" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)" }}>
+                {panier.length === 0 ? (
+                  <div className="text-center p-5 text-xs" style={{ color: "var(--text-muted)" }}>Panier vide</div>
+                ) : panier.map((p) => (
+                  <div key={p.produit_id} className="flex items-center gap-1.5 py-1.5 px-2 rounded-lg" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-[11px] truncate" style={{ color: "var(--text-primary)" }}>{p.nom}</div>
+                    </div>
+                    <input type="number" min={1} value={p.quantite} onChange={(e) => updateCartQty(p.produit_id, parseInt(e.target.value) || 0)} className="w-[50px] py-1 px-1.5 rounded-md text-[11px] text-center outline-none" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }} />
+                    <input type="number" value={p.prix_unitaire} onChange={(e) => updateCartPrice(p.produit_id, parseFloat(e.target.value) || 0)} className="w-[70px] py-1 px-1.5 rounded-md text-[11px] text-center outline-none" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)", color: "var(--text-primary)" }} />
+                    <span className="text-[11px] font-bold min-w-[60px] text-right" style={{ color: "var(--gold)" }}>{formatAr(p.sous_total)}</span>
+                    <button onClick={() => updateCartQty(p.produit_id, 0)} className="w-6 h-6 rounded-md flex items-center justify-center text-xs btn-press" style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.15)", color: "var(--danger)" }}>✕</button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Totaux */}
+              {panier.length > 0 && (
+                <div className="py-3 px-3 rounded-xl mb-3 space-y-1" style={{ background: "var(--bg-elevated)", border: "1px solid var(--border-subtle)" }}>
+                  <div className="flex justify-between text-[11px]">
+                    <span style={{ color: "var(--text-muted)" }}>Sous-total</span>
+                    <span className="font-semibold" style={{ color: "var(--text-primary)" }}>{formatAr(totalPanier)}</span>
+                  </div>
+                  {form.tva > 0 && (
+                    <div className="flex justify-between text-[11px]">
+                      <span style={{ color: "var(--text-muted)" }}>TVA</span>
+                      <span className="font-semibold" style={{ color: "var(--text-primary)" }}>{formatAr(form.tva)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm pt-1" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+                    <span className="font-bold" style={{ color: "var(--text-primary)" }}>TOTAL</span>
+                    <span className="font-extrabold text-base" style={{ color: "var(--gold)" }}>{formatAr(totalAvecTVA)}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Formulaire */}
+              <div className="grid grid-cols-2 gap-2">
+                <Input label="Fournisseur *" placeholder="Nom du fournisseur" value={form.fournisseur_nom} onChange={(e) => setForm({ ...form, fournisseur_nom: e.target.value })} list="fournisseurs-list" />
+                <datalist id="fournisseurs-list">
+                  {fournisseursConnus.map((f) => <option key={f} value={f} />)}
+                </datalist>
+                <Input label="Contact" placeholder="Tél / Email" value={form.fournisseur_contact} onChange={(e) => setForm({ ...form, fournisseur_contact: e.target.value })} />
+                <Input type="date" label="Date" value={form.date_achat} onChange={(e) => setForm({ ...form, date_achat: e.target.value })} />
+                <Input type="number" label="TVA (Ar)" value={String(form.tva)} onChange={(e) => setForm({ ...form, tva: parseFloat(e.target.value) || 0 })} />
+                <Input type="number" label="Payé (Ar)" value={String(form.montant_paye)} onChange={(e) => setForm({ ...form, montant_paye: parseFloat(e.target.value) || 0 })} />
+              </div>
+            </div>
+          </div>
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="secondary" onClick={() => { setShowModal(false); resetForm(); }}>Annuler</Button>
+          <Button variant="primary" onClick={handleSubmit} loading={saving} disabled={saving || panier.length === 0}>
+            {editMode ? "Modifier" : "Enregistrer"}
+          </Button>
+        </ModalFooter>
+      </Modal>
     </div>
   );
 }
